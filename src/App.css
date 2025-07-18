@@ -641,6 +641,7 @@ body {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--lila-lighter);
   animation: slideIn 0.3s ease;
@@ -729,6 +730,7 @@ body {
 
 .seccion-calendario {
   padding: 2rem;
+  overflow-x: hidden;
 }
 
 .sesion-seleccionada {
@@ -1222,6 +1224,7 @@ body {
 /* Estilos para el Calendario de Disponibilidad */
 .calendario-disponibilidad {
   margin: 2rem 0;
+  overflow: hidden;
 }
 
 .calendario-header {
@@ -1284,9 +1287,30 @@ body {
 
 .calendario-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(200px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scroll-behavior: smooth;
+}
+
+.calendario-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.calendario-grid::-webkit-scrollbar-track {
+  background: var(--lila-lighter);
+  border-radius: 3px;
+}
+
+.calendario-grid::-webkit-scrollbar-thumb {
+  background: var(--lila);
+  border-radius: 3px;
+}
+
+.calendario-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--lila-dark);
 }
 
 .calendario-dia {
@@ -1438,12 +1462,6 @@ body {
 }
 
 /* Responsive para el calendario */
-@media (max-width: 1200px) {
-  .calendario-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
   .calendario-header {
     flex-direction: column;
@@ -1451,7 +1469,7 @@ body {
   }
   
   .calendario-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(7, minmax(150px, 1fr));
   }
   
   .leyenda-calendario {
@@ -1462,7 +1480,7 @@ body {
 
 @media (max-width: 480px) {
   .calendario-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
   }
   
   .calendario-dia {
