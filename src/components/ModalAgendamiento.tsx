@@ -29,10 +29,6 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
 
   if (!psicologo) return null;
 
-  const horiosDisponibles = psicologo.disponibilidad.find(
-    d => d.fecha === fechaSeleccionada
-  )?.horarios || [];
-
   const handleSeleccionarHorario = (fecha: string, hora: string, horaLocalCalculada: string) => {
     setFechaSeleccionada(fecha);
     setHoraSeleccionada(hora);

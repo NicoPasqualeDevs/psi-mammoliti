@@ -52,11 +52,7 @@ function App() {
                 src={`${process.env.PUBLIC_URL}/logo.svg`}
                 alt="PsiConnect Logo" 
                 className="logo"
-                onLoad={() => {
-                  console.log('Logo cargado exitosamente');
-                }}
                 onError={(e) => {
-                  console.log('Error loading logo, usando alternativa');
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                   const fallback = target.nextElementSibling as HTMLElement;

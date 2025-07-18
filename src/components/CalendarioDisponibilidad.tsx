@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Psicologo, CalendarioSemana, CalendarioDia, CalendarioHorario } from '../types';
-import { detectarTimezone, convertirHorario, obtenerSemanaActual, formatearFechaCorta } from '../utils/timezone';
+import { detectarTimezone, convertirHorario, obtenerSemanaActual } from '../utils/timezone';
 
 interface CalendarioDisponibilidadProps {
   psicologo: Psicologo;

@@ -1,118 +1,307 @@
 # 🧠 PsiConnect - Plataforma de Agendamiento de Sesiones Psicológicas
 
-## Descripción
+## 📋 Descripción General
 
-PsiConnect es una aplicación web moderna que permite a los usuarios encontrar psicólogos especializados, filtrar por temáticas de consulta, ver horarios disponibles y agendar sesiones de manera simulada.
+PsiConnect es una aplicación web moderna desarrollada en React + TypeScript que permite a los pacientes encontrar y agendar sesiones con psicólogos especializados. La plataforma incluye funcionalidades avanzadas como visualización de disponibilidad en calendario semanal, adaptación automática de horarios según zona horaria del usuario, y un sistema completo de filtrado.
 
-## Características
+## 🎯 Objetivos del Proyecto
 
-- **Ver psicólogos disponibles**: Explora una lista completa de profesionales
-- **Filtros avanzados**: Filtra por especialidad, precio máximo y disponibilidad
-- **Horarios en tiempo real**: Ve los horarios disponibles de cada psicólogo
-- **Agendamiento simple**: Agenda sesiones con un formulario intuitivo
-- **Gestión de sesiones**: Ve todas tus sesiones agendadas en un panel dedicado
-- **Diseño moderno**: Interfaz atractiva y responsive
+- **Facilitar la conexión** entre pacientes y psicólogos especializados
+- **Simplificar el proceso de agendamiento** con una interfaz intuitiva
+- **Adaptar automáticamente los horarios** según la ubicación del usuario
+- **Proporcionar información detallada** sobre especialidades y disponibilidad
+- **Ofrecer una experiencia visual atractiva** y profesional
 
-## Tecnologías Utilizadas
+## ⚡ Funcionalidades Principales
 
-- **React 18** con TypeScript
-- **CSS3** con diseño responsive
-- **Datos simulados** para demostración
+### 🔍 Búsqueda y Filtrado de Psicólogos
+- **Filtro por especialidad**: Ansiedad, Depresión, Terapia Familiar, Psicología Infantil, etc.
+- **Filtro por precio máximo**: Slider interactivo de $50 a $150
+- **Filtro por disponibilidad**: Selección por fecha específica
+- **Visualización de resultados en tiempo real**
 
-## Instalación y Ejecución
+### 👥 Perfiles de Psicólogos
+Cada psicólogo muestra:
+- **Información personal**: Nombre, apellido, foto
+- **Experiencia profesional**: Años de experiencia
+- **Rating y valoraciones**: Sistema de estrellas
+- **Especialidades**: Tags de áreas de especialización
+- **Precio por sesión**: Tarifa claramente visible
+- **Disponibilidad**: Preview de próximos horarios con conversión de zona horaria
 
-### Prerrequisitos
-- Node.js (versión 14 o superior)
-- npm o yarn
+### 📅 Sistema de Calendario Avanzado
+- **Vista semanal completa**: 7 días con navegación entre semanas
+- **Horarios por día**: Visualización clara de slots disponibles
+- **Adaptación automática de zona horaria**: Muestra horarios locales del usuario
+- **Identificación visual**: 
+  - Día actual resaltado
+  - Fechas pasadas marcadas como no disponibles
+  - Horarios seleccionados destacados
+- **Leyenda de colores**: Para facilitar la comprensión
 
-### Pasos de instalación
+### 📝 Proceso de Agendamiento
+- **Selección de horario**: Click directo en el calendario
+- **Formulario de datos personales**: Nombre, email, teléfono
+- **Selección de especialidad**: Dropdown con especialidades del psicólogo
+- **Confirmación de datos**: Resumen completo antes de confirmar
+- **Navegación dual**: Vista calendario ↔ Vista formulario
 
-1. **Instalar dependencias:**
-   ```bash
-   npm install
-   ```
+### 🌍 Adaptación de Zona Horaria
+- **Detección automática**: Del timezone del usuario
+- **Conversión de horarios**: Muestra tanto hora del psicólogo como hora local
+- **Información clara**: Indica explícitamente las zonas horarias
+- **Soporte internacional**: Para usuarios en diferentes países
 
-2. **Ejecutar la aplicación:**
-   ```bash
-   npm start
-   ```
+### 📊 Gestión de Sesiones Agendadas
+- **Lista de sesiones**: Visualización completa de citas programadas
+- **Información detallada**: Fecha, hora, psicólogo, especialidad, precio
+- **Estados de sesión**: Confirmada, pendiente, cancelada
+- **Datos del paciente**: Información de contacto
 
-3. **Abrir en el navegador:**
-   La aplicación se abrirá automáticamente en `http://localhost:3000`
+## 🏗️ Arquitectura Técnica
 
-## Estructura del Proyecto
+### Stack Tecnológico
+- **Frontend**: React 18.2.0 + TypeScript 4.9.5
+- **Bundler**: Create React App (react-scripts 5.0.1)
+- **Estilos**: CSS Variables + CSS Grid/Flexbox
+- **Linting**: ESLint 8.42.0 + plugins para TypeScript y React
+- **Control de versiones**: Git + GitHub
 
+### Estructura del Proyecto
 ```
 src/
 ├── components/           # Componentes React reutilizables
-│   ├── PsicologoCard.tsx        # Tarjeta de psicólogo
-│   ├── FiltrosBusqueda.tsx      # Filtros de búsqueda
-│   ├── ModalAgendamiento.tsx    # Modal para agendar
-│   └── SesionesAgendadas.tsx    # Lista de sesiones
-├── data/                # Datos simulados
-│   └── psicologos.ts           # Base de datos de psicólogos
-├── types/               # Definiciones de TypeScript
-│   └── index.ts                # Interfaces y tipos
+│   ├── CalendarioDisponibilidad.tsx    # Calendario semanal
+│   ├── FiltrosBusqueda.tsx             # Panel de filtros
+│   ├── ModalAgendamiento.tsx           # Modal de agendamiento
+│   ├── PsicologoCard.tsx               # Tarjeta de psicólogo
+│   └── SesionesAgendadas.tsx           # Lista de sesiones
+├── data/                 # Datos mock y configuración
+│   └── psicologos.ts                   # Lista de psicólogos
+├── types/               # Definiciones TypeScript
+│   └── index.ts                        # Interfaces y tipos
+├── utils/               # Utilidades y helpers
+│   └── timezone.ts                     # Funciones de zona horaria
 ├── App.tsx              # Componente principal
-├── App.css              # Estilos principales
+├── App.css              # Estilos globales
 └── index.tsx            # Punto de entrada
 ```
 
-## Funcionalidades Principales
+### Tipos de Datos Principales
 
-### 1. Búsqueda y Filtrado
-- Filtro por especialidad (Ansiedad, Depresión, Terapia Familiar, etc.)
-- Filtro por precio máximo (deslizador)
-- Filtro por disponibilidad por fecha
+#### Psicologo
+```typescript
+interface Psicologo {
+  id: string;
+  nombre: string;
+  apellido: string;
+  especialidades: string[];
+  experiencia: number;
+  precio: number;
+  imagen: string;
+  descripcion: string;
+  rating: number;
+  disponibilidad: HorarioDisponible[];
+}
+```
 
-### 2. Información del Psicólogo
-- Foto, nombre y calificación
-- Años de experiencia
-- Especialidades
-- Descripción profesional
-- Precio por sesión
-- Próxima disponibilidad
+#### Sesion
+```typescript
+interface Sesion {
+  id: string;
+  psicologoId: string;
+  fecha: string;
+  hora: string;
+  paciente: {
+    nombre: string;
+    email: string;
+    telefono: string;
+  };
+  especialidad: string;
+  estado: 'confirmada' | 'pendiente' | 'cancelada';
+}
+```
 
-### 3. Agendamiento de Sesiones
-- Selección de fecha y hora
-- Elección de especialidad
-- Formulario de datos personales
-- Resumen de la sesión
-- Confirmación inmediata
+## 🎨 Diseño y UX
 
-### 4. Gestión de Sesiones
-- Lista de todas las sesiones agendadas
-- Estado de cada sesión (confirmada, pendiente, cancelada)
-- Detalles completos de cada cita
+### Paleta de Colores
+- **Primarios**: Tonos lilas (#8475b3, #665090, #4a3d73)
+- **Secundarios**: Rosa (#f188a6), Celeste (#98c4e8), Naranjo (#f57e2e)
+- **Neutrales**: Blanco, grises, azul oscuro para textos
 
-## Datos de Ejemplo
+### Principios de Diseño
+- **Minimalismo**: Interfaz limpia sin elementos innecesarios
+- **Accesibilidad**: Contrastes adecuados y navegación clara
+- **Responsividad**: Adaptación a diferentes tamaños de pantalla
+- **Feedback visual**: Hover effects, transiciones suaves
+- **Consistencia**: Uso coherente de tipografía y espaciado
 
-La aplicación incluye 5 psicólogos ficticios con diferentes especialidades:
+## 🚀 Instalación y Configuración
 
-1. **Ana García Ruiz** - Ansiedad, Depresión, TCC
-2. **Carlos Mendoza López** - Terapia Familiar y de Pareja
-3. **María Fernández Silva** - Psicología Infantil, TDAH
-4. **Roberto Jiménez Castro** - Estrés Laboral, Burnout
-5. **Lucía Morales Vega** - Trauma, EMDR
+### Prerrequisitos
+- Node.js 16+ y npm
+- Git
 
-## Responsive Design
+### Pasos de Instalación
+```bash
+# 1. Clonar el repositorio
+git clone [URL_DEL_REPOSITORIO]
+cd psi-mammoliti
 
-La aplicación está optimizada para:
-- 💻 **Desktop**: Diseño de dos columnas con sidebar
-- 📱 **Mobile**: Diseño apilado con navegación adaptada
-- 📊 **Tablet**: Layout intermedio optimizado
+# 2. Instalar dependencias
+npm install
 
-## Scripts Disponibles
+# 3. Ejecutar en modo desarrollo
+npm start
 
-- `npm start`: Ejecuta la aplicación en modo desarrollo
-- `npm build`: Construye la aplicación para producción
-- `npm test`: Ejecuta los tests (si están configurados)
+# 4. Abrir en el navegador
+# La aplicación estará disponible en http://localhost:3000
+```
 
-## Próximas Mejoras
+### Scripts Disponibles
+- `npm start` - Ejecutar en modo desarrollo
+- `npm run build` - Crear build de producción
+- `npm test` - Ejecutar tests
+- `npm run lint` - Verificar código con ESLint
+- `npm run lint:fix` - Corregir errores de linting automáticamente
 
-- [ ] Integración con backend real
-- [ ] Sistema de notificaciones
-- [ ] Pagos en línea
-- [ ] Chat en tiempo real
-- [ ] Calificaciones y reseñas
-- [ ] Recordatorios por email/SMS 
+## 📱 Casos de Uso
+
+### 1. Búsqueda de Psicólogo Especializado
+**Actor**: Paciente
+**Flujo**:
+1. Ingresa a la aplicación
+2. Utiliza filtros (especialidad: "Ansiedad", precio máximo: $80)
+3. Visualiza resultados filtrados
+4. Revisa perfiles de psicólogos disponibles
+
+### 2. Agendamiento de Sesión
+**Actor**: Paciente
+**Flujo**:
+1. Selecciona un psicólogo de interés
+2. Click en "Ver Horarios"
+3. Navega por el calendario semanal
+4. Selecciona fecha y hora disponible
+5. Completa formulario con datos personales
+6. Confirma agendamiento
+7. Recibe confirmación
+
+### 3. Visualización de Citas Agendadas
+**Actor**: Paciente
+**Flujo**:
+1. Click en "Mis Sesiones" en la navegación
+2. Visualiza lista completa de sesiones
+3. Revisa detalles (fecha, hora, psicólogo, estado)
+
+### 4. Adaptación de Zona Horaria
+**Actor**: Usuario internacional
+**Flujo**:
+1. La aplicación detecta automáticamente su zona horaria
+2. Todos los horarios se muestran con conversión local
+3. Ve claramente tanto el horario del psicólogo como su horario local
+
+## 🔧 Configuración de Desarrollo
+
+### ESLint
+Configurado con:
+- Reglas estándar para TypeScript
+- Plugins para React y React Hooks
+- Advertencias para console.log
+- Detección de variables no utilizadas
+- Validación de dependencias en useEffect
+
+### Git
+- `.gitignore` configurado para ignorar node_modules y archivos temporales
+- Estructura de commits clara
+- Control de versiones de dependencias con package-lock.json
+
+## 📊 Métricas y Consideraciones
+
+### Performance
+- **Componentes optimizados**: Uso de useMemo para cálculos costosos
+- **Lazy loading**: Carga de componentes bajo demanda
+- **Bundle size**: Minimizado con Create React App
+
+### Escalabilidad
+- **Arquitectura modular**: Componentes reutilizables
+- **Tipado fuerte**: TypeScript previene errores en tiempo de desarrollo
+- **Separación de responsabilidades**: Lógica de negocio separada de la presentación
+
+### Mantenibilidad
+- **Código limpio**: Siguiendo principios SOLID
+- **Documentación**: Comentarios claros y README detallado
+- **Linting**: Estándares de código consistentes
+
+## 🌍 Consideraciones Internacionales
+
+### Zona Horaria
+- Soporte para múltiples zonas horarias
+- Detección automática del timezone del usuario
+- Conversión precisa de horarios
+- Visualización clara de diferencias horarias
+
+### Localización (Preparado para)
+- Estructura preparada para múltiples idiomas
+- Formato de fechas según configuración regional
+- Soporte para diferentes formatos de hora (12h/24h)
+
+## 🔮 Roadmap Futuro
+
+### Funcionalidades Planificadas
+- **Sistema de autenticación**: Login/registro de usuarios
+- **Pasarela de pagos**: Integración con Stripe/PayPal
+- **Notificaciones**: Email y SMS de recordatorios
+- **Video llamadas**: Integración para sesiones online
+- **Calificaciones**: Sistema de reviews y comentarios
+- **Chat en tiempo real**: Comunicación pre-sesión
+- **API REST**: Backend para persistencia de datos
+
+### Mejoras Técnicas
+- **Tests unitarios**: Cobertura completa con Jest
+- **Tests E2E**: Cypress para testing de flujos completos
+- **PWA**: Aplicación web progresiva
+- **Optimización SEO**: Server-side rendering con Next.js
+- **Monitoreo**: Analytics y tracking de errores
+
+## 📈 Análisis de Valor de Negocio
+
+### Beneficios para Pacientes
+- **Acceso 24/7** a información de psicólogos
+- **Transparencia** en precios y especialidades
+- **Facilidad de agendamiento** sin llamadas telefónicas
+- **Adaptación automática** de horarios según ubicación
+
+### Beneficios para Psicólogos
+- **Mayor visibilidad** de sus servicios
+- **Gestión automatizada** de disponibilidad
+- **Reducción de tiempo** en coordinación de citas
+- **Acceso a mercado global** con adaptación de zonas horarias
+
+### Métricas de Éxito
+- **Tiempo de agendamiento**: Reducido de minutos a segundos
+- **Tasa de conversión**: % de visitantes que agendan
+- **Satisfacción del usuario**: Medida a través de UX
+- **Retención**: Usuarios que regresan a la plataforma
+
+## 🛠️ Soporte y Mantenimiento
+
+### Requisitos del Sistema
+- **Navegadores soportados**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- **Dispositivos**: Desktop, tablet, móvil
+- **Resoluciones**: Desde 320px hasta 1920px+
+
+### Procedimientos de Despliegue
+- Build de producción optimizado
+- Verificación de linting antes del deploy
+- Testing de funcionalidades críticas
+- Monitoreo post-despliegue
+
+---
+
+## 📞 Contacto y Soporte
+
+Para consultas técnicas o funcionales sobre esta documentación, contactar al equipo de desarrollo.
+
+**Versión del documento**: 1.0  
+**Fecha de actualización**: 18/7/2025  
+**Elaborado por**: Equipo de Desarrollo PsiConnect 
