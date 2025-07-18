@@ -1,0 +1,1067 @@
+:root {
+  --plyr-color-main: #F188A6;
+  --plyr-audio-controls-background: transparent;
+  --plyr-audio-control-color: white;
+  --plyr-control-spacing: 2.5rem;
+  --plyr-control-radius: 100vw;
+  --plyr-audio-controls-background-hover: white;
+  --plyr-audio-control-color-hover: #F188A6;
+  
+  --lila-lighter: #f3efff;
+  --textos-azul: #001959;
+  --lila-darkest: #2d2049;
+  --_fonts---headings: Poppins, sans-serif;
+  --lila-light: #b3a4d0;
+  --_fonts---texts: Poppins, sans-serif;
+  --textos-gris: #455375;
+  --lila-darker: #4a3d73;
+  --secundario-naranja: #f57e2e;
+  --lila: #8475b3;
+  --neutral-white: white;
+  --secundario-amarillo: #e6f381;
+  --secundario-celeste: #98c4e8;
+  --neutral-black: black;
+  --secundario-rosa: #f188a6;
+  --secundario-salmón: #ea8069;
+  --lila-dark: #665090;
+  --componentes-accesible: #9b9b9b;
+  --gradientes-1: var(--textos-gris);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--_fonts---texts);
+  background: linear-gradient(135deg, var(--lila-lighter) 0%, var(--neutral-white) 50%, var(--lila-lighter) 100%);
+  color: var(--textos-azul);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.app::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, var(--lila-lighter) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--secundario-celeste) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, var(--lila-lighter) 0%, transparent 50%);
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.app-header {
+  background: linear-gradient(135deg, var(--lila-darkest) 0%, var(--lila-darker) 30%, var(--lila-dark) 70%, var(--lila) 100%);
+  color: var(--neutral-white);
+  padding: 3rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle, var(--secundario-rosa) 1px, transparent 1px),
+    radial-gradient(circle, var(--secundario-celeste) 1px, transparent 1px);
+  background-size: 50px 50px, 30px 30px;
+  background-position: 0 0, 25px 25px;
+  opacity: 0.1;
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(-50px, -50px) rotate(0deg); }
+  50% { transform: translate(50px, 50px) rotate(180deg); }
+}
+
+.header-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.logo-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  filter: drop-shadow(0 4px 12px rgba(132, 117, 179, 0.3));
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.logo:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.logo-fallback {
+  width: 60px;
+  height: 60px;
+  font-size: 3rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
+  border-radius: 50%;
+  border: 3px solid var(--lila);
+  filter: drop-shadow(0 4px 12px rgba(132, 117, 179, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.logo-fallback:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.app-header h1 {
+  font-family: var(--_fonts---headings);
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(45deg, var(--neutral-white), var(--secundario-rosa), var(--secundario-celeste));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-header .subtitle {
+  font-size: 1.3rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  font-weight: 400;
+  color: var(--lila-lighter);
+}
+
+.navegacion {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.navegacion button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: var(--neutral-white);
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--_fonts---headings);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.navegacion button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.navegacion button:hover::before {
+  left: 100%;
+}
+
+.navegacion button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(132, 117, 179, 0.4);
+}
+
+.navegacion button.activo {
+  background: linear-gradient(135deg, var(--neutral-white), var(--lila-lighter));
+  color: var(--lila-darkest);
+  border-color: var(--neutral-white);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+.app-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  position: relative;
+}
+
+.busqueda-container {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.sidebar {
+  background: var(--neutral-white);
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 
+    0 10px 25px rgba(132, 117, 179, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--lila-lighter);
+  position: sticky;
+  top: 2rem;
+  backdrop-filter: blur(20px);
+}
+
+.filtros-busqueda h3 {
+  color: var(--textos-azul);
+  margin-bottom: 2rem;
+  font-size: 1.4rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filtros-busqueda h3::before {
+  content: '🔍';
+  font-size: 1.2rem;
+}
+
+.filtro-grupo {
+  margin-bottom: 2rem;
+}
+
+.filtro-grupo label {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  color: var(--textos-gris);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filtro-grupo select,
+.filtro-grupo input[type="range"] {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: var(--lila-lighter);
+  color: var(--textos-azul);
+  font-family: var(--_fonts---texts);
+}
+
+.filtro-grupo select:focus,
+.filtro-grupo input[type="range"]:focus {
+  outline: none;
+  border-color: var(--lila);
+  box-shadow: 0 0 0 3px rgba(132, 117, 179, 0.1);
+  transform: translateY(-1px);
+}
+
+.filtro-grupo input[type="range"] {
+  width: 100%;
+  margin: 0.5rem 0;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+.filtro-grupo input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(
+    to right,
+    var(--lila-dark) 0%,
+    var(--lila-dark) calc((100% * (var(--value, 0) - 50)) / (150 - 50)),
+    var(--lila-lighter) calc((100% * (var(--value, 0) - 50)) / (150 - 50))
+  );
+  border-radius: 4px;
+  border: 1px solid var(--lila-light);
+}
+
+.filtro-grupo input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: var(--lila-lighter);
+  border-radius: 4px;
+  border: 1px solid var(--lila-light);
+}
+
+.filtro-grupo input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--lila-darkest);
+  cursor: pointer;
+  margin-top: -6px;
+  border: 2px solid var(--neutral-white);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.filtro-grupo input[type="range"]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--lila-darkest);
+  cursor: pointer;
+  border: 2px solid var(--neutral-white);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.filtro-grupo input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.filtro-grupo input[type="range"]:hover::-moz-range-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.contenido-principal {
+  min-height: 500px;
+}
+
+.resultados-header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.resultados-header h2 {
+  color: var(--textos-azul);
+  font-size: 2.2rem;
+  margin-bottom: 0.8rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+}
+
+.resultados-header p {
+  color: var(--textos-gris);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.psicologos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 2rem;
+}
+
+.psicologo-card {
+  background: var(--neutral-white);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 
+    0 10px 30px rgba(132, 117, 179, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--lila-lighter);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.psicologo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--lila), var(--secundario-rosa), var(--secundario-celeste));
+}
+
+.psicologo-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(132, 117, 179, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--lila);
+}
+
+.psicologo-header {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.psicologo-imagen {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--lila-lighter);
+  box-shadow: 0 4px 12px rgba(132, 117, 179, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.psicologo-card:hover .psicologo-imagen {
+  transform: scale(1.1);
+  border-color: var(--lila);
+}
+
+.psicologo-info h3 {
+  color: var(--textos-azul);
+  font-size: 1.3rem;
+  margin-bottom: 0.8rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.estrellas {
+  color: var(--secundario-amarillo);
+  font-size: 1.2rem;
+  filter: drop-shadow(0 1px 2px rgba(230, 243, 129, 0.3));
+}
+
+.rating-numero {
+  color: var(--textos-gris);
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--lila-lighter);
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+}
+
+.experiencia {
+  color: var(--componentes-accesible);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.descripcion {
+  color: var(--textos-gris);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.especialidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.especialidad-tag {
+  background: linear-gradient(135deg, var(--lila-lighter), var(--lila-light));
+  color: var(--lila-darkest);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--lila-light);
+  transition: all 0.3s ease;
+}
+
+.especialidad-tag:hover {
+  background: linear-gradient(135deg, var(--lila), var(--secundario-rosa));
+  color: var(--neutral-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(132, 117, 179, 0.3);
+}
+
+.disponibilidad-info {
+  background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
+  padding: 1.2rem;
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--lila-light);
+}
+
+.disponibilidad-info p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: var(--textos-azul);
+}
+
+.disponibilidad-info p:first-child {
+  font-weight: 700;
+  color: var(--lila-darkest);
+}
+
+.precio-accion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.precio {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--secundario-naranja);
+  font-family: var(--_fonts---headings);
+}
+
+.btn-agendar {
+  background: linear-gradient(135deg, var(--lila-dark), var(--lila), var(--secundario-rosa));
+  color: var(--neutral-white);
+  border: none;
+  padding: 1rem 1.8rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--_fonts---headings);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(132, 117, 179, 0.3);
+}
+
+.btn-agendar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-agendar:hover::before {
+  left: 100%;
+}
+
+.btn-agendar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(132, 117, 179, 0.4);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(45, 32, 73, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--neutral-white);
+  border-radius: 24px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--lila-lighter);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 0;
+  background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
+  border-radius: 24px 24px 0 0;
+}
+
+.modal-header h2 {
+  color: var(--textos-azul);
+  font-size: 1.6rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+}
+
+.btn-cerrar {
+  background: var(--neutral-white);
+  border: 2px solid var(--lila-light);
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--textos-gris);
+  padding: 0.5rem;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btn-cerrar:hover {
+  background: var(--lila-lighter);
+  border-color: var(--lila);
+  color: var(--lila-darkest);
+  transform: rotate(90deg);
+}
+
+.formulario-agendamiento {
+  padding: 2rem;
+}
+
+.campo-grupo {
+  margin-bottom: 1.8rem;
+}
+
+.campo-grupo label {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  color: var(--textos-azul);
+  font-family: var(--_fonts---headings);
+}
+
+.campo-grupo input,
+.campo-grupo select {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: var(--lila-lighter);
+  color: var(--textos-azul);
+  font-family: var(--_fonts---texts);
+}
+
+.campo-grupo input:focus,
+.campo-grupo select:focus {
+  outline: none;
+  border-color: var(--lila);
+  box-shadow: 0 0 0 3px rgba(132, 117, 179, 0.1);
+  transform: translateY(-1px);
+}
+
+.formulario-agendamiento h3 {
+  color: var(--textos-azul);
+  margin: 2.5rem 0 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--lila-lighter);
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.resumen-sesion {
+  background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
+  padding: 2rem;
+  border-radius: 16px;
+  margin: 2rem 0;
+  border: 1px solid var(--lila-light);
+}
+
+.resumen-sesion h4 {
+  color: var(--textos-azul);
+  margin-bottom: 1.2rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.resumen-sesion p {
+  margin: 0.6rem 0;
+  color: var(--textos-gris);
+  font-weight: 500;
+}
+
+.botones-modal {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-end;
+  margin-top: 2.5rem;
+}
+
+.btn-cancelar {
+  background: var(--neutral-white);
+  color: var(--textos-gris);
+  border: 2px solid var(--lila-light);
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: var(--_fonts---headings);
+  transition: all 0.3s ease;
+}
+
+.btn-cancelar:hover {
+  background: var(--lila-lighter);
+  border-color: var(--lila);
+  color: var(--textos-azul);
+  transform: translateY(-2px);
+}
+
+.btn-confirmar {
+  background: linear-gradient(135deg, var(--secundario-naranja), var(--secundario-salmón));
+  color: var(--neutral-white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: var(--_fonts---headings);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 126, 46, 0.3);
+}
+
+.btn-confirmar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(245, 126, 46, 0.4);
+}
+
+.sin-resultados {
+  text-align: center;
+  background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
+  padding: 4rem 2rem;
+  border-radius: 20px;
+  border: 2px dashed var(--lila-light);
+  margin-top: 2rem;
+}
+
+.sin-resultados h3 {
+  color: var(--textos-azul);
+  font-family: var(--_fonts---headings);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.sin-resultados p {
+  color: var(--textos-gris);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sin-resultados::before {
+  content: '🔍';
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* Mejoras adicionales para animaciones */
+.psicologo-card {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.psicologo-card:nth-child(1) { animation-delay: 0.1s; }
+.psicologo-card:nth-child(2) { animation-delay: 0.2s; }
+.psicologo-card:nth-child(3) { animation-delay: 0.3s; }
+.psicologo-card:nth-child(4) { animation-delay: 0.4s; }
+.psicologo-card:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Gradiente para el fondo del contenido principal */
+.contenido-principal::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--secundario-rosa) 0%, transparent 70%);
+  opacity: 0.1;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.contenido-principal {
+  position: relative;
+}
+
+/* Efectos hover mejorados */
+.sidebar:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 15px 35px rgba(132, 117, 179, 0.15),
+    0 6px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Loading shimmer effect */
+.loading-shimmer {
+  background: linear-gradient(90deg, var(--lila-lighter) 25%, var(--neutral-white) 50%, var(--lila-lighter) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.sesiones-agendadas {
+  background: var(--neutral-white);
+  border-radius: 24px;
+  padding: 3rem;
+  box-shadow: 
+    0 10px 30px rgba(132, 117, 179, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--lila-lighter);
+}
+
+.sesiones-agendadas h3 {
+  color: var(--textos-azul);
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sesiones-agendadas h3::before {
+  content: '📅';
+  font-size: 1.5rem;
+}
+
+.sin-sesiones {
+  text-align: center;
+  color: var(--textos-gris);
+  font-size: 1.2rem;
+  padding: 4rem;
+  background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
+  border-radius: 16px;
+  border: 1px solid var(--lila-light);
+}
+
+.lista-sesiones {
+  display: grid;
+  gap: 2rem;
+}
+
+.sesion-card {
+  border: 2px solid var(--lila-lighter);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--neutral-white), var(--lila-lighter));
+  position: relative;
+  overflow: hidden;
+}
+
+.sesion-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--lila), var(--secundario-rosa));
+}
+
+.sesion-card:hover {
+  border-color: var(--lila);
+  box-shadow: 0 8px 25px rgba(132, 117, 179, 0.15);
+  transform: translateY(-4px);
+}
+
+.sesion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.sesion-header h4 {
+  color: var(--textos-azul);
+  font-size: 1.3rem;
+  font-family: var(--_fonts---headings);
+  font-weight: 700;
+}
+
+.estado {
+  padding: 0.5rem 1.2rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  border: 2px solid;
+}
+
+.estado-confirmada {
+  background: linear-gradient(135deg, var(--secundario-amarillo), #d4e157);
+  color: var(--textos-azul);
+  border-color: var(--secundario-amarillo);
+}
+
+.estado-pendiente {
+  background: linear-gradient(135deg, var(--secundario-naranja), var(--secundario-salmón));
+  color: var(--neutral-white);
+  border-color: var(--secundario-naranja);
+}
+
+.estado-cancelada {
+  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+  color: var(--neutral-white);
+  border-color: #ff6b6b;
+}
+
+.sesion-detalles,
+.sesion-paciente {
+  margin-bottom: 1.5rem;
+}
+
+.sesion-detalles p,
+.sesion-paciente p {
+  margin: 0.8rem 0;
+  color: var(--textos-gris);
+  font-weight: 500;
+}
+
+.sesion-detalles p strong,
+.sesion-paciente p strong {
+  color: var(--textos-azul);
+  font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+  .busqueda-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .sidebar {
+    position: relative;
+    top: 0;
+  }
+  
+  .psicologos-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 2rem 1rem;
+  }
+  
+  .app-header h1 {
+    font-size: 2.2rem;
+  }
+  
+  .navegacion {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .navegacion button {
+    width: 250px;
+  }
+  
+  .app-main {
+    padding: 2rem 1rem;
+  }
+  
+  .psicologos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-overlay {
+    padding: 1rem;
+  }
+  
+  .formulario-agendamiento,
+  .modal-header {
+    padding: 1.5rem;
+  }
+  
+  .sesiones-agendadas {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .psicologo-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .precio-accion {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .btn-agendar {
+    width: 100%;
+  }
+  
+  .botones-modal {
+    flex-direction: column;
+  }
+  
+  .btn-cancelar,
+  .btn-confirmar {
+    width: 100%;
+  }
+} 
