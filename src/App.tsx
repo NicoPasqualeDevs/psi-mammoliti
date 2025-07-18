@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PsicologoCard } from './components/PsicologoCard';
 import { FiltrosBusquedaComponent } from './components/FiltrosBusqueda';
 import { ModalAgendamiento } from './components/ModalAgendamiento';
@@ -7,15 +7,42 @@ import { psicologos } from './data/psicologos';
 import { Psicologo, FiltrosBusqueda, Sesion } from './types';
 import './App.css';
 
+const STORAGE_KEY = 'psiconnect-sesiones';
+
+const cargarSesionesDeStorage = (): Sesion[] => {
+  try {
+    const sesionesGuardadas = localStorage.getItem(STORAGE_KEY);
+    if (sesionesGuardadas) {
+      return JSON.parse(sesionesGuardadas);
+    }
+  } catch (error) {
+    console.error('Error al cargar sesiones desde localStorage:', error);
+  }
+  return [];
+};
+
+const guardarSesionesEnStorage = (sesiones: Sesion[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sesiones));
+  } catch (error) {
+    console.error('Error al guardar sesiones en localStorage:', error);
+  }
+};
+
 function App() {
   const [psicologoSeleccionado, setPsicologoSeleccionado] = useState<Psicologo | null>(null);
-  const [sesiones, setSesiones] = useState<Sesion[]>([]);
+  const [sesiones, setSesiones] = useState<Sesion[]>(() => cargarSesionesDeStorage());
   const [vistaActual, setVistaActual] = useState<'buscar' | 'sesiones'>('buscar');
   const [filtros, setFiltros] = useState<FiltrosBusqueda>({
     especialidad: 'Todas',
     precioMax: 150,
     disponibilidad: ''
   });
+
+  // Guardar sesiones en localStorage cada vez que cambien
+  useEffect(() => {
+    guardarSesionesEnStorage(sesiones);
+  }, [sesiones]);
 
   const psicologosFiltrados = useMemo(() => {
     return psicologos.filter(psicologo => {
@@ -39,7 +66,7 @@ function App() {
     };
     
     setSesiones(prev => [...prev, sesion]);
-    alert('¡Sesión agendada exitosamente! 🎉');
+    alert('¡Sesión agendada exitosamente! 🎉\nTus datos han sido guardados automáticamente.');
   };
 
   return (
