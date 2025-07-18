@@ -14,6 +14,14 @@ const truncarTexto = (texto: string): string => {
   return texto.slice(0, LONGITUD_MAXIMA) + '...';
 };
 
+const getModalidadEmoji = (modalidad: string): string => {
+  return modalidad === 'online' ? '💻' : '🏢';
+};
+
+const getModalidadTexto = (modalidad: string): string => {
+  return modalidad === 'online' ? 'Online' : 'Presencial';
+};
+
 export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSeleccionar }) => {
   const proximaDisponibilidad = psicologo.disponibilidad[0];
   const timezoneUsuario = detectarTimezone();
@@ -47,6 +55,17 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
         ))}
       </div>
       
+      <div className="modalidades-disponibles">
+        <p><strong>Modalidades disponibles:</strong></p>
+        <div className="modalidades-lista">
+          {psicologo.modalidades.map((modalidad, index) => (
+            <span key={index} className="modalidad-tag">
+              {getModalidadEmoji(modalidad)} {getModalidadTexto(modalidad)}
+            </span>
+          ))}
+        </div>
+      </div>
+      
       <div className="disponibilidad-info">
         <div className="disponibilidad-header">
           <p><strong>Disponibilidad:</strong></p>
@@ -63,11 +82,12 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
               })}
             </p>
             <div className="horarios-preview">
-              {proximaDisponibilidad.horarios.slice(0, 3).map((hora, index) => {
-                const horaLocal = convertirHorario(hora, timezonePsicologo, timezoneUsuario);
+              {proximaDisponibilidad.horarios.slice(0, 3).map((horarioData, index) => {
+                const horaLocal = convertirHorario(horarioData.hora, timezonePsicologo, timezoneUsuario);
+                const modalidadesTexto = horarioData.modalidades.map(getModalidadEmoji).join('');
                 return (
                   <span key={index} className="horario-preview">
-                    {hora} ({horaLocal})
+                    {modalidadesTexto} {horarioData.hora} ({horaLocal})
                   </span>
                 );
               })}

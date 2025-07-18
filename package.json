@@ -17,7 +17,9 @@
     "eject": "react-scripts eject",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --ignore-pattern \"scripts/**\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix && echo ✅ Lint completado sin errores!",
-    "generate-manual": "node scripts/generate-manual.js"
+    "generate-manual": "node scripts/generate-manual.js",
+    "generate-modalidades-doc": "node scripts/generate-modalidades-doc.js",
+    "generate-all-docs": "node scripts/generate-all-docs.js"
   },
   "eslintConfig": {
     "extends": [

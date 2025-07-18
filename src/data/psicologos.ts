@@ -11,37 +11,173 @@ export const psicologos: Psicologo[] = [
     imagen: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
     descripcion: 'Psicóloga clínica especializada en trastornos de ansiedad y depresión. Enfoque en terapia.',
     rating: 4.8,
+    modalidades: ['online', 'presencial'],
     disponibilidad: [
       // Julio 2025
-      { fecha: '2025-07-18', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-07-21', horarios: ['09:00', '11:00', '14:00', '15:00'] },
-      { fecha: '2025-07-23', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-07-25', horarios: ['09:00', '10:00', '11:00', '15:00'] },
-      { fecha: '2025-07-28', horarios: ['08:00', '09:00', '15:00', '16:00'] },
-      { fecha: '2025-07-30', horarios: ['09:00', '10:00', '14:00', '15:00'] },
+      { fecha: '2025-07-18', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-21', horarios: [
+        { hora: '09:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-23', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-25', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-28', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-30', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
       // Agosto 2025
-      { fecha: '2025-08-01', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-08-04', horarios: ['08:00', '09:00', '14:00', '17:00'] },
-      { fecha: '2025-08-06', horarios: ['09:00', '11:00', '15:00', '16:00'] },
-      { fecha: '2025-08-08', horarios: ['08:00', '10:00', '14:00', '15:00'] },
-      { fecha: '2025-08-11', horarios: ['09:00', '10:00', '16:00', '17:00'] },
-      { fecha: '2025-08-13', horarios: ['09:00', '11:00', '14:00', '15:00'] },
-      { fecha: '2025-08-15', horarios: ['08:00', '09:00', '15:00', '16:00'] },
-      { fecha: '2025-08-18', horarios: ['09:00', '10:00', '14:00', '17:00'] },
-      { fecha: '2025-08-20', horarios: ['08:00', '11:00', '15:00', '16:00'] },
-      { fecha: '2025-08-22', horarios: ['09:00', '10:00', '14:00', '15:00'] },
-      { fecha: '2025-08-25', horarios: ['09:00', '11:00', '16:00', '17:00'] },
-      { fecha: '2025-08-27', horarios: ['08:00', '09:00', '14:00', '15:00'] },
-      { fecha: '2025-08-29', horarios: ['09:00', '10:00', '15:00', '16:00'] },
+      { fecha: '2025-08-01', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-04', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-06', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-08', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-11', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-13', horarios: [
+        { hora: '09:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-15', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-18', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-20', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-22', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-25', horarios: [
+        { hora: '09:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-27', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-29', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
       // Septiembre 2025
-      { fecha: '2025-09-01', horarios: ['09:00', '11:00', '14:00', '15:00'] },
-      { fecha: '2025-09-03', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-09-05', horarios: ['09:00', '10:00', '14:00', '15:00'] },
-      { fecha: '2025-09-08', horarios: ['09:00', '11:00', '15:00', '16:00'] },
-      { fecha: '2025-09-10', horarios: ['08:00', '09:00', '14:00', '17:00'] },
-      { fecha: '2025-09-12', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-09-15', horarios: ['09:00', '11:00', '14:00', '15:00'] },
-      { fecha: '2025-09-17', horarios: ['08:00', '09:00', '16:00', '17:00'] }
+      { fecha: '2025-09-01', horarios: [
+        { hora: '09:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-03', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-09-05', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-08', horarios: [
+        { hora: '09:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-09-10', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-12', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-15', horarios: [
+        { hora: '09:00', modalidades: ['online'] },
+        { hora: '11:00', modalidades: ['online', 'presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-09-17', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]}
     ]
   },
   {
@@ -54,37 +190,173 @@ export const psicologos: Psicologo[] = [
     imagen: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=300&h=300&fit=crop&crop=face',
     descripcion: 'Especialista en terapia familiar y de pareja. Más de 12 años ayudando a fortalecer relaciones.',
     rating: 4.9,
+    modalidades: ['presencial'],
     disponibilidad: [
       // Julio 2025
-      { fecha: '2025-07-19', horarios: ['11:00', '14:00', '17:00', '18:00'] },
-      { fecha: '2025-07-22', horarios: ['10:00', '15:00', '16:00', '17:00'] },
-      { fecha: '2025-07-24', horarios: ['11:00', '14:00', '15:00', '18:00'] },
-      { fecha: '2025-07-26', horarios: ['10:00', '11:00', '16:00', '17:00'] },
-      { fecha: '2025-07-29', horarios: ['14:00', '15:00', '17:00', '18:00'] },
-      { fecha: '2025-07-31', horarios: ['11:00', '16:00', '17:00', '18:00'] },
+      { fecha: '2025-07-19', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-07-22', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-07-24', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-07-26', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-07-29', horarios: [
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-07-31', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
       // Agosto 2025
-      { fecha: '2025-08-02', horarios: ['10:00', '14:00', '15:00', '17:00'] },
-      { fecha: '2025-08-05', horarios: ['11:00', '16:00', '17:00', '18:00'] },
-      { fecha: '2025-08-07', horarios: ['10:00', '14:00', '15:00', '16:00'] },
-      { fecha: '2025-08-09', horarios: ['11:00', '15:00', '17:00', '18:00'] },
-      { fecha: '2025-08-12', horarios: ['10:00', '14:00', '16:00', '17:00'] },
-      { fecha: '2025-08-14', horarios: ['11:00', '15:00', '16:00', '18:00'] },
-      { fecha: '2025-08-16', horarios: ['10:00', '14:00', '17:00', '18:00'] },
-      { fecha: '2025-08-19', horarios: ['11:00', '15:00', '16:00', '17:00'] },
-      { fecha: '2025-08-21', horarios: ['10:00', '14:00', '16:00', '18:00'] },
-      { fecha: '2025-08-23', horarios: ['11:00', '15:00', '17:00', '18:00'] },
-      { fecha: '2025-08-26', horarios: ['10:00', '14:00', '16:00', '17:00'] },
-      { fecha: '2025-08-28', horarios: ['11:00', '15:00', '16:00', '18:00'] },
-      { fecha: '2025-08-30', horarios: ['10:00', '14:00', '17:00', '18:00'] },
+      { fecha: '2025-08-02', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-05', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-07', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-09', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-12', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-14', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-16', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-19', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-21', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-23', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-26', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-28', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-30', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
       // Septiembre 2025
-      { fecha: '2025-09-02', horarios: ['11:00', '15:00', '16:00', '17:00'] },
-      { fecha: '2025-09-04', horarios: ['10:00', '14:00', '17:00', '18:00'] },
-      { fecha: '2025-09-06', horarios: ['11:00', '15:00', '16:00', '18:00'] },
-      { fecha: '2025-09-09', horarios: ['10:00', '14:00', '16:00', '17:00'] },
-      { fecha: '2025-09-11', horarios: ['11:00', '15:00', '17:00', '18:00'] },
-      { fecha: '2025-09-13', horarios: ['10:00', '14:00', '16:00', '18:00'] },
-      { fecha: '2025-09-16', horarios: ['11:00', '15:00', '16:00', '17:00'] },
-      { fecha: '2025-09-18', horarios: ['10:00', '14:00', '17:00', '18:00'] }
+      { fecha: '2025-09-02', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-04', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-06', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-09', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-11', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-13', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-16', horarios: [
+        { hora: '11:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-18', horarios: [
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['presencial'] }
+      ]}
     ]
   },
   {
@@ -97,37 +369,173 @@ export const psicologos: Psicologo[] = [
     imagen: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=300&fit=crop&crop=face',
     descripcion: 'Psicóloga infantil experta en TDAH y dificultades del aprendizaje. Enfoque lúdico y educativo.',
     rating: 4.7,
+    modalidades: ['online', 'presencial'],
     disponibilidad: [
       // Julio 2025
-      { fecha: '2025-07-18', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-07-20', horarios: ['08:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-07-23', horarios: ['09:00', '10:00', '16:00', '17:00'] },
-      { fecha: '2025-07-25', horarios: ['08:00', '09:00', '15:00', '18:00'] },
-      { fecha: '2025-07-27', horarios: ['09:00', '10:00', '16:00', '17:00'] },
-      { fecha: '2025-07-30', horarios: ['08:00', '09:00', '15:00', '16:00'] },
+      { fecha: '2025-07-18', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-20', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-23', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-25', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-27', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-30', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] }
+      ]},
       // Agosto 2025
-      { fecha: '2025-08-01', horarios: ['08:00', '10:00', '16:00', '17:00'] },
-      { fecha: '2025-08-03', horarios: ['09:00', '10:00', '15:00', '18:00'] },
-      { fecha: '2025-08-06', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-08-08', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-08-10', horarios: ['08:00', '10:00', '17:00', '18:00'] },
-      { fecha: '2025-08-13', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-08-15', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-08-17', horarios: ['09:00', '10:00', '15:00', '18:00'] },
-      { fecha: '2025-08-20', horarios: ['08:00', '10:00', '16:00', '17:00'] },
-      { fecha: '2025-08-22', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-08-24', horarios: ['08:00', '09:00', '17:00', '18:00'] },
-      { fecha: '2025-08-27', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-08-29', horarios: ['08:00', '10:00', '16:00', '17:00'] },
-      { fecha: '2025-08-31', horarios: ['09:00', '10:00', '15:00', '18:00'] },
+      { fecha: '2025-08-01', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-03', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-06', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-08', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-10', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online', 'presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-13', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-15', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-17', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-20', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-22', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-24', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online', 'presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-27', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-29', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-31', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
       // Septiembre 2025
-      { fecha: '2025-09-03', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-09-05', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-09-07', horarios: ['08:00', '10:00', '17:00', '18:00'] },
-      { fecha: '2025-09-10', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2025-09-12', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2025-09-14', horarios: ['09:00', '10:00', '15:00', '18:00'] },
-      { fecha: '2025-09-17', horarios: ['08:00', '10:00', '16:00', '17:00'] }
+      { fecha: '2025-09-03', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-05', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-07', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '17:00', modalidades: ['online', 'presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-10', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-12', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '09:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-14', horarios: [
+        { hora: '09:00', modalidades: ['online', 'presencial'] },
+        { hora: '10:00', modalidades: ['online'] },
+        { hora: '15:00', modalidades: ['presencial'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-17', horarios: [
+        { hora: '08:00', modalidades: ['online'] },
+        { hora: '10:00', modalidades: ['presencial'] },
+        { hora: '16:00', modalidades: ['online', 'presencial'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]}
     ]
   },
   {
@@ -140,37 +548,173 @@ export const psicologos: Psicologo[] = [
     imagen: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&h=300&fit=crop&crop=face',
     descripcion: 'Psicólogo organizacional especializado en estrés laboral y burnout. Enfoque en bienestar.',
     rating: 4.6,
+    modalidades: ['online'],
     disponibilidad: [
       // Julio 2025
-      { fecha: '2025-07-19', horarios: ['12:00', '13:00', '17:00', '18:00'] },
-      { fecha: '2025-07-21', horarios: ['11:00', '12:00', '16:00', '17:00'] },
-      { fecha: '2025-07-24', horarios: ['12:00', '13:00', '14:00', '18:00'] },
-      { fecha: '2025-07-26', horarios: ['11:00', '12:00', '17:00', '18:00'] },
-      { fecha: '2025-07-28', horarios: ['12:00', '13:00', '16:00', '17:00'] },
-      { fecha: '2025-07-31', horarios: ['11:00', '14:00', '17:00', '18:00'] },
+      { fecha: '2025-07-19', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-21', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-24', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-26', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-28', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-31', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
       // Agosto 2025
-      { fecha: '2025-08-02', horarios: ['12:00', '13:00', '16:00', '17:00'] },
-      { fecha: '2025-08-04', horarios: ['11:00', '12:00', '17:00', '18:00'] },
-      { fecha: '2025-08-07', horarios: ['12:00', '13:00', '14:00', '16:00'] },
-      { fecha: '2025-08-09', horarios: ['11:00', '12:00', '17:00', '18:00'] },
-      { fecha: '2025-08-11', horarios: ['12:00', '13:00', '16:00', '17:00'] },
-      { fecha: '2025-08-14', horarios: ['11:00', '14:00', '17:00', '18:00'] },
-      { fecha: '2025-08-16', horarios: ['12:00', '13:00', '16:00', '17:00'] },
-      { fecha: '2025-08-18', horarios: ['11:00', '12:00', '14:00', '18:00'] },
-      { fecha: '2025-08-21', horarios: ['12:00', '13:00', '17:00', '18:00'] },
-      { fecha: '2025-08-23', horarios: ['11:00', '12:00', '16:00', '17:00'] },
-      { fecha: '2025-08-25', horarios: ['12:00', '13:00', '14:00', '18:00'] },
-      { fecha: '2025-08-28', horarios: ['11:00', '12:00', '17:00', '18:00'] },
-      { fecha: '2025-08-30', horarios: ['12:00', '13:00', '16:00', '17:00'] },
+      { fecha: '2025-08-02', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-04', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-07', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-09', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-11', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-14', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-16', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-18', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-21', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-23', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-25', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-28', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-30', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
       // Septiembre 2025
-      { fecha: '2025-09-01', horarios: ['11:00', '14:00', '17:00', '18:00'] },
-      { fecha: '2025-09-04', horarios: ['12:00', '13:00', '16:00', '17:00'] },
-      { fecha: '2025-09-06', horarios: ['11:00', '12:00', '17:00', '18:00'] },
-      { fecha: '2025-09-08', horarios: ['12:00', '13:00', '14:00', '16:00'] },
-      { fecha: '2025-09-11', horarios: ['11:00', '12:00', '17:00', '18:00'] },
-      { fecha: '2025-09-13', horarios: ['12:00', '13:00', '16:00', '17:00'] },
-      { fecha: '2025-09-15', horarios: ['11:00', '14:00', '17:00', '18:00'] },
-      { fecha: '2025-09-18', horarios: ['12:00', '13:00', '16:00', '17:00'] }
+      { fecha: '2025-09-01', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-04', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-06', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-08', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-11', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-13', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-15', horarios: [
+        { hora: '11:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] },
+        { hora: '18:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-18', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '16:00', modalidades: ['online'] },
+        { hora: '17:00', modalidades: ['online'] }
+      ]}
     ]
   },
   {
@@ -183,29 +727,100 @@ export const psicologos: Psicologo[] = [
     imagen: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=300&fit=crop&crop=face',
     descripcion: 'Especialista en trauma y EMDR. Amplia experiencia en trastornos de estrés postraumático.',
     rating: 4.9,
+    modalidades: ['online', 'presencial'],
     disponibilidad: [
       // Julio 2025
-      { fecha: '2025-07-18', horarios: ['13:00', '14:00'] },
-      { fecha: '2025-07-22', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-07-24', horarios: ['12:00', '13:00', '14:00'] },
-      { fecha: '2025-07-29', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-07-31', horarios: ['12:00', '13:00'] },
+      { fecha: '2025-07-18', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-07-22', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-24', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-07-29', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-07-31', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] }
+      ]},
       // Agosto 2025
-      { fecha: '2025-08-05', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-08-07', horarios: ['12:00', '13:00', '14:00'] },
-      { fecha: '2025-08-12', horarios: ['13:00', '14:00'] },
-      { fecha: '2025-08-14', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-08-19', horarios: ['12:00', '13:00', '14:00'] },
-      { fecha: '2025-08-21', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-08-26', horarios: ['12:00', '13:00'] },
-      { fecha: '2025-08-28', horarios: ['13:00', '14:00', '15:00'] },
+      { fecha: '2025-08-05', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-07', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-12', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-14', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-19', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-08-21', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-08-26', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-08-28', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
       // Septiembre 2025
-      { fecha: '2025-09-02', horarios: ['12:00', '13:00', '14:00'] },
-      { fecha: '2025-09-04', horarios: ['13:00', '14:00'] },
-      { fecha: '2025-09-09', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-09-11', horarios: ['12:00', '13:00', '14:00'] },
-      { fecha: '2025-09-16', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2025-09-18', horarios: ['12:00', '13:00'] }
+      { fecha: '2025-09-02', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-04', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] }
+      ]},
+      { fecha: '2025-09-09', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-09-11', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] },
+        { hora: '14:00', modalidades: ['online'] }
+      ]},
+      { fecha: '2025-09-16', horarios: [
+        { hora: '13:00', modalidades: ['online'] },
+        { hora: '14:00', modalidades: ['presencial'] },
+        { hora: '15:00', modalidades: ['online', 'presencial'] }
+      ]},
+      { fecha: '2025-09-18', horarios: [
+        { hora: '12:00', modalidades: ['online'] },
+        { hora: '13:00', modalidades: ['presencial'] }
+      ]}
     ]
   }
 ];

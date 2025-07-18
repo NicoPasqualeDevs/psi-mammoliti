@@ -117,4 +117,7 @@ logs
 # Misc
 .sass-cache/
 .connect.lock
-.coveralls.yml 
+.coveralls.yml
+
+# Documentación PDF
+*.pdf 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Psicologo, Sesion } from '../types';
+import { Psicologo, Sesion, Modalidad } from '../types';
 import { CalendarioDisponibilidad } from './CalendarioDisponibilidad';
 import { detectarTimezone } from '../utils/timezone';
 
@@ -9,6 +9,14 @@ interface ModalAgendamientoProps {
   onAgendar: (sesion: Omit<Sesion, 'id' | 'estado'>) => void;
 }
 
+const getModalidadEmoji = (modalidad: string): string => {
+  return modalidad === 'online' ? '💻' : '🏢';
+};
+
+const getModalidadTexto = (modalidad: string): string => {
+  return modalidad === 'online' ? 'Online' : 'Presencial';
+};
+
 export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
   psicologo,
   onCerrar,
@@ -17,6 +25,8 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
   const [fechaSeleccionada, setFechaSeleccionada] = useState('');
   const [horaSeleccionada, setHoraSeleccionada] = useState('');
   const [horaLocal, setHoraLocal] = useState('');
+  const [modalidadesDisponibles, setModalidadesDisponibles] = useState<Modalidad[]>([]);
+  const [modalidadSeleccionada, setModalidadSeleccionada] = useState<Modalidad | ''>('');
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState('');
   const [datosPersonales, setDatosPersonales] = useState({
     nombre: '',
@@ -29,18 +39,26 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
 
   if (!psicologo) return null;
 
-  const handleSeleccionarHorario = (fecha: string, hora: string, horaLocalCalculada: string) => {
+  const handleSeleccionarHorario = (fecha: string, hora: string, horaLocalCalculada: string, modalidades: string[]) => {
     setFechaSeleccionada(fecha);
     setHoraSeleccionada(hora);
     setHoraLocal(horaLocalCalculada);
+    setModalidadesDisponibles(modalidades as Modalidad[]);
+    
+    if (modalidades.length === 1) {
+      setModalidadSeleccionada(modalidades[0] as Modalidad);
+    } else {
+      setModalidadSeleccionada('');
+    }
+    
     setVistaCalendario(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!fechaSeleccionada || !horaSeleccionada || !especialidadSeleccionada || 
-        !datosPersonales.nombre || !datosPersonales.email) {
+    if (!fechaSeleccionada || !horaSeleccionada || !modalidadSeleccionada || 
+        !especialidadSeleccionada || !datosPersonales.nombre || !datosPersonales.email) {
       alert('Por favor completa todos los campos requeridos');
       return;
     }
@@ -49,6 +67,7 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
       psicologoId: psicologo.id,
       fecha: fechaSeleccionada,
       hora: horaSeleccionada,
+      modalidad: modalidadSeleccionada,
       paciente: datosPersonales,
       especialidad: especialidadSeleccionada
     });
@@ -105,6 +124,9 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
                   <p><strong>Hora (psicólogo):</strong> {horaSeleccionada}</p>
                   <p><strong>Hora (tu zona):</strong> {horaLocal}</p>
                   <p><strong>Tu zona horaria:</strong> {timezoneUsuario}</p>
+                  {modalidadesDisponibles.length > 0 && (
+                    <p><strong>Modalidades disponibles:</strong> {modalidadesDisponibles.map(m => `${getModalidadEmoji(m)} ${getModalidadTexto(m)}`).join(', ')}</p>
+                  )}
                 </div>
                 <button 
                   type="button" 
@@ -116,21 +138,48 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
               </div>
             )}
 
-                         {!fechaSeleccionada && (
-               <div className="sin-seleccion">
-                 <p>Por favor selecciona un horario en el calendario para continuar</p>
-                 <button 
-                   type="button" 
-                   className="btn-ir-calendario"
-                   onClick={() => setVistaCalendario(true)}
-                 >
-                   📅 Ir al Calendario
-                 </button>
-               </div>
-             )}
+            {!fechaSeleccionada && (
+              <div className="sin-seleccion">
+                <p>Por favor selecciona un horario en el calendario para continuar</p>
+                <button 
+                  type="button" 
+                  className="btn-ir-calendario"
+                  onClick={() => setVistaCalendario(true)}
+                >
+                  📅 Ir al Calendario
+                </button>
+              </div>
+            )}
 
             {fechaSeleccionada && (
               <>
+                {modalidadesDisponibles.length > 1 && (
+                  <div className="campo-grupo">
+                    <label>Modalidad de la sesión:</label>
+                    <select 
+                      value={modalidadSeleccionada} 
+                      onChange={e => setModalidadSeleccionada(e.target.value as Modalidad)}
+                      required
+                    >
+                      <option value="">Selecciona una modalidad</option>
+                      {modalidadesDisponibles.map(modalidad => (
+                        <option key={modalidad} value={modalidad}>
+                          {getModalidadEmoji(modalidad)} {getModalidadTexto(modalidad)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {modalidadesDisponibles.length === 1 && (
+                  <div className="campo-grupo">
+                    <label>Modalidad de la sesión:</label>
+                    <div className="modalidad-unica">
+                      {getModalidadEmoji(modalidadesDisponibles[0])} {getModalidadTexto(modalidadesDisponibles[0])}
+                    </div>
+                  </div>
+                )}
+
                 <div className="campo-grupo">
                   <label>Especialidad:</label>
                   <select 
@@ -183,6 +232,7 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
                   <p><strong>Fecha:</strong> {new Date(fechaSeleccionada).toLocaleDateString('es-ES')}</p>
                   <p><strong>Hora (psicólogo):</strong> {horaSeleccionada}</p>
                   <p><strong>Hora (tu zona):</strong> {horaLocal}</p>
+                  {modalidadSeleccionada && <p><strong>Modalidad:</strong> {getModalidadEmoji(modalidadSeleccionada)} {getModalidadTexto(modalidadSeleccionada)}</p>}
                   {especialidadSeleccionada && <p><strong>Especialidad:</strong> {especialidadSeleccionada}</p>}
                 </div>
 

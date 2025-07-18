@@ -6,6 +6,14 @@ interface SesionesAgendadasProps {
   psicologos: Psicologo[];
 }
 
+const getModalidadEmoji = (modalidad: string): string => {
+  return modalidad === 'online' ? '💻' : '🏢';
+};
+
+const getModalidadTexto = (modalidad: string): string => {
+  return modalidad === 'online' ? 'Online' : 'Presencial';
+};
+
 export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ sesiones, psicologos }) => {
   if (sesiones.length === 0) {
     return (
@@ -36,6 +44,7 @@ export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ sesiones, 
               <div className="sesion-detalles">
                 <p><strong>Fecha:</strong> {new Date(sesion.fecha).toLocaleDateString('es-ES')}</p>
                 <p><strong>Hora:</strong> {sesion.hora}</p>
+                <p><strong>Modalidad:</strong> {getModalidadEmoji(sesion.modalidad)} {getModalidadTexto(sesion.modalidad)}</p>
                 <p><strong>Especialidad:</strong> {sesion.especialidad}</p>
                 <p><strong>Precio:</strong> ${psicologo?.precio}</p>
               </div>

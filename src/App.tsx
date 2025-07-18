@@ -36,7 +36,8 @@ function App() {
   const [filtros, setFiltros] = useState<FiltrosBusqueda>({
     especialidad: 'Todas',
     precioMax: 150,
-    disponibilidad: ''
+    disponibilidad: '',
+    modalidad: ''
   });
 
   // Guardar sesiones en localStorage cada vez que cambien
@@ -51,10 +52,22 @@ function App() {
       
       const cumplePrecio = psicologo.precio <= filtros.precioMax;
       
+      const modalidadSeleccionada = filtros.modalidad as 'online' | 'presencial' | '';
+      const cumpleModalidad = modalidadSeleccionada === '' || 
+        psicologo.modalidades.includes(modalidadSeleccionada as 'online' | 'presencial');
+      
       const cumpleDisponibilidad = !filtros.disponibilidad || 
-        psicologo.disponibilidad.some(disp => disp.fecha === filtros.disponibilidad);
+        psicologo.disponibilidad.some(disp => {
+          if (disp.fecha !== filtros.disponibilidad) return false;
+          
+          if (modalidadSeleccionada === '') return disp.horarios.length > 0;
+          
+          return disp.horarios.some(horario => 
+            horario.modalidades.includes(modalidadSeleccionada as 'online' | 'presencial')
+          );
+        });
 
-      return cumpleEspecialidad && cumplePrecio && cumpleDisponibilidad;
+      return cumpleEspecialidad && cumplePrecio && cumpleModalidad && cumpleDisponibilidad;
     });
   }, [filtros]);
 

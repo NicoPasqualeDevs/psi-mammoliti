@@ -4,10 +4,14 @@ import { detectarTimezone, convertirHorario, obtenerSemanaActual } from '../util
 
 interface CalendarioDisponibilidadProps {
   psicologo: Psicologo;
-  onSeleccionarHorario: (fecha: string, hora: string, horaLocal: string) => void;
+  onSeleccionarHorario: (fecha: string, hora: string, horaLocal: string, modalidades: string[]) => void;
   fechaSeleccionada?: string;
   horaSeleccionada?: string;
 }
+
+const getModalidadEmoji = (modalidad: string): string => {
+  return modalidad === 'online' ? '💻' : '🏢';
+};
 
 export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> = ({
   psicologo,
@@ -18,7 +22,7 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
   const [semanaActual, setSemanaActual] = useState(() => obtenerSemanaActual());
   const [diasExpandidos, setDiasExpandidos] = useState<Set<string>>(new Set());
   const timezoneUsuario = detectarTimezone();
-  const timezonePsicologo = 'America/Mexico_City'; // Asumimos que el psicólogo está en México
+  const timezonePsicologo = 'America/Mexico_City';
 
   const calendarioSemana: CalendarioSemana = useMemo(() => {
     const dias: CalendarioDia[] = [];
@@ -30,10 +34,11 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
       const fechaStr = fecha.toISOString().split('T')[0];
       const disponibilidadDia = psicologo.disponibilidad.find(d => d.fecha === fechaStr);
       
-      const horarios: CalendarioHorario[] = disponibilidadDia?.horarios.map(hora => ({
-        hora,
+      const horarios: CalendarioHorario[] = disponibilidadDia?.horarios.map(horarioData => ({
+        hora: horarioData.hora,
         disponible: true,
-        horaLocal: convertirHorario(hora, timezonePsicologo, timezoneUsuario)
+        horaLocal: convertirHorario(horarioData.hora, timezonePsicologo, timezoneUsuario),
+        modalidades: horarioData.modalidades
       })) || [];
       
       dias.push({
@@ -73,7 +78,7 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
   };
 
   const toggleDiaExpandido = (fechaStr: string, tieneHorarios: boolean) => {
-    if (!tieneHorarios) return; // Solo permitir expansión si tiene horarios
+    if (!tieneHorarios) return;
     
     setDiasExpandidos(prev => {
       const nuevoSet = new Set(prev);
@@ -169,15 +174,21 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
                     
                     {tieneHorarios && !esDiaPasado && dia.horarios.map((horario, horarioIndex) => {
                       const isSelected = fechaSeleccionada === fechaStr && horaSeleccionada === horario.hora;
+                      const modalidadesIconos = horario.modalidades.map(getModalidadEmoji).join(' ');
                       
                       return (
                         <button
                           key={horarioIndex}
                           className={`horario-slot ${isSelected ? 'seleccionado' : ''}`}
-                          onClick={() => onSeleccionarHorario(fechaStr, horario.hora, horario.horaLocal)}
+                          onClick={() => onSeleccionarHorario(fechaStr, horario.hora, horario.horaLocal, horario.modalidades)}
                         >
-                          <div className="horario-original">{horario.hora}</div>
-                          <div className="horario-local">({horario.horaLocal})</div>
+                          <div className="horario-info">
+                            <div className="horario-original">{horario.hora}</div>
+                            <div className="horario-local">({horario.horaLocal})</div>
+                          </div>
+                          <div className="modalidades-horario">
+                            {modalidadesIconos}
+                          </div>
                         </button>
                       );
                     })}
@@ -201,6 +212,9 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
         <div className="leyenda-item">
           <div className="color-no-disponible"></div>
           <span>No disponible</span>
+        </div>
+        <div className="leyenda-item">
+          <span>💻 Online | 🏢 Presencial</span>
         </div>
       </div>
     </div>

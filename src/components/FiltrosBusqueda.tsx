@@ -35,6 +35,13 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
     });
   };
 
+  const handleModalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onFiltrosChange({
+      ...filtros,
+      modalidad: e.target.value as FiltrosBusqueda['modalidad']
+    });
+  };
+
   return (
     <div className="filtros-busqueda">
       <h3>Filtrar Psicólogos</h3>
@@ -49,6 +56,19 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
           {especialidades.map(esp => (
             <option key={esp} value={esp}>{esp}</option>
           ))}
+        </select>
+      </div>
+
+      <div className="filtro-grupo">
+        <label htmlFor="modalidad">Modalidad:</label>
+        <select
+          id="modalidad"
+          value={filtros.modalidad}
+          onChange={handleModalidadChange}
+        >
+          <option value="">Cualquier modalidad</option>
+          <option value="online">Solo Online</option>
+          <option value="presencial">Solo Presencial</option>
         </select>
       </div>
 
