@@ -73,10 +73,10 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
           onChange={handleDisponibilidadChange}
         >
           <option value="">Cualquier fecha</option>
-          <option value="2024-01-15">15 de Enero</option>
-          <option value="2024-01-16">16 de Enero</option>
-          <option value="2024-01-17">17 de Enero</option>
-          <option value="2024-01-18">18 de Enero</option>
+          <option value="2024-12-16">16 de Diciembre</option>
+          <option value="2024-12-17">17 de Diciembre</option>
+          <option value="2024-12-18">18 de Diciembre</option>
+          <option value="2024-12-19">19 de Diciembre</option>
         </select>
       </div>
     </div>

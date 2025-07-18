@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Psicologo, Sesion } from '../types';
+import { CalendarioDisponibilidad } from './CalendarioDisponibilidad';
+import { detectarTimezone } from '../utils/timezone';
 
 interface ModalAgendamientoProps {
   psicologo: Psicologo | null;
@@ -14,18 +16,29 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
 }) => {
   const [fechaSeleccionada, setFechaSeleccionada] = useState('');
   const [horaSeleccionada, setHoraSeleccionada] = useState('');
+  const [horaLocal, setHoraLocal] = useState('');
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState('');
   const [datosPersonales, setDatosPersonales] = useState({
     nombre: '',
     email: '',
     telefono: ''
   });
+  const [vistaCalendario, setVistaCalendario] = useState(true);
+
+  const timezoneUsuario = detectarTimezone();
 
   if (!psicologo) return null;
 
   const horiosDisponibles = psicologo.disponibilidad.find(
     d => d.fecha === fechaSeleccionada
   )?.horarios || [];
+
+  const handleSeleccionarHorario = (fecha: string, hora: string, horaLocalCalculada: string) => {
+    setFechaSeleccionada(fecha);
+    setHoraSeleccionada(hora);
+    setHoraLocal(horaLocalCalculada);
+    setVistaCalendario(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,107 +68,140 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
           <button className="btn-cerrar" onClick={onCerrar}>×</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="formulario-agendamiento">
-          <div className="campo-grupo">
-            <label>Fecha de la sesión:</label>
-            <select 
-              value={fechaSeleccionada} 
-              onChange={e => setFechaSeleccionada(e.target.value)}
-              required
-            >
-              <option value="">Selecciona una fecha</option>
-              {psicologo.disponibilidad.map(disp => (
-                <option key={disp.fecha} value={disp.fecha}>
-                  {new Date(disp.fecha).toLocaleDateString('es-ES', {
+        <div className="navegacion-modal">
+          <button
+            type="button"
+            className={`btn-vista ${vistaCalendario ? 'activo' : ''}`}
+            onClick={() => setVistaCalendario(true)}
+          >
+            📅 Vista Calendario
+          </button>
+          <button
+            type="button"
+            className={`btn-vista ${!vistaCalendario ? 'activo' : ''}`}
+            onClick={() => setVistaCalendario(false)}
+          >
+            📝 Datos de la Sesión
+          </button>
+        </div>
+
+        {vistaCalendario ? (
+          <div className="seccion-calendario">
+            <CalendarioDisponibilidad
+              psicologo={psicologo}
+              onSeleccionarHorario={handleSeleccionarHorario}
+              fechaSeleccionada={fechaSeleccionada}
+              horaSeleccionada={horaSeleccionada}
+            />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="formulario-agendamiento">
+            {fechaSeleccionada && horaSeleccionada && (
+              <div className="sesion-seleccionada">
+                <h4>Horario Seleccionado:</h4>
+                <div className="horario-detalles">
+                  <p><strong>Fecha:</strong> {new Date(fechaSeleccionada).toLocaleDateString('es-ES', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                  })}
-                </option>
-              ))}
-            </select>
-          </div>
+                  })}</p>
+                  <p><strong>Hora (psicólogo):</strong> {horaSeleccionada}</p>
+                  <p><strong>Hora (tu zona):</strong> {horaLocal}</p>
+                  <p><strong>Tu zona horaria:</strong> {timezoneUsuario}</p>
+                </div>
+                <button 
+                  type="button" 
+                  className="btn-cambiar-horario"
+                  onClick={() => setVistaCalendario(true)}
+                >
+                  🔄 Cambiar Horario
+                </button>
+              </div>
+            )}
 
-          {fechaSeleccionada && (
-            <div className="campo-grupo">
-              <label>Hora:</label>
-              <select 
-                value={horaSeleccionada} 
-                onChange={e => setHoraSeleccionada(e.target.value)}
-                required
-              >
-                <option value="">Selecciona una hora</option>
-                {horiosDisponibles.map(hora => (
-                  <option key={hora} value={hora}>{hora}</option>
-                ))}
-              </select>
-            </div>
-          )}
+                         {!fechaSeleccionada && (
+               <div className="sin-seleccion">
+                 <p>Por favor selecciona un horario en el calendario para continuar</p>
+                 <button 
+                   type="button" 
+                   className="btn-ir-calendario"
+                   onClick={() => setVistaCalendario(true)}
+                 >
+                   📅 Ir al Calendario
+                 </button>
+               </div>
+             )}
 
-          <div className="campo-grupo">
-            <label>Especialidad:</label>
-            <select 
-              value={especialidadSeleccionada} 
-              onChange={e => setEspecialidadSeleccionada(e.target.value)}
-              required
-            >
-              <option value="">Selecciona una especialidad</option>
-              {psicologo.especialidades.map(esp => (
-                <option key={esp} value={esp}>{esp}</option>
-              ))}
-            </select>
-          </div>
+            {fechaSeleccionada && (
+              <>
+                <div className="campo-grupo">
+                  <label>Especialidad:</label>
+                  <select 
+                    value={especialidadSeleccionada} 
+                    onChange={e => setEspecialidadSeleccionada(e.target.value)}
+                    required
+                  >
+                    <option value="">Selecciona una especialidad</option>
+                    {psicologo.especialidades.map(esp => (
+                      <option key={esp} value={esp}>{esp}</option>
+                    ))}
+                  </select>
+                </div>
 
-          <h3>Datos personales</h3>
-          
-          <div className="campo-grupo">
-            <label>Nombre completo:</label>
-            <input
-              type="text"
-              value={datosPersonales.nombre}
-              onChange={e => setDatosPersonales({...datosPersonales, nombre: e.target.value})}
-              required
-            />
-          </div>
+                <h3>Datos personales</h3>
+                
+                <div className="campo-grupo">
+                  <label>Nombre completo:</label>
+                  <input
+                    type="text"
+                    value={datosPersonales.nombre}
+                    onChange={e => setDatosPersonales({...datosPersonales, nombre: e.target.value})}
+                    required
+                  />
+                </div>
 
-          <div className="campo-grupo">
-            <label>Email:</label>
-            <input
-              type="email"
-              value={datosPersonales.email}
-              onChange={e => setDatosPersonales({...datosPersonales, email: e.target.value})}
-              required
-            />
-          </div>
+                <div className="campo-grupo">
+                  <label>Email:</label>
+                  <input
+                    type="email"
+                    value={datosPersonales.email}
+                    onChange={e => setDatosPersonales({...datosPersonales, email: e.target.value})}
+                    required
+                  />
+                </div>
 
-          <div className="campo-grupo">
-            <label>Teléfono:</label>
-            <input
-              type="tel"
-              value={datosPersonales.telefono}
-              onChange={e => setDatosPersonales({...datosPersonales, telefono: e.target.value})}
-            />
-          </div>
+                <div className="campo-grupo">
+                  <label>Teléfono:</label>
+                  <input
+                    type="tel"
+                    value={datosPersonales.telefono}
+                    onChange={e => setDatosPersonales({...datosPersonales, telefono: e.target.value})}
+                  />
+                </div>
 
-          <div className="resumen-sesion">
-            <h4>Resumen de la sesión:</h4>
-            <p><strong>Psicólogo:</strong> {psicologo.nombre} {psicologo.apellido}</p>
-            <p><strong>Precio:</strong> ${psicologo.precio}</p>
-            {fechaSeleccionada && <p><strong>Fecha:</strong> {fechaSeleccionada}</p>}
-            {horaSeleccionada && <p><strong>Hora:</strong> {horaSeleccionada}</p>}
-            {especialidadSeleccionada && <p><strong>Especialidad:</strong> {especialidadSeleccionada}</p>}
-          </div>
+                <div className="resumen-sesion">
+                  <h4>Resumen de la sesión:</h4>
+                  <p><strong>Psicólogo:</strong> {psicologo.nombre} {psicologo.apellido}</p>
+                  <p><strong>Precio:</strong> ${psicologo.precio}</p>
+                  <p><strong>Fecha:</strong> {new Date(fechaSeleccionada).toLocaleDateString('es-ES')}</p>
+                  <p><strong>Hora (psicólogo):</strong> {horaSeleccionada}</p>
+                  <p><strong>Hora (tu zona):</strong> {horaLocal}</p>
+                  {especialidadSeleccionada && <p><strong>Especialidad:</strong> {especialidadSeleccionada}</p>}
+                </div>
 
-          <div className="botones-modal">
-            <button type="button" onClick={onCerrar} className="btn-cancelar">
-              Cancelar
-            </button>
-            <button type="submit" className="btn-confirmar">
-              Confirmar Agendamiento
-            </button>
-          </div>
-        </form>
+                <div className="botones-modal">
+                  <button type="button" onClick={onCerrar} className="btn-cancelar">
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn-confirmar">
+                    Confirmar Agendamiento
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
+        )}
       </div>
     </div>
   );

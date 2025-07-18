@@ -12,9 +12,9 @@ export const psicologos: Psicologo[] = [
     descripcion: 'Psicóloga clínica especializada en trastornos de ansiedad y depresión. Enfoque en terapia.',
     rating: 4.8,
     disponibilidad: [
-      { fecha: '2024-01-15', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2024-01-16', horarios: ['09:00', '11:00', '14:00'] },
-      { fecha: '2024-01-17', horarios: ['10:00', '15:00', '16:00', '17:00'] }
+      { fecha: '2024-12-16', horarios: ['09:00', '10:00', '15:00', '16:00'] },
+      { fecha: '2024-12-17', horarios: ['09:00', '11:00', '14:00'] },
+      { fecha: '2024-12-18', horarios: ['10:00', '15:00', '16:00', '17:00'] }
     ]
   },
   {
@@ -28,9 +28,9 @@ export const psicologos: Psicologo[] = [
     descripcion: 'Especialista en terapia familiar y de pareja. Más de 12 años ayudando a fortalecer relaciones.',
     rating: 4.9,
     disponibilidad: [
-      { fecha: '2024-01-15', horarios: ['11:00', '14:00', '17:00'] },
-      { fecha: '2024-01-16', horarios: ['09:00', '10:00', '15:00', '16:00'] },
-      { fecha: '2024-01-18', horarios: ['09:00', '11:00', '14:00', '15:00'] }
+      { fecha: '2024-12-16', horarios: ['11:00', '14:00', '17:00'] },
+      { fecha: '2024-12-17', horarios: ['09:00', '10:00', '15:00', '16:00'] },
+      { fecha: '2024-12-19', horarios: ['09:00', '11:00', '14:00', '15:00'] }
     ]
   },
   {
@@ -44,9 +44,9 @@ export const psicologos: Psicologo[] = [
     descripcion: 'Psicóloga infantil experta en TDAH y dificultades del aprendizaje. Enfoque lúdico y educativo.',
     rating: 4.7,
     disponibilidad: [
-      { fecha: '2024-01-15', horarios: ['08:00', '09:00', '16:00', '17:00'] },
-      { fecha: '2024-01-17', horarios: ['08:00', '09:00', '10:00', '11:00'] },
-      { fecha: '2024-01-18', horarios: ['16:00', '17:00', '18:00'] }
+      { fecha: '2024-12-16', horarios: ['08:00', '09:00', '16:00', '17:00'] },
+      { fecha: '2024-12-18', horarios: ['08:00', '09:00', '10:00', '11:00'] },
+      { fecha: '2024-12-19', horarios: ['16:00', '17:00', '18:00'] }
     ]
   },
   {
@@ -60,9 +60,9 @@ export const psicologos: Psicologo[] = [
     descripcion: 'Psicólogo organizacional especializado en estrés laboral y burnout. Enfoque en bienestar.',
     rating: 4.6,
     disponibilidad: [
-      { fecha: '2024-01-16', horarios: ['12:00', '13:00', '17:00', '18:00'] },
-      { fecha: '2024-01-17', horarios: ['12:00', '13:00', '14:00'] },
-      { fecha: '2024-01-18', horarios: ['10:00', '11:00', '12:00', '13:00'] }
+      { fecha: '2024-12-17', horarios: ['12:00', '13:00', '17:00', '18:00'] },
+      { fecha: '2024-12-18', horarios: ['12:00', '13:00', '14:00'] },
+      { fecha: '2024-12-19', horarios: ['10:00', '11:00', '12:00', '13:00'] }
     ]
   },
   {
@@ -76,9 +76,9 @@ export const psicologos: Psicologo[] = [
     descripcion: 'Especialista en trauma y EMDR. Amplia experiencia en trastornos de estrés postraumático.',
     rating: 4.9,
     disponibilidad: [
-      { fecha: '2024-01-15', horarios: ['13:00', '14:00'] },
-      { fecha: '2024-01-16', horarios: ['13:00', '14:00', '15:00'] },
-      { fecha: '2024-01-17', horarios: ['13:00', '14:00', '15:00', '16:00'] }
+      { fecha: '2024-12-16', horarios: ['13:00', '14:00'] },
+      { fecha: '2024-12-17', horarios: ['13:00', '14:00', '15:00'] },
+      { fecha: '2024-12-18', horarios: ['13:00', '14:00', '15:00', '16:00'] }
     ]
   }
 ];

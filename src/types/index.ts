@@ -34,4 +34,26 @@ export interface FiltrosBusqueda {
   especialidad: string;
   precioMax: number;
   disponibilidad: string;
+}
+
+export interface CalendarioSemana {
+  inicio: Date;
+  fin: Date;
+  dias: CalendarioDia[];
+}
+
+export interface CalendarioDia {
+  fecha: Date;
+  horarios: CalendarioHorario[];
+}
+
+export interface CalendarioHorario {
+  hora: string;
+  disponible: boolean;
+  horaLocal: string;
+}
+
+export interface ConfiguracionTimezone {
+  timezone: string;
+  offset: number;
 } 
