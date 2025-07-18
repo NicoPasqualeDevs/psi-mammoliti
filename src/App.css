@@ -154,11 +154,8 @@ body {
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 0.5rem;
-  background: linear-gradient(45deg, var(--neutral-white), var(--secundario-rosa), var(--secundario-celeste));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: var(--secundario-rosa);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .app-header .subtitle {
@@ -186,24 +183,7 @@ body {
   cursor: pointer;
   font-weight: 600;
   font-family: var(--_fonts---headings);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.navegacion button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.navegacion button:hover::before {
-  left: 100%;
+  transition: all 0.3s ease;
 }
 
 .navegacion button:hover {
@@ -213,7 +193,7 @@ body {
 }
 
 .navegacion button.activo {
-  background: linear-gradient(135deg, var(--neutral-white), var(--lila-lighter));
+  background: var(--neutral-white);
   color: var(--lila-darkest);
   border-color: var(--neutral-white);
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
@@ -615,7 +595,7 @@ body {
 }
 
 .btn-agendar {
-  background: linear-gradient(135deg, var(--lila-dark), var(--lila), var(--secundario-rosa));
+  background: var(--lila);
   color: var(--neutral-white);
   border: none;
   padding: 1rem 1.8rem;
@@ -623,28 +603,12 @@ body {
   cursor: pointer;
   font-weight: 700;
   font-family: var(--_fonts---headings);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(132, 117, 179, 0.3);
 }
 
-.btn-agendar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.btn-agendar:hover::before {
-  left: 100%;
-}
-
 .btn-agendar:hover {
+  background: var(--lila-dark);
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(132, 117, 179, 0.4);
 }
