@@ -1320,6 +1320,44 @@ body {
   padding: 1rem;
   min-height: 200px;
   transition: all 0.3s ease;
+  position: relative;
+}
+
+.calendario-dia.colapsado {
+  min-height: 100px;
+  max-height: 100px;
+  overflow: hidden;
+}
+
+.calendario-dia.expandido {
+  min-height: 200px;
+  max-height: none;
+}
+
+.calendario-dia.clickeable {
+  cursor: pointer;
+}
+
+.calendario-dia.clickeable:hover {
+  border-color: var(--lila);
+  box-shadow: 0 2px 8px rgba(132, 117, 179, 0.15);
+}
+
+.calendario-dia.clickeable.colapsado {
+  border-left: 4px solid var(--secundario-naranja);
+}
+
+.calendario-dia.clickeable.colapsado::after {
+  content: '';
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 2px;
+  background: var(--lila);
+  border-radius: 1px;
+  opacity: 0.5;
 }
 
 .calendario-dia.es-hoy {
@@ -1334,7 +1372,6 @@ body {
 
 .calendario-dia:hover:not(.es-pasado) {
   border-color: var(--lila);
-  transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(132, 117, 179, 0.2);
 }
 
@@ -1343,6 +1380,18 @@ body {
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--lila-lighter);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.calendario-dia.clickeable .dia-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.calendario-dia.clickeable .dia-header:hover {
+  background: var(--lila-lighter);
+  border-radius: 8px;
 }
 
 .dia-nombre {
@@ -1363,10 +1412,51 @@ body {
   margin-top: 0.2rem;
 }
 
+.indicador-expandir {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  color: var(--lila);
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.contador-horarios {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  background: var(--secundario-naranja);
+  color: var(--neutral-white);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sin-horarios-colapsado,
+.dia-pasado-colapsado {
+  display: none;
+}
+
 .horarios-dia {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.calendario-dia.colapsado .horarios-dia {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.calendario-dia.expandido .horarios-dia {
+  opacity: 1;
+  height: auto;
 }
 
 .horario-slot {
@@ -1485,5 +1575,23 @@ body {
   
   .calendario-dia {
     min-height: 150px;
+  }
+  
+  .calendario-dia.colapsado {
+    min-height: 90px;
+    max-height: 90px;
+  }
+  
+  .calendario-dia.expandido {
+    min-height: 150px;
+  }
+  
+  .contador-horarios {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+  }
+  
+  .indicador-expandir {
+    font-size: 0.7rem;
   }
 } 

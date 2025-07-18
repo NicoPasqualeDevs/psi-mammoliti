@@ -49,12 +49,13 @@ export const convertirHorario = (hora: string, timezoneOrigen: string, timezoneD
 };
 
 export const obtenerSemanaActual = (): { inicio: Date; fin: Date } => {
-  const hoy = new Date();
-  const diaActual = hoy.getDay();
+  // Usar la primera fecha con disponibilidad (18 de julio 2025) como referencia
+  const fechaReferencia = new Date('2025-07-18');
+  const diaActual = fechaReferencia.getDay();
   const diferencia = diaActual === 0 ? -6 : 1 - diaActual;
   
-  const lunes = new Date(hoy);
-  lunes.setDate(hoy.getDate() + diferencia);
+  const lunes = new Date(fechaReferencia);
+  lunes.setDate(fechaReferencia.getDate() + diferencia);
   lunes.setHours(0, 0, 0, 0);
   
   const domingo = new Date(lunes);

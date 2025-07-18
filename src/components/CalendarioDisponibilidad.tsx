@@ -16,6 +16,7 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
   horaSeleccionada
 }) => {
   const [semanaActual, setSemanaActual] = useState(() => obtenerSemanaActual());
+  const [diasExpandidos, setDiasExpandidos] = useState<Set<string>>(new Set());
   const timezoneUsuario = detectarTimezone();
   const timezonePsicologo = 'America/Mexico_City'; // Asumimos que el psicólogo está en México
 
@@ -71,6 +72,20 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
     return fecha < hoy;
   };
 
+  const toggleDiaExpandido = (fechaStr: string, tieneHorarios: boolean) => {
+    if (!tieneHorarios) return; // Solo permitir expansión si tiene horarios
+    
+    setDiasExpandidos(prev => {
+      const nuevoSet = new Set(prev);
+      if (nuevoSet.has(fechaStr)) {
+        nuevoSet.delete(fechaStr);
+      } else {
+        nuevoSet.add(fechaStr);
+      }
+      return nuevoSet;
+    });
+  };
+
   return (
     <div className="calendario-disponibilidad">
       <div className="calendario-header">
@@ -104,44 +119,70 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
           const fechaStr = dia.fecha.toISOString().split('T')[0];
           const tieneHorarios = dia.horarios.length > 0;
           const esDiaPasado = esPasado(dia.fecha);
+          const estaExpandido = diasExpandidos.has(fechaStr);
           
           return (
             <div 
               key={index} 
-              className={`calendario-dia ${esHoy(dia.fecha) ? 'es-hoy' : ''} ${esDiaPasado ? 'es-pasado' : ''}`}
+              className={`calendario-dia ${esHoy(dia.fecha) ? 'es-hoy' : ''} ${esDiaPasado ? 'es-pasado' : ''} ${estaExpandido ? 'expandido' : 'colapsado'} ${tieneHorarios && !esDiaPasado ? 'clickeable' : ''}`}
             >
-              <div className="dia-header">
+              <div 
+                className="dia-header"
+                onClick={() => toggleDiaExpandido(fechaStr, tieneHorarios && !esDiaPasado)}
+              >
                 <span className="dia-nombre">
                   {dia.fecha.toLocaleDateString('es-ES', { weekday: 'short' })}
                 </span>
                 <span className="dia-numero">
                   {dia.fecha.getDate()}
                 </span>
+                {tieneHorarios && !esDiaPasado && (
+                  <span className="indicador-expandir">
+                    {estaExpandido ? '▼' : '▶'}
+                  </span>
+                )}
+                {tieneHorarios && !esDiaPasado && (
+                  <span className="contador-horarios">
+                    {dia.horarios.length}
+                  </span>
+                )}
               </div>
               
               <div className="horarios-dia">
-                {!tieneHorarios && !esDiaPasado && (
-                  <div className="sin-horarios">Sin disponibilidad</div>
+                {!tieneHorarios && !esDiaPasado && !estaExpandido && (
+                  <div className="sin-horarios-colapsado">Sin disponibilidad</div>
                 )}
                 
-                {esDiaPasado && (
-                  <div className="dia-pasado">Fecha pasada</div>
+                {esDiaPasado && !estaExpandido && (
+                  <div className="dia-pasado-colapsado">Fecha pasada</div>
                 )}
                 
-                {tieneHorarios && !esDiaPasado && dia.horarios.map((horario, horarioIndex) => {
-                  const isSelected = fechaSeleccionada === fechaStr && horaSeleccionada === horario.hora;
-                  
-                  return (
-                    <button
-                      key={horarioIndex}
-                      className={`horario-slot ${isSelected ? 'seleccionado' : ''}`}
-                      onClick={() => onSeleccionarHorario(fechaStr, horario.hora, horario.horaLocal)}
-                    >
-                      <div className="horario-original">{horario.hora}</div>
-                      <div className="horario-local">({horario.horaLocal})</div>
-                    </button>
-                  );
-                })}
+                {estaExpandido && (
+                  <>
+                    {!tieneHorarios && !esDiaPasado && (
+                      <div className="sin-horarios">Sin disponibilidad</div>
+                    )}
+                    
+                    {esDiaPasado && (
+                      <div className="dia-pasado">Fecha pasada</div>
+                    )}
+                    
+                    {tieneHorarios && !esDiaPasado && dia.horarios.map((horario, horarioIndex) => {
+                      const isSelected = fechaSeleccionada === fechaStr && horaSeleccionada === horario.hora;
+                      
+                      return (
+                        <button
+                          key={horarioIndex}
+                          className={`horario-slot ${isSelected ? 'seleccionado' : ''}`}
+                          onClick={() => onSeleccionarHorario(fechaStr, horario.hora, horario.horaLocal)}
+                        >
+                          <div className="horario-original">{horario.hora}</div>
+                          <div className="horario-local">({horario.horaLocal})</div>
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             </div>
           );
