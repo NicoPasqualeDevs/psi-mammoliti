@@ -134,8 +134,29 @@ fi
 echo -e "\n${BLUE}📋 Verificando conectividad...${NC}"
 if curl -s -f "http://localhost:$SERVICE_PORT" > /dev/null; then
     test_result 0 "Aplicación responde en puerto $SERVICE_PORT"
+    
+    # Test específico para React
+    if curl -s "http://localhost:$SERVICE_PORT" | grep -q "root"; then
+        test_result 0 "La aplicación React se está sirviendo correctamente"
+    else
+        test_result 1 "La aplicación responde pero no parece ser React"
+    fi
 else
     test_result 1 "Aplicación no responde en puerto $SERVICE_PORT"
+    
+    # Diagnóstico adicional
+    info "Verificando si el proceso serve está corriendo..."
+    if pgrep -f "serve" > /dev/null; then
+        info "Proceso 'serve' encontrado, pero no responde en puerto $SERVICE_PORT"
+    else
+        info "Proceso 'serve' no encontrado"
+    fi
+    
+    # Verificar logs de PM2
+    info "Últimas líneas del log de error de PM2:"
+    if [ -f "/var/log/$APP_NAME/error.log" ]; then
+        tail -3 "/var/log/$APP_NAME/error.log" 2>/dev/null || echo "Log de error vacío"
+    fi
 fi
 
 # Test 9: Verificar proxy nginx

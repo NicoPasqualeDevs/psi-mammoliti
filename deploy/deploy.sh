@@ -201,6 +201,18 @@ ufw allow 22/tcp
 ufw allow 80/tcp
 ufw --force enable
 
+# Verificar que el build se creó correctamente
+log "Verificando build de React..."
+if [ ! -d "$APP_DIR/build" ]; then
+    error "El directorio build no existe. La construcción falló."
+fi
+
+if [ ! -f "$APP_DIR/build/index.html" ]; then
+    error "El archivo index.html no existe en build. La construcción falló."
+fi
+
+log "Build verificado correctamente"
+
 # Iniciar aplicación con PM2
 log "Iniciando aplicación con PM2..."
 cd "$APP_DIR"
@@ -208,12 +220,44 @@ pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
 
+# Verificar que la aplicación inició correctamente
+sleep 3
+if ! pm2 list | grep "$APP_NAME" | grep -q "online"; then
+    warning "La aplicación PM2 no está online. Verificando logs..."
+    pm2 logs "$APP_NAME" --lines 10
+    
+    # Intentar reiniciar
+    log "Intentando reiniciar aplicación..."
+    pm2 restart "$APP_NAME"
+    sleep 2
+fi
+
 # Configurar PM2 para iniciar automáticamente
 env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root
 
 log "Verificando estado de servicios..."
 systemctl status nginx --no-pager
 pm2 status
+
+# Test final de conectividad
+log "Realizando test final de conectividad..."
+sleep 5
+
+# Test puerto 3000 (aplicación)
+if curl -s -m 10 "http://localhost:$SERVICE_PORT" > /dev/null; then
+    log "✅ Aplicación responde en puerto $SERVICE_PORT"
+else
+    warning "❌ Aplicación no responde en puerto $SERVICE_PORT"
+    log "Ejecutando diagnóstico automático..."
+    pm2 logs "$APP_NAME" --lines 5
+fi
+
+# Test puerto 80 (nginx)
+if curl -s -m 10 "http://localhost" > /dev/null; then
+    log "✅ nginx responde correctamente"
+else
+    warning "❌ nginx no responde"
+fi
 
 # Crear script de gestión
 log "Creando scripts de gestión..."
@@ -242,16 +286,46 @@ case "$1" in
     logs)
         pm2 logs "$APP_NAME" --lines 50
         ;;
+    diagnose)
+        echo "Ejecutando diagnóstico de React..."
+        if [ -f "$APP_DIR/deploy/diagnose-react.sh" ]; then
+            chmod +x "$APP_DIR/deploy/diagnose-react.sh"
+            "$APP_DIR/deploy/diagnose-react.sh"
+        else
+            echo "Script de diagnóstico no encontrado"
+        fi
+        ;;
+    fix)
+        echo "Intentando reparar $APP_NAME..."
+        cd "$APP_DIR"
+        echo "1. Reconstruyendo aplicación..."
+        npm run build
+        echo "2. Reiniciando PM2..."
+        pm2 restart "$APP_NAME"
+        echo "3. Verificando estado..."
+        sleep 3
+        pm2 status
+        ;;
     update)
         echo "Actualizando $APP_NAME..."
         cd "$APP_DIR"
         git pull
-        npm ci --only=production
+        npm install --omit=dev
         npm run build
         pm2 restart "$APP_NAME"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart|status|logs|update}"
+        echo "Uso: $0 {start|stop|restart|status|logs|diagnose|fix|update}"
+        echo ""
+        echo "Comandos disponibles:"
+        echo "  start      - Iniciar aplicación"
+        echo "  stop       - Detener aplicación"
+        echo "  restart    - Reiniciar aplicación"
+        echo "  status     - Ver estado de PM2"
+        echo "  logs       - Ver logs de aplicación"
+        echo "  diagnose   - Ejecutar diagnóstico completo"
+        echo "  fix        - Intentar reparar problemas comunes"
+        echo "  update     - Actualizar desde git"
         exit 1
         ;;
 esac
@@ -276,6 +350,8 @@ echo -e "   $APP_NAME-manage stop      # Detener aplicación"
 echo -e "   $APP_NAME-manage restart   # Reiniciar aplicación"
 echo -e "   $APP_NAME-manage status    # Ver estado"
 echo -e "   $APP_NAME-manage logs      # Ver logs"
+echo -e "   $APP_NAME-manage diagnose  # Diagnosticar problemas"
+echo -e "   $APP_NAME-manage fix       # Reparar problemas comunes"
 echo -e "   $APP_NAME-manage update    # Actualizar aplicación"
 echo ""
 echo -e "   systemctl status nginx     # Estado de nginx"
