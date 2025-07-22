@@ -82,7 +82,7 @@ Cada psicólogo muestra:
 
 ### Stack Tecnológico
 - **Frontend**: React 18.2.0 + TypeScript 4.9.5
-- **Base de Datos**: IndexedDB con Dexie 3.2.4
+- **Base de Datos**: SQLite 3 con Express
 - **Routing**: React Router DOM 6.3.0
 - **Bundler**: Create React App (react-scripts 5.0.1)
 - **Estilos**: CSS Variables + CSS Grid/Flexbox
@@ -204,7 +204,7 @@ interface FiltrosBusqueda {
   "react-dom": "^18.2.0",
   "react-router-dom": "^6.3.0",
   "typescript": "^4.9.5",
-  "dexie": "^3.2.4"
+  "sqlite3": "^5.1.6"
 }
 ```
 
@@ -440,3 +440,6 @@ Para consultas técnicas o funcionales sobre esta documentación, contactar al e
 **Fecha de actualización**: 19/1/2025  
 **Elaborado por**: Equipo de Desarrollo PsiConnect  
 **Cambios principales**: Implementación completa de CRUD, base de datos local, panel de administración 
+
+### ✅ Base de Datos Centralizada
+- **SQLite**: Persistencia centralizada de datos 
