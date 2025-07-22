@@ -91,15 +91,7 @@ if [ -f "package-lock.json" ]; then
     log "Limpiando package-lock.json para evitar conflictos de versiones..."
     rm package-lock.json
 fi
-npm install
-
-# Migrar datos iniciales al backend
-log "Ejecutando migración de datos..."
-if [ -f "backend/migrate.js" ]; then
-    node backend/migrate.js
-else
-    warning "Script de migración no encontrado, saltando..."
-fi
+npm install --omit=dev
 
 # Construir aplicación para producción
 log "Construyendo aplicación..."
@@ -109,43 +101,24 @@ npm run build
 log "Configurando PM2..."
 cat > ecosystem.config.js << EOF
 module.exports = {
-  apps: [
-    {
-      name: '$APP_NAME-backend',
-      script: 'backend/server.js',
-      cwd: '$APP_DIR',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'production',
-        PORT: '3001'
-      },
-      error_file: '/var/log/$APP_NAME/backend-error.log',
-      out_file: '/var/log/$APP_NAME/backend-out.log',
-      log_file: '/var/log/$APP_NAME/backend-combined.log',
-      time: true
+  apps: [{
+    name: '$APP_NAME',
+    script: 'npx',
+    args: 'serve -s build -l $SERVICE_PORT',
+    cwd: '$APP_DIR',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    env: {
+      NODE_ENV: 'production',
+      PORT: '$SERVICE_PORT'
     },
-    {
-      name: '$APP_NAME-frontend',
-      script: 'npx',
-      args: 'serve -s build -l $SERVICE_PORT',
-      cwd: '$APP_DIR',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '512M',
-      env: {
-        NODE_ENV: 'production',
-        PORT: '$SERVICE_PORT'
-      },
-      error_file: '/var/log/$APP_NAME/frontend-error.log',
-      out_file: '/var/log/$APP_NAME/frontend-out.log',
-      log_file: '/var/log/$APP_NAME/frontend-combined.log',
-      time: true
-    }
-  ]
+    error_file: '/var/log/$APP_NAME/error.log',
+    out_file: '/var/log/$APP_NAME/out.log',
+    log_file: '/var/log/$APP_NAME/combined.log',
+    time: true
+  }]
 };
 EOF
 
@@ -222,30 +195,11 @@ log "Reiniciando nginx..."
 systemctl restart nginx
 systemctl enable nginx
 
-# Configurar firewall básico (opcional)
+# Configurar firewall básico
 log "Configurando firewall..."
-if command -v ufw &> /dev/null; then
-    log "Configurando ufw..."
-    ufw allow 22/tcp
-    ufw allow 80/tcp
-    ufw --force enable
-    log "✅ Firewall configurado con ufw"
-else
-    warning "ufw no está disponible, omitiendo configuración de firewall"
-    log "💡 Considera instalar ufw: apt-get install ufw"
-fi
-
-# Verificar que el build se creó correctamente
-log "Verificando build de React..."
-if [ ! -d "$APP_DIR/build" ]; then
-    error "El directorio build no existe. La construcción falló."
-fi
-
-if [ ! -f "$APP_DIR/build/index.html" ]; then
-    error "El archivo index.html no existe en build. La construcción falló."
-fi
-
-log "Build verificado correctamente"
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw --force enable
 
 # Iniciar aplicación con PM2
 log "Iniciando aplicación con PM2..."
@@ -254,66 +208,12 @@ pm2 start ecosystem.config.js
 pm2 save
 pm2 startup
 
-# Verificar que las aplicaciones iniciaron correctamente
-sleep 5
-backend_online=$(pm2 list | grep "$APP_NAME-backend" | grep -c "online")
-frontend_online=$(pm2 list | grep "$APP_NAME-frontend" | grep -c "online")
-
-if [ "$backend_online" -eq 0 ]; then
-    warning "El backend PM2 no está online. Verificando logs..."
-    pm2 logs "$APP_NAME-backend" --lines 10
-    
-    # Intentar reiniciar
-    log "Intentando reiniciar backend..."
-    pm2 restart "$APP_NAME-backend"
-    sleep 2
-fi
-
-if [ "$frontend_online" -eq 0 ]; then
-    warning "El frontend PM2 no está online. Verificando logs..."
-    pm2 logs "$APP_NAME-frontend" --lines 10
-    
-    # Intentar reiniciar
-    log "Intentando reiniciar frontend..."
-    pm2 restart "$APP_NAME-frontend"
-    sleep 2
-fi
-
 # Configurar PM2 para iniciar automáticamente
 env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root
 
 log "Verificando estado de servicios..."
 systemctl status nginx --no-pager
 pm2 status
-
-# Test final de conectividad
-log "Realizando test final de conectividad..."
-sleep 5
-
-# Test puerto 3001 (backend)
-if curl -s -m 10 "http://localhost:3001/api/stats" > /dev/null; then
-    log "✅ Backend responde en puerto 3001"
-else
-    warning "❌ Backend no responde en puerto 3001"
-    log "Ejecutando diagnóstico del backend..."
-    pm2 logs "$APP_NAME-backend" --lines 5
-fi
-
-# Test puerto 3000 (frontend)
-if curl -s -m 10 "http://localhost:$SERVICE_PORT" > /dev/null; then
-    log "✅ Frontend responde en puerto $SERVICE_PORT"
-else
-    warning "❌ Frontend no responde en puerto $SERVICE_PORT"
-    log "Ejecutando diagnóstico del frontend..."
-    pm2 logs "$APP_NAME-frontend" --lines 5
-fi
-
-# Test puerto 80 (nginx)
-if curl -s -m 10 "http://localhost" > /dev/null; then
-    log "✅ nginx responde correctamente"
-else
-    warning "❌ nginx no responde"
-fi
 
 # Crear script de gestión
 log "Creando scripts de gestión..."
@@ -330,96 +230,28 @@ case "$1" in
         ;;
     stop)
         echo "Deteniendo $APP_NAME..."
-        pm2 stop "$APP_NAME-backend" "$APP_NAME-frontend"
+        pm2 stop "$APP_NAME"
         ;;
     restart)
         echo "Reiniciando $APP_NAME..."
-        pm2 restart "$APP_NAME-backend" "$APP_NAME-frontend"
-        ;;
-    restart-backend)
-        echo "Reiniciando backend..."
-        pm2 restart "$APP_NAME-backend"
-        ;;
-    restart-frontend)
-        echo "Reiniciando frontend..."
-        pm2 restart "$APP_NAME-frontend"
+        pm2 restart "$APP_NAME"
         ;;
     status)
         pm2 status
         ;;
     logs)
-        echo "Logs del backend:"
-        pm2 logs "$APP_NAME-backend" --lines 25
-        echo ""
-        echo "Logs del frontend:"
-        pm2 logs "$APP_NAME-frontend" --lines 25
-        ;;
-    logs-backend)
-        pm2 logs "$APP_NAME-backend" --lines 50
-        ;;
-    logs-frontend)
-        pm2 logs "$APP_NAME-frontend" --lines 50
-        ;;
-    diagnose)
-        echo "Ejecutando diagnóstico completo..."
-        if [ -f "$APP_DIR/deploy/diagnose-react.sh" ]; then
-            chmod +x "$APP_DIR/deploy/diagnose-react.sh"
-            "$APP_DIR/deploy/diagnose-react.sh"
-        else
-            echo "Script de diagnóstico no encontrado"
-        fi
-        ;;
-    fix)
-        echo "Intentando reparar $APP_NAME..."
-        cd "$APP_DIR"
-        echo "1. Reconstruyendo aplicación..."
-        npm run build
-        echo "2. Reiniciando backend..."
-        pm2 restart "$APP_NAME-backend"
-        echo "3. Reiniciando frontend..."
-        pm2 restart "$APP_NAME-frontend"
-        echo "4. Verificando estado..."
-        sleep 3
-        pm2 status
+        pm2 logs "$APP_NAME" --lines 50
         ;;
     update)
         echo "Actualizando $APP_NAME..."
         cd "$APP_DIR"
         git pull
-        npm install
-        echo "Ejecutando migración de datos..."
-        if [ -f "backend/migrate.js" ]; then
-            node backend/migrate.js
-        fi
+        npm ci --only=production
         npm run build
-        pm2 restart "$APP_NAME-backend" "$APP_NAME-frontend"
-        ;;
-    migrate)
-        echo "Ejecutando migración de datos..."
-        cd "$APP_DIR"
-        if [ -f "backend/migrate.js" ]; then
-            node backend/migrate.js
-        else
-            echo "Script de migración no encontrado"
-        fi
+        pm2 restart "$APP_NAME"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart|restart-backend|restart-frontend|status|logs|logs-backend|logs-frontend|diagnose|fix|update|migrate}"
-        echo ""
-        echo "Comandos disponibles:"
-        echo "  start            - Iniciar aplicación completa"
-        echo "  stop             - Detener aplicación completa"
-        echo "  restart          - Reiniciar aplicación completa"
-        echo "  restart-backend  - Reiniciar solo backend"
-        echo "  restart-frontend - Reiniciar solo frontend"
-        echo "  status           - Ver estado de PM2"
-        echo "  logs             - Ver logs combinados"
-        echo "  logs-backend     - Ver logs del backend"
-        echo "  logs-frontend    - Ver logs del frontend"
-        echo "  diagnose         - Ejecutar diagnóstico completo"
-        echo "  fix              - Intentar reparar problemas comunes"
-        echo "  update           - Actualizar desde git"
-        echo "  migrate          - Ejecutar migración de datos"
+        echo "Uso: $0 {start|stop|restart|status|logs|update}"
         exit 1
         ;;
 esac
@@ -434,26 +266,17 @@ echo ""
 echo -e "${YELLOW}📋 Información del despliegue:${NC}"
 echo -e "   🌐 URL: http://$DOMAIN_NAME"
 echo -e "   📁 Directorio: $APP_DIR"
-echo -e "   🔧 Frontend: puerto $SERVICE_PORT"
-echo -e "   🔧 Backend: puerto 3001"
+echo -e "   🔧 Puerto interno: $SERVICE_PORT"
 echo -e "   📊 Logs: /var/log/$APP_NAME/"
-echo -e "   🗄️ Base de datos: SQLite en $APP_DIR/backend/database.sqlite"
-echo -e "   ⚡ Node.js: $(node --version)"
+echo -e "   ⚡ Node.js: $(node --version) (compatible con react-router-dom v7)"
 echo ""
 echo -e "${YELLOW}🛠️ Comandos útiles:${NC}"
-echo -e "   $APP_NAME-manage start             # Iniciar aplicación completa"
-echo -e "   $APP_NAME-manage stop              # Detener aplicación"
-echo -e "   $APP_NAME-manage restart           # Reiniciar aplicación completa"
-echo -e "   $APP_NAME-manage restart-backend   # Reiniciar solo backend"
-echo -e "   $APP_NAME-manage restart-frontend  # Reiniciar solo frontend"
-echo -e "   $APP_NAME-manage status            # Ver estado"
-echo -e "   $APP_NAME-manage logs              # Ver logs combinados"
-echo -e "   $APP_NAME-manage logs-backend      # Ver logs del backend"
-echo -e "   $APP_NAME-manage logs-frontend     # Ver logs del frontend"
-echo -e "   $APP_NAME-manage diagnose          # Diagnosticar problemas"
-echo -e "   $APP_NAME-manage fix               # Reparar problemas comunes"
-echo -e "   $APP_NAME-manage update            # Actualizar aplicación"
-echo -e "   $APP_NAME-manage migrate           # Migrar datos"
+echo -e "   $APP_NAME-manage start     # Iniciar aplicación"
+echo -e "   $APP_NAME-manage stop      # Detener aplicación"
+echo -e "   $APP_NAME-manage restart   # Reiniciar aplicación"
+echo -e "   $APP_NAME-manage status    # Ver estado"
+echo -e "   $APP_NAME-manage logs      # Ver logs"
+echo -e "   $APP_NAME-manage update    # Actualizar aplicación"
 echo ""
 echo -e "   systemctl status nginx     # Estado de nginx"
 echo -e "   pm2 monit                  # Monitor PM2"

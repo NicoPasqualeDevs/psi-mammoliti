@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import { useDatabase } from './hooks/useDatabase';
 import { FiltrosBusquedaComponent } from './components/FiltrosBusqueda';
@@ -7,8 +7,7 @@ import { PsicologoCard } from './components/PsicologoCard';
 import { ModalAgendamiento } from './components/ModalAgendamiento';
 import { SesionesAgendadas } from './components/SesionesAgendadas';
 import { Admin } from './components/Admin';
-import { Psicologo, FiltrosBusqueda, Sesion, Modalidad } from './types';
-
+import { Psicologo, FiltrosBusqueda, Sesion } from './types';
 
 // Componente principal de la aplicación pública
 const MainApp: React.FC = () => {
@@ -18,7 +17,9 @@ const MainApp: React.FC = () => {
     loading,
     error,
     initialized,
-    insertarSesion
+    insertarSesion,
+    filtrarPsicologos,
+    limpiarError
   } = useDatabase();
 
   const [vistaActual, setVistaActual] = useState<'busqueda' | 'sesiones'>('busqueda');
@@ -30,31 +31,6 @@ const MainApp: React.FC = () => {
     modalidad: ''
   });
 
-  // Función para filtrar psicólogos localmente
-  const filtrarPsicologos = (
-    especialidad?: string,
-    precioMax?: number,
-    modalidad?: string
-  ): Psicologo[] => {
-    return psicologos.filter(psicologo => {
-      if (especialidad && especialidad !== '' && 
-          !psicologo.especialidades.includes(especialidad)) {
-        return false;
-      }
-      
-      if (precioMax && psicologo.precio > precioMax) {
-        return false;
-      }
-      
-      if (modalidad && modalidad !== '' && 
-          !psicologo.modalidades.includes(modalidad as Modalidad)) {
-        return false;
-      }
-      
-      return true;
-    });
-  };
-
   const psicologosFiltrados = useMemo(() => {
     if (!initialized || loading) return [];
     
@@ -63,7 +39,7 @@ const MainApp: React.FC = () => {
       filtros.precioMax,
       filtros.modalidad
     );
-  }, [filtros, psicologos, initialized, loading]);
+  }, [filtros, filtrarPsicologos, initialized, loading]);
 
   const handleAgendar = async (nuevaSesion: Omit<Sesion, 'id' | 'estado'>) => {
     const sesion: Sesion = {
@@ -107,7 +83,7 @@ const MainApp: React.FC = () => {
       <div className="error-container">
         <h2>Error en la base de datos</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()} className="btn-agendar">
+        <button onClick={limpiarError} className="btn-agendar">
           Reintentar
         </button>
       </div>
@@ -220,8 +196,7 @@ function App() {
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/home" element={<MainApp />} />
+        <Route path="/" element={<MainApp />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>
