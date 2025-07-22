@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { useDatabase } from './hooks/useDatabase';
 import { FiltrosBusquedaComponent } from './components/FiltrosBusqueda';
@@ -8,6 +8,7 @@ import { ModalAgendamiento } from './components/ModalAgendamiento';
 import { SesionesAgendadas } from './components/SesionesAgendadas';
 import { Admin } from './components/Admin';
 import { Psicologo, FiltrosBusqueda, Sesion } from './types';
+
 
 // Componente principal de la aplicación pública
 const MainApp: React.FC = () => {
@@ -196,7 +197,8 @@ function App() {
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={<MainApp />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/home" element={<MainApp />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>
