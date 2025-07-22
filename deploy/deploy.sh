@@ -54,15 +54,15 @@ apt-get install -y \
     lsb-release \
     unzip
 
-# Instalar Node.js 18.x
-log "Instalando Node.js..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+# Instalar Node.js 20.x
+log "Instalando Node.js 20.x..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs
 
 # Verificar instalaciones
 node_version=$(node --version)
 npm_version=$(npm --version)
-log "Node.js instalado: $node_version"
+log "Node.js instalado: $node_version (requerido: >=20.0.0 para react-router-dom v7)"
 log "npm instalado: $npm_version"
 
 # Instalar PM2 globalmente
@@ -86,7 +86,12 @@ cd "$APP_DIR"
 
 # Instalar dependencias de Node.js
 log "Instalando dependencias npm..."
-npm ci --only=production
+# Limpiar cache y package-lock si hay conflictos
+if [ -f "package-lock.json" ]; then
+    log "Limpiando package-lock.json para evitar conflictos de versiones..."
+    rm package-lock.json
+fi
+npm install --omit=dev
 
 # Construir aplicación para producción
 log "Construyendo aplicación..."
@@ -263,6 +268,7 @@ echo -e "   🌐 URL: http://$DOMAIN_NAME"
 echo -e "   📁 Directorio: $APP_DIR"
 echo -e "   🔧 Puerto interno: $SERVICE_PORT"
 echo -e "   📊 Logs: /var/log/$APP_NAME/"
+echo -e "   ⚡ Node.js: $(node --version) (compatible con react-router-dom v7)"
 echo ""
 echo -e "${YELLOW}🛠️ Comandos útiles:${NC}"
 echo -e "   $APP_NAME-manage start     # Iniciar aplicación"
