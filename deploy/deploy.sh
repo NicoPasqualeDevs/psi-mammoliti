@@ -195,11 +195,18 @@ log "Reiniciando nginx..."
 systemctl restart nginx
 systemctl enable nginx
 
-# Configurar firewall básico
+# Configurar firewall básico (opcional)
 log "Configurando firewall..."
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw --force enable
+if command -v ufw &> /dev/null; then
+    log "Configurando ufw..."
+    ufw allow 22/tcp
+    ufw allow 80/tcp
+    ufw --force enable
+    log "✅ Firewall configurado con ufw"
+else
+    warning "ufw no está disponible, omitiendo configuración de firewall"
+    log "💡 Considera instalar ufw: apt-get install ufw"
+fi
 
 # Verificar que el build se creó correctamente
 log "Verificando build de React..."

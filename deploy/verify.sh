@@ -184,18 +184,19 @@ fi
 echo -e "\n${BLUE}📋 Verificando firewall...${NC}"
 if command -v ufw &> /dev/null; then
     if ufw status | grep -q "Status: active"; then
-        test_result 0 "Firewall está activo"
+        test_result 0 "Firewall ufw está activo"
         
         if ufw status | grep -q "80"; then
-            test_result 0 "Puerto 80 está abierto"
+            test_result 0 "Puerto 80 está abierto en ufw"
         else
-            test_result 1 "Puerto 80 no está abierto"
+            test_result 1 "Puerto 80 no está abierto en ufw"
         fi
     else
-        test_result 1 "Firewall no está activo"
+        test_result 1 "Firewall ufw no está activo"
     fi
 else
-    test_result 1 "ufw no está instalado"
+    info "ufw no está instalado (opcional)"
+    test_result 0 "Sistema sin ufw (configuración de firewall omitida)"
 fi
 
 # Test 12: Verificar script de gestión

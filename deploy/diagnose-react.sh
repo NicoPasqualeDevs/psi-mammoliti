@@ -133,7 +133,24 @@ ps aux | grep -E "(node|serve|pm2)" | grep -v grep || echo "No hay procesos enco
 echo -e "\nPuertos en uso:"
 netstat -tulpn | grep ":$SERVICE_PORT " || echo "Puerto $SERVICE_PORT no está en uso"
 
-# 9. Sugerencias de solución
+# 9. Verificar firewall (opcional)
+echo -e "\n${YELLOW}🛡️ Verificando firewall...${NC}"
+if command -v ufw &> /dev/null; then
+    if ufw status | grep -q "Status: active"; then
+        echo -e "${GREEN}✅ ufw está activo${NC}"
+        if ufw status | grep -q "80"; then
+            echo -e "${GREEN}✅ Puerto 80 abierto en ufw${NC}"
+        else
+            echo -e "${YELLOW}⚠️ Puerto 80 no está abierto en ufw${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️ ufw no está activo${NC}"
+    fi
+else
+    echo -e "${BLUE}ℹ️ ufw no está instalado (configuración opcional)${NC}"
+fi
+
+# 10. Sugerencias de solución
 echo -e "\n${BLUE}💡 Sugerencias de solución:${NC}"
 echo "============================================"
 
@@ -155,5 +172,12 @@ echo "   pm2 logs $APP_NAME"
 
 echo "5. Probar manualmente:"
 echo "   cd $APP_DIR && npx serve -s build -l $SERVICE_PORT"
+
+if ! command -v ufw &> /dev/null; then
+    echo ""
+    echo "6. Instalar firewall (recomendado para producción):"
+    echo "   apt-get install ufw"
+    echo "   ufw allow 22/tcp && ufw allow 80/tcp && ufw enable"
+fi
 
 echo -e "\n${GREEN}✅ Diagnóstico completado${NC}" 
