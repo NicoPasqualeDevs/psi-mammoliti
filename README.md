@@ -2,7 +2,7 @@
 
 ## 📋 Descripción General
 
-PsiConnect es una aplicación web moderna desarrollada en React + TypeScript que permite a los pacientes encontrar y agendar sesiones con psicólogos especializados. La plataforma incluye funcionalidades avanzadas como visualización de disponibilidad en calendario semanal, adaptación automática de horarios según zona horaria del usuario, y un sistema completo de filtrado.
+PsiConnect es una aplicación web moderna desarrollada en React + TypeScript que permite a los pacientes encontrar y agendar sesiones con psicólogos especializados. La plataforma incluye funcionalidades avanzadas como visualización de disponibilidad en calendario semanal, adaptación automática de horarios según zona horaria del usuario, sistema completo de filtrado, **base de datos local con IndexedDB**, **panel de administración completo**, y **sistema CRUD para gestión de psicólogos**.
 
 ## 🎯 Objetivos del Proyecto
 
@@ -11,14 +11,34 @@ PsiConnect es una aplicación web moderna desarrollada en React + TypeScript que
 - **Adaptar automáticamente los horarios** según la ubicación del usuario
 - **Proporcionar información detallada** sobre especialidades y disponibilidad
 - **Ofrecer una experiencia visual atractiva** y profesional
+- **Gestionar de forma completa** la base de datos de psicólogos
+- **Persistir datos localmente** para una experiencia sin interrupciones
 
 ## ⚡ Funcionalidades Principales
 
 ### 🔍 Búsqueda y Filtrado de Psicólogos
 - **Filtro por especialidad**: Ansiedad, Depresión, Terapia Familiar, Psicología Infantil, etc.
-- **Filtro por precio máximo**: Slider interactivo de $50 a $150
+- **Filtro por precio máximo**: Slider interactivo de $30 a $300
+- **Filtro por modalidad**: Online, Presencial o ambas
 - **Filtro por disponibilidad**: Selección por fecha específica
 - **Visualización de resultados en tiempo real**
+
+### 🛠️ Panel de Administración (/admin)
+- **Gestión completa de psicólogos**: CRUD completo (Crear, Leer, Actualizar, Eliminar)
+- **Formulario de nuevo psicólogo**: Con validaciones completas
+- **Edición en línea**: Modificación directa de perfiles existentes
+- **Generación automática de horarios**: Sistema inteligente de disponibilidad
+- **Gestión de especialidades**: Creación y asignación dinámica
+- **Configuración de modalidades**: Online y/o presencial
+- **Estadísticas del sistema**: Contadores de psicólogos, sesiones y especialidades
+
+### 💾 Sistema de Base de Datos Local
+- **IndexedDB con Dexie**: Persistencia local de datos
+- **Migración automática**: Importación inicial de datos
+- **Transacciones ACID**: Garantía de consistencia de datos
+- **Relaciones normalizadas**: Especialidades y horarios relacionados
+- **Índices optimizados**: Búsquedas rápidas y eficientes
+- **Limpieza y recarga**: Herramientas de mantenimiento de BD
 
 ### 👥 Perfiles de Psicólogos
 Cada psicólogo muestra:
@@ -62,6 +82,8 @@ Cada psicólogo muestra:
 
 ### Stack Tecnológico
 - **Frontend**: React 18.2.0 + TypeScript 4.9.5
+- **Base de Datos**: IndexedDB con Dexie 3.2.4
+- **Routing**: React Router DOM 6.3.0
 - **Bundler**: Create React App (react-scripts 5.0.1)
 - **Estilos**: CSS Variables + CSS Grid/Flexbox
 - **Linting**: ESLint 8.42.0 + plugins para TypeScript y React
@@ -71,18 +93,25 @@ Cada psicólogo muestra:
 ```
 src/
 ├── components/           # Componentes React reutilizables
+│   ├── Admin.tsx                       # Panel de administración
 │   ├── CalendarioDisponibilidad.tsx    # Calendario semanal
 │   ├── FiltrosBusqueda.tsx             # Panel de filtros
 │   ├── ModalAgendamiento.tsx           # Modal de agendamiento
 │   ├── PsicologoCard.tsx               # Tarjeta de psicólogo
 │   └── SesionesAgendadas.tsx           # Lista de sesiones
 ├── data/                 # Datos mock y configuración
-│   └── psicologos.ts                   # Lista de psicólogos
+│   └── psicologos.ts                   # Lista inicial de psicólogos
+├── database/            # Capa de persistencia
+│   ├── database.ts                     # Servicio de base de datos
+│   └── migration.ts                    # Migración y carga inicial
+├── hooks/               # React Hooks personalizados
+│   └── useDatabase.ts                  # Hook para operaciones CRUD
 ├── types/               # Definiciones TypeScript
 │   └── index.ts                        # Interfaces y tipos
 ├── utils/               # Utilidades y helpers
+│   ├── horarioGenerator.ts             # Generador de horarios
 │   └── timezone.ts                     # Funciones de zona horaria
-├── App.tsx              # Componente principal
+├── App.tsx              # Componente principal con routing
 ├── App.css              # Estilos globales
 └── index.tsx            # Punto de entrada
 ```
@@ -101,7 +130,21 @@ interface Psicologo {
   imagen: string;
   descripcion: string;
   rating: number;
+  modalidades: Modalidad[];
   disponibilidad: HorarioDisponible[];
+}
+```
+
+#### HorarioDisponible
+```typescript
+interface HorarioDisponible {
+  fecha: string;
+  horarios: HorarioModalidad[];
+}
+
+interface HorarioModalidad {
+  hora: string;
+  modalidades: Modalidad[];
 }
 ```
 
@@ -112,6 +155,7 @@ interface Sesion {
   psicologoId: string;
   fecha: string;
   hora: string;
+  modalidad: Modalidad;
   paciente: {
     nombre: string;
     email: string;
@@ -119,6 +163,16 @@ interface Sesion {
   };
   especialidad: string;
   estado: 'confirmada' | 'pendiente' | 'cancelada';
+}
+```
+
+#### FiltrosBusqueda
+```typescript
+interface FiltrosBusqueda {
+  especialidad: string;
+  precioMax: number;
+  disponibilidad: string;
+  modalidad: Modalidad | '';
 }
 ```
 
@@ -141,6 +195,18 @@ interface Sesion {
 ### Prerrequisitos
 - Node.js 16+ y npm
 - Git
+- Navegador moderno con soporte para IndexedDB
+
+### Dependencias Principales
+```json
+{
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "react-router-dom": "^6.3.0",
+  "typescript": "^4.9.5",
+  "dexie": "^3.2.4"
+}
+```
 
 ### Pasos de Instalación
 ```bash
@@ -156,7 +222,14 @@ npm start
 
 # 4. Abrir en el navegador
 # La aplicación estará disponible en http://localhost:3000
+# Panel de administración en http://localhost:3000/admin
 ```
+
+### Primer Uso
+1. **Migración automática**: Al cargar por primera vez, se importan datos iniciales
+2. **Base de datos local**: Se crea automáticamente en IndexedDB del navegador
+3. **Panel público**: Acceso inmediato a búsqueda y agendamiento
+4. **Panel admin**: Gestión completa de psicólogos en `/admin`
 
 ### Scripts Disponibles
 - `npm start` - Ejecutar en modo desarrollo
@@ -186,14 +259,32 @@ npm start
 6. Confirma agendamiento
 7. Recibe confirmación
 
-### 3. Visualización de Citas Agendadas
+### 3. Gestión de Psicólogos (Admin)
+**Actor**: Administrador
+**Flujo**:
+1. Accede a `/admin`
+2. Ve estadísticas del sistema (psicólogos, sesiones, especialidades)
+3. Crea nuevo psicólogo completando formulario
+4. Configura especialidades, modalidades y generación automática de horarios
+5. Edita psicólogos existentes
+6. Elimina psicólogos (con confirmación)
+
+### 4. Mantenimiento de Base de Datos
+**Actor**: Administrador
+**Flujo**:
+1. Accede al panel de administración
+2. Utiliza "Limpiar y Recargar DB" si hay problemas
+3. Confirma operación
+4. Sistema restaura datos desde archivo base
+
+### 5. Visualización de Citas Agendadas
 **Actor**: Paciente
 **Flujo**:
 1. Click en "Mis Sesiones" en la navegación
 2. Visualiza lista completa de sesiones
 3. Revisa detalles (fecha, hora, psicólogo, estado)
 
-### 4. Adaptación de Zona Horaria
+### 6. Adaptación de Zona Horaria
 **Actor**: Usuario internacional
 **Flujo**:
 1. La aplicación detecta automáticamente su zona horaria
@@ -220,17 +311,29 @@ Configurado con:
 ### Performance
 - **Componentes optimizados**: Uso de useMemo para cálculos costosos
 - **Lazy loading**: Carga de componentes bajo demanda
+- **IndexedDB optimizada**: Índices para búsquedas rápidas
+- **Transacciones eficientes**: Operaciones batch para mejor rendimiento
 - **Bundle size**: Minimizado con Create React App
 
 ### Escalabilidad
 - **Arquitectura modular**: Componentes reutilizables
 - **Tipado fuerte**: TypeScript previene errores en tiempo de desarrollo
 - **Separación de responsabilidades**: Lógica de negocio separada de la presentación
+- **Base de datos normalizada**: Estructura optimizada para crecimiento
+- **Hooks reutilizables**: Lógica de estado centralizada
 
 ### Mantenibilidad
 - **Código limpio**: Siguiendo principios SOLID
 - **Documentación**: Comentarios claros y README detallado
 - **Linting**: Estándares de código consistentes
+- **Logging detallado**: Trazabilidad de operaciones CRUD
+- **Manejo de errores**: Captura y reporte de excepciones
+
+### Seguridad de Datos
+- **Validaciones client-side**: Prevención de datos corruptos
+- **Transacciones ACID**: Garantía de consistencia
+- **Limpieza de datos**: Sanitización de inputs
+- **Backup automático**: Datos persistentes en IndexedDB
 
 ## 🌍 Consideraciones Internacionales
 
@@ -248,20 +351,31 @@ Configurado con:
 ## 🔮 Roadmap Futuro
 
 ### Funcionalidades Planificadas
-- **Sistema de autenticación**: Login/registro de usuarios
+- **Sistema de autenticación**: Login/registro de usuarios y roles
+- **Backup/Restore**: Exportación e importación de datos
+- **Sincronización en la nube**: Backend con API REST
 - **Pasarela de pagos**: Integración con Stripe/PayPal
 - **Notificaciones**: Email y SMS de recordatorios
 - **Video llamadas**: Integración para sesiones online
 - **Calificaciones**: Sistema de reviews y comentarios
 - **Chat en tiempo real**: Comunicación pre-sesión
-- **API REST**: Backend para persistencia de datos
+- **Reportes**: Dashboards y analytics avanzados
 
 ### Mejoras Técnicas
 - **Tests unitarios**: Cobertura completa con Jest
 - **Tests E2E**: Cypress para testing de flujos completos
-- **PWA**: Aplicación web progresiva
+- **PWA**: Aplicación web progresiva offline-first
 - **Optimización SEO**: Server-side rendering con Next.js
 - **Monitoreo**: Analytics y tracking de errores
+- **Docker**: Containerización para despliegue
+- **CI/CD**: Pipeline de integración continua
+
+### Escalabilidad de Datos
+- **Backend REST API**: Migración a base de datos remota
+- **Cache inteligente**: Estrategias de sincronización
+- **Sharding**: Particionado de datos por región
+- **CDN**: Distribución de contenido estático
+- **Microservicios**: Arquitectura distribuida
 
 ## 📈 Análisis de Valor de Negocio
 
@@ -298,10 +412,31 @@ Configurado con:
 
 ---
 
+## 🏆 Características Implementadas
+
+### ✅ Sistema Completo de CRUD
+- **Gestión de Psicólogos**: Crear, editar, eliminar con validaciones
+- **Base de Datos Local**: IndexedDB con Dexie para persistencia
+- **Panel de Administración**: Interfaz completa de gestión
+- **Migraciones**: Sistema de importación y actualización de datos
+
+### ✅ Funcionalidades Avanzadas
+- **Generación de Horarios**: Sistema automático de disponibilidad
+- **Adaptación de Zona Horaria**: Conversión automática de horarios
+- **Filtrado Dinámico**: Búsqueda en tiempo real
+- **Validaciones Completas**: Integridad de datos garantizada
+
+### ✅ Experiencia de Usuario
+- **Interfaz Responsiva**: Adaptable a todos los dispositivos
+- **Feedback Visual**: Estados de carga y confirmaciones
+- **Navegación Intuitiva**: Flujos de usuario optimizados
+- **Manejo de Errores**: Mensajes claros y acciones de recuperación
+
 ## 📞 Contacto y Soporte
 
 Para consultas técnicas o funcionales sobre esta documentación, contactar al equipo de desarrollo.
 
-**Versión del documento**: 1.0  
-**Fecha de actualización**: 18/7/2025  
-**Elaborado por**: Equipo de Desarrollo PsiConnect 
+**Versión del documento**: 2.0  
+**Fecha de actualización**: 19/1/2025  
+**Elaborado por**: Equipo de Desarrollo PsiConnect  
+**Cambios principales**: Implementación completa de CRUD, base de datos local, panel de administración 

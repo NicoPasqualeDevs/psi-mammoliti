@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiltrosBusqueda } from '../types';
-import { especialidades } from '../data/psicologos';
+import { useDatabase } from '../hooks/useDatabase';
 
 interface FiltrosBusquedaProps {
   filtros: FiltrosBusqueda;
@@ -11,6 +11,8 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
   filtros,
   onFiltrosChange
 }) => {
+  const { especialidades } = useDatabase();
+
   const handleEspecialidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltrosChange({
       ...filtros,
@@ -19,12 +21,9 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
   };
 
   const handlePrecioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    // Actualizar la variable CSS para el progreso
-    e.target.style.setProperty('--value', value.toString());
     onFiltrosChange({
       ...filtros,
-      precioMax: value
+      precioMax: parseInt(e.target.value)
     });
   };
 
@@ -38,13 +37,13 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
   const handleModalidadChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltrosChange({
       ...filtros,
-      modalidad: e.target.value as FiltrosBusqueda['modalidad']
+      modalidad: e.target.value as 'online' | 'presencial' | ''
     });
   };
 
   return (
     <div className="filtros-busqueda">
-      <h3>Filtrar Psicólogos</h3>
+      <h3>Filtros de Búsqueda</h3>
       
       <div className="filtro-grupo">
         <label htmlFor="especialidad">Especialidad:</label>
@@ -53,22 +52,12 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
           value={filtros.especialidad} 
           onChange={handleEspecialidadChange}
         >
-          {especialidades.map(esp => (
-            <option key={esp} value={esp}>{esp}</option>
+          <option value="">Todas las especialidades</option>
+          {especialidades.map(especialidad => (
+            <option key={especialidad} value={especialidad}>
+              {especialidad}
+            </option>
           ))}
-        </select>
-      </div>
-
-      <div className="filtro-grupo">
-        <label htmlFor="modalidad">Modalidad:</label>
-        <select
-          id="modalidad"
-          value={filtros.modalidad}
-          onChange={handleModalidadChange}
-        >
-          <option value="">Cualquier modalidad</option>
-          <option value="online">Solo Online</option>
-          <option value="presencial">Solo Presencial</option>
         </select>
       </div>
 
@@ -78,28 +67,38 @@ export const FiltrosBusquedaComponent: React.FC<FiltrosBusquedaProps> = ({
           type="range"
           id="precio"
           min="50"
-          max="150"
+          max="300"
+          step="25"
           value={filtros.precioMax}
           onChange={handlePrecioChange}
-          style={{ '--value': filtros.precioMax } as React.CSSProperties}
         />
       </div>
 
       <div className="filtro-grupo">
-        <label htmlFor="disponibilidad">Disponibilidad:</label>
-        <select
+        <label htmlFor="modalidad">Modalidad:</label>
+        <select 
+          id="modalidad"
+          value={filtros.modalidad} 
+          onChange={handleModalidadChange}
+        >
+          <option value="">Cualquier modalidad</option>
+          <option value="online">💻 Online</option>
+          <option value="presencial">🏢 Presencial</option>
+        </select>
+      </div>
+
+      <div className="filtro-grupo">
+        <label htmlFor="disponibilidad">Fecha disponible:</label>
+        <select 
           id="disponibilidad"
-          value={filtros.disponibilidad}
+          value={filtros.disponibilidad} 
           onChange={handleDisponibilidadChange}
         >
           <option value="">Cualquier fecha</option>
-          <option value="2025-07-18">18 de Julio</option>
-          <option value="2025-07-21">21 de Julio</option>
-          <option value="2025-07-25">25 de Julio</option>
-          <option value="2025-08-01">1 de Agosto</option>
-          <option value="2025-08-15">15 de Agosto</option>
-          <option value="2025-09-01">1 de Septiembre</option>
-          <option value="2025-09-15">15 de Septiembre</option>
+          <option value="2025-01-20">20 de Enero</option>
+          <option value="2025-01-21">21 de Enero</option>
+          <option value="2025-01-22">22 de Enero</option>
+          <option value="2025-01-23">23 de Enero</option>
         </select>
       </div>
     </div>

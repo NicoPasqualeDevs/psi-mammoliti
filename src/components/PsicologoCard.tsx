@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Psicologo } from '../types';
 import { detectarTimezone, convertirHorario } from '../utils/timezone';
 
@@ -9,8 +9,8 @@ interface PsicologoCardProps {
 
 const LONGITUD_MAXIMA = 86; // Longitud del texto de ejemplo
 
-const truncarTexto = (texto: string): string => {
-  if (texto.length <= LONGITUD_MAXIMA) return texto;
+const truncarTexto = (texto: string, expandido: boolean): string => {
+  if (expandido || texto.length <= LONGITUD_MAXIMA) return texto;
   return texto.slice(0, LONGITUD_MAXIMA) + '...';
 };
 
@@ -23,6 +23,7 @@ const getModalidadTexto = (modalidad: string): string => {
 };
 
 export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSeleccionar }) => {
+  const [expandido, setExpandido] = useState(false);
   const proximaDisponibilidad = psicologo.disponibilidad[0];
   const timezoneUsuario = detectarTimezone();
   const timezonePsicologo = 'America/Mexico_City';
@@ -43,11 +44,22 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
             <span className="estrellas">{'★'.repeat(Math.floor(psicologo.rating))}</span>
             <span className="rating-numero">({psicologo.rating})</span>
           </div>
-          <p className="experiencia">{psicologo.experiencia} años de experiencia</p>
+          <p className={`experiencia ${expandido ? 'expandido' : ''}`}>
+            {psicologo.experiencia} años de experiencia
+          </p>
+          <p className={`descripcion ${expandido ? 'expandido' : ''}`}>
+            {truncarTexto(psicologo.descripcion, expandido)}
+          </p>
+          {psicologo.descripcion.length > LONGITUD_MAXIMA && (
+            <button 
+              className="btn-expandir"
+              onClick={() => setExpandido(!expandido)}
+            >
+              {expandido ? '▼ Ver menos' : '▲ Ver más'}
+            </button>
+          )}
         </div>
       </div>
-      
-      <p className="descripcion">{truncarTexto(psicologo.descripcion)}</p>
       
       <div className="especialidades">
         {psicologo.especialidades.map((esp, index) => (
