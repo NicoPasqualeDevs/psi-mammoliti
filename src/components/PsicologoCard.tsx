@@ -56,10 +56,10 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
         </p>
         {psicologo.descripcion.length > LONGITUD_MAXIMA && (
           <button 
-            className="btn-expandir"
+            className="btn-expandir btn-expandir-sutil"
             onClick={() => setExpandido(!expandido)}
           >
-            {expandido ? '▼ Ver menos' : '▲ Ver más'}
+            {expandido ? 'ver menos' : 'leer más...'}
           </button>
         )}
       </div>
