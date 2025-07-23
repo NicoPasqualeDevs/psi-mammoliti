@@ -46,8 +46,18 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     
-    # CSP básico para React
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self';" always;
+    # CSP actualizado para permitir recursos necesarios
+    add_header Content-Security-Policy "
+        default-src 'self';
+        script-src 'self' 'unsafe-eval' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        font-src 'self' https://fonts.gstatic.com data:;
+        img-src 'self' data: https: blob:;
+        connect-src 'self' https://api.global-deer.com;
+        frame-ancestors 'none';
+        base-uri 'self';
+        form-action 'self';
+    " always;
 
     # Configuración de compresión
     gzip on;

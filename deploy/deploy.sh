@@ -15,7 +15,8 @@ NC='\033[0m'
 APP_NAME="psi-mammoliti"
 APP_DIR="/var/www/$APP_NAME"
 SERVICE_PORT="3000"
-DOMAIN_NAME="${DOMAIN_NAME:-localhost}"
+DOMAIN_NAME="${DOMAIN_NAME:-global-deer.com}"
+SETUP_SSL="${SETUP_SSL:-false}"
 
 echo -e "${GREEN}🚀 Iniciando despliegue de $APP_NAME${NC}"
 
@@ -260,12 +261,27 @@ EOF
 
 chmod +x "/usr/local/bin/$APP_NAME-manage"
 
+# Configurar SSL si está habilitado
+if [ "$SETUP_SSL" = "true" ]; then
+    log "Configurando SSL con Certbot..."
+    if [ -f "$(pwd)/deploy/setup-ssl.sh" ]; then
+        chmod +x "$(pwd)/deploy/setup-ssl.sh"
+        "$(pwd)/deploy/setup-ssl.sh"
+    else
+        warning "Script de configuración SSL no encontrado"
+    fi
+fi
+
 # Mostrar información final
 echo ""
 echo -e "${GREEN}✅ ¡Despliegue completado con éxito!${NC}"
 echo ""
 echo -e "${YELLOW}📋 Información del despliegue:${NC}"
-echo -e "   🌐 URL: http://$DOMAIN_NAME"
+if [ "$SETUP_SSL" = "true" ]; then
+    echo -e "   🌐 URL: https://$DOMAIN_NAME"
+else
+    echo -e "   🌐 URL: http://$DOMAIN_NAME"
+fi
 echo -e "   📁 Directorio: $APP_DIR"
 echo -e "   🔧 Puerto interno: $SERVICE_PORT"
 echo -e "   📊 Logs: /var/log/$APP_NAME/"
@@ -281,5 +297,13 @@ echo -e "   $APP_NAME-manage update    # Actualizar aplicación"
 echo ""
 echo -e "   systemctl status nginx     # Estado de nginx"
 echo -e "   pm2 monit                  # Monitor PM2"
+if [ "$SETUP_SSL" = "true" ]; then
+    echo -e "   certbot certificates      # Ver certificados SSL"
+    echo -e "   certbot renew --dry-run   # Probar renovación SSL"
+fi
 echo ""
-echo -e "${GREEN}🎉 La aplicación debería estar disponible en: http://$DOMAIN_NAME${NC}" 
+if [ "$SETUP_SSL" = "true" ]; then
+    echo -e "${GREEN}🎉 La aplicación está disponible en: https://$DOMAIN_NAME${NC}"
+else
+    echo -e "${GREEN}🎉 La aplicación está disponible en: http://$DOMAIN_NAME${NC}"
+fi 
