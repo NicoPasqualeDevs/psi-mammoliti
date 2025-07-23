@@ -95,6 +95,15 @@ if [ -f "package-lock.json" ]; then
 fi
 npm install --omit=dev
 
+# Configurar base de datos
+log "Configurando base de datos SQLite..."
+if [ -f "deploy/setup-db.sh" ]; then
+    chmod +x deploy/setup-db.sh
+    ./deploy/setup-db.sh
+else
+    error "Script de configuración de base de datos no encontrado"
+fi
+
 # Construir aplicación para producción
 log "Construyendo aplicación..."
 npm run build
@@ -103,24 +112,43 @@ npm run build
 log "Configurando PM2..."
 cat > ecosystem.config.js << EOF
 module.exports = {
-  apps: [{
-    name: '$APP_NAME',
-    script: 'npx',
-    args: 'serve -s build -l $SERVICE_PORT',
-    cwd: '$APP_DIR',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'production',
-      PORT: '$SERVICE_PORT'
+  apps: [
+    {
+      name: '$APP_NAME-frontend',
+      script: 'npx',
+      args: 'serve -s build -l $SERVICE_PORT',
+      cwd: '$APP_DIR',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: '$SERVICE_PORT'
+      },
+      error_file: '/var/log/$APP_NAME/frontend-error.log',
+      out_file: '/var/log/$APP_NAME/frontend-out.log',
+      log_file: '/var/log/$APP_NAME/frontend-combined.log',
+      time: true
     },
-    error_file: '/var/log/$APP_NAME/error.log',
-    out_file: '/var/log/$APP_NAME/out.log',
-    log_file: '/var/log/$APP_NAME/combined.log',
-    time: true
-  }]
+    {
+      name: '$APP_NAME-backend',
+      script: 'backend/server.js',
+      cwd: '$APP_DIR',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: '3001'
+      },
+      error_file: '/var/log/$APP_NAME/backend-error.log',
+      out_file: '/var/log/$APP_NAME/backend-out.log',
+      log_file: '/var/log/$APP_NAME/backend-combined.log',
+      time: true
+    }
+  ]
 };
 EOF
 
