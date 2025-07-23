@@ -47,6 +47,7 @@ apt-get install -y \
     curl \
     git \
     nginx \
+    ufw \
     software-properties-common \
     apt-transport-https \
     ca-certificates \
