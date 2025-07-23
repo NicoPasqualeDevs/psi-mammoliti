@@ -23,6 +23,7 @@
     "generate-manual": "node scripts/generate-manual.js",
     "generate-modalidades-doc": "node scripts/generate-modalidades-doc.js",
     "generate-admin-manual": "node scripts/generate-admin-manual.js",
+    "generate-tech-summary": "node scripts/generate-tech-summary.js",
     "generate-all-docs": "node scripts/generate-all-docs.js",
     "convert-data": "node scripts/convert-psicologos-data.js",
     "backend:install": "cd backend && npm install",

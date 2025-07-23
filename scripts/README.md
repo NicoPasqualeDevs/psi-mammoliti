@@ -16,11 +16,23 @@ npm run generate-modalidades-doc
 ```
 Genera `Documentacion-Modalidades-PsiConnect.pdf` con justificación técnica detallada de la implementación de modalidades online/presencial.
 
-### 3. Documentación Completa
+### 3. Manual del Panel de Administración
+```bash
+npm run generate-admin-manual
+```
+Genera `Manual-Panel-Administracion-PsiConnect.pdf` con documentación completa del panel de administración.
+
+### 4. Resumen Técnico y Consideraciones de Backup
+```bash
+npm run generate-tech-summary
+```
+Genera `Resumen-Tecnico-PsiConnect.pdf` con documentación técnica liviana, hitos importantes implementados y estrategias de backup.
+
+### 5. Documentación Completa
 ```bash
 npm run generate-all-docs
 ```
-Ejecuta ambos scripts y genera toda la documentación del proyecto.
+Ejecuta todos los scripts y genera toda la documentación del proyecto.
 
 ## 📋 Contenido de los Documentos
 
@@ -32,7 +44,14 @@ Ejecuta ambos scripts y genera toda la documentación del proyecto.
 - ✅ Preguntas frecuentes
 - ✅ Soporte técnico
 
-### Documentación Técnica
+### Manual del Panel de Administración
+- ✅ Guía completa del panel de administración
+- ✅ Gestión CRUD de psicólogos
+- ✅ Configuración de horarios y especialidades
+- ✅ Herramientas de mantenimiento de base de datos
+- ✅ Estadísticas y monitoreo
+
+### Documentación Técnica de Modalidades
 - ✅ Resumen ejecutivo de cambios
 - ✅ Arquitectura de tipos TypeScript
 - ✅ Comparaciones antes/después del código
@@ -40,6 +59,15 @@ Ejecuta ambos scripts y genera toda la documentación del proyecto.
 - ✅ Mejoras en UI/UX
 - ✅ Casos de uso cubiertos
 - ✅ Beneficios y mejoras futuras
+
+### Resumen Técnico y Consideraciones de Backup
+- ✅ Hitos técnicos implementados más importantes
+- ✅ Arquitectura técnica actual (React + Node.js + SQLite)
+- ✅ Estrategias de backup y recuperación en 3 niveles
+- ✅ Evaluación de riesgos y mitigaciones
+- ✅ Métricas de performance y escalabilidad
+- ✅ Herramientas de monitoreo y diagnóstico
+- ✅ Recomendaciones técnicas prioritarias
 
 ## 🔧 Requisitos Técnicos
 
@@ -52,6 +80,8 @@ Ejecuta ambos scripts y genera toda la documentación del proyecto.
 Los PDFs se crean en el directorio raíz del proyecto:
 - `Manual-Usuario-PsiConnect.pdf`
 - `Documentacion-Modalidades-PsiConnect.pdf`
+- `Manual-Panel-Administracion-PsiConnect.pdf`
+- `Resumen-Tecnico-PsiConnect.pdf`
 
 ## 🎨 Personalización
 

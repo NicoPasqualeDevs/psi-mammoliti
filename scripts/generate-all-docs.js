@@ -1,6 +1,7 @@
 const generateManual = require('./generate-manual.js');
 const generateModalidadesDoc = require('./generate-modalidades-doc.js');
 const generateAdminManual = require('./generate-admin-manual.js');
+const generateTechSummary = require('./generate-tech-summary.js');
 
 async function generateAllDocs() {
     try {
@@ -19,12 +20,17 @@ async function generateAllDocs() {
         await generateAdminManual();
         console.log('');
         
+        console.log('4️⃣ Generando Resumen Técnico y Consideraciones de Backup...');
+        await generateTechSummary();
+        console.log('');
+        
         console.log('🎉 ¡Documentación completa generada exitosamente!');
         console.log('');
         console.log('📄 Archivos generados:');
         console.log('   • Manual-Usuario-PsiConnect.pdf');
         console.log('   • Documentacion-Modalidades-PsiConnect.pdf');
         console.log('   • Manual-Panel-Administracion-PsiConnect.pdf');
+        console.log('   • Resumen-Tecnico-PsiConnect.pdf');
         console.log('');
         console.log('✨ Todos los documentos están listos para distribución.');
         
