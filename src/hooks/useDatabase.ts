@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import DatabaseService from '../database/database';
-import { migrarDatosIniciales } from '../database/migration';
+import ApiService from '../services/apiService';
 import { Psicologo, Sesion, Modalidad } from '../types';
 
 interface DatabaseState {
@@ -22,15 +21,13 @@ export function useDatabase() {
     initialized: false
   });
 
-  const db = DatabaseService.getInstance();
-
-  // Cargar datos de la base de datos
+  // Cargar datos del backend
   const cargarDatos = useCallback(async () => {
     try {
       const [psicologos, sesiones, especialidades] = await Promise.all([
-        db.obtenerPsicologos(),
-        db.obtenerSesiones(),
-        db.obtenerEspecialidades()
+        ApiService.obtenerPsicologos(),
+        ApiService.obtenerSesiones(),
+        ApiService.obtenerEspecialidades()
       ]);
 
       setState(prev => ({
@@ -43,34 +40,30 @@ export function useDatabase() {
       }));
       
     } catch (error) {
+      console.error('Error cargando datos del backend:', error);
       setState(prev => ({ 
         ...prev, 
-        error: 'Error al cargar datos', 
+        error: 'Error al conectar con el servidor. Verifica que el backend esté ejecutándose.', 
         loading: false 
       }));
     }
-  }, [db]);
+  }, []);
 
-  // Inicializar base de datos y cargar datos
+  // Inicializar conexión con el backend
   const inicializar = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
-      // Esperar a que la base de datos se inicialice
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Migrar datos iniciales si es necesario
-      await migrarDatosIniciales();
-      
-      // Cargar todos los datos
+      // Intentar cargar datos del backend
       await cargarDatos();
       
       setState(prev => ({ ...prev, initialized: true, loading: false }));
       
     } catch (error) {
+      console.error('Error inicializando conexión con backend:', error);
       setState(prev => ({ 
         ...prev, 
-        error: 'Error al inicializar la base de datos', 
+        error: 'Error al inicializar la conexión con el servidor', 
         loading: false 
       }));
     }
@@ -84,40 +77,39 @@ export function useDatabase() {
   // Insertar nueva sesión
   const insertarSesion = useCallback(async (sesion: Sesion) => {
     try {
-      await db.insertarSesion(sesion);
+      await ApiService.crearSesion(sesion);
       await cargarDatos(); // Recargar datos después de insertar
       return true;
     } catch (error) {
       console.error('Error insertando sesión:', error);
       setState(prev => ({ 
         ...prev, 
-        error: 'Error al agendar la sesión' 
+        error: 'Error al agendar la sesión en el servidor' 
       }));
       return false;
     }
-  }, [db, cargarDatos]);
+  }, [cargarDatos]);
 
   // Eliminar psicólogo
   const eliminarPsicologo = useCallback(async (id: string) => {
     try {
-      await db.eliminarPsicologo(id);
+      await ApiService.eliminarPsicologo(id);
       await cargarDatos(); // Recargar datos después de eliminar
       return true;
     } catch (error) {
+      console.error('Error eliminando psicólogo:', error);
       setState(prev => ({ 
         ...prev, 
-        error: 'Error al eliminar el psicólogo' 
+        error: 'Error al eliminar el psicólogo del servidor' 
       }));
       return false;
     }
-  }, [db, cargarDatos]);
+  }, [cargarDatos]);
 
   // Insertar psicólogo
   const insertarPsicologo = useCallback(async (psicologo: Psicologo) => {
     try {
-
-      
-      // Validar datos antes de insertar
+      // Validar datos antes de enviar
       if (!psicologo.id || !psicologo.nombre || !psicologo.apellido) {
         throw new Error('Datos del psicólogo incompletos: falta ID, nombre o apellido');
       }
@@ -136,14 +128,13 @@ export function useDatabase() {
         throw new Error(`Ya existe un psicólogo con el ID: ${psicologo.id}`);
       }
       
-      await db.insertarPsicologo(psicologo);
-      
+      await ApiService.crearPsicologo(psicologo);
       await cargarDatos(); // Recargar datos después de insertar
       
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-
+      console.error('Error insertando psicólogo:', errorMessage, error);
       
       setState(prev => ({ 
         ...prev, 
@@ -151,13 +142,11 @@ export function useDatabase() {
       }));
       return false;
     }
-  }, [db, cargarDatos, state.psicologos]);
+  }, [cargarDatos, state.psicologos]);
 
   // Actualizar psicólogo
   const actualizarPsicologo = useCallback(async (psicologo: Psicologo) => {
     try {
-
-      
       // Validar datos antes de actualizar
       if (!psicologo.id || !psicologo.nombre || !psicologo.apellido) {
         throw new Error('Datos del psicólogo incompletos: falta ID, nombre o apellido');
@@ -177,14 +166,13 @@ export function useDatabase() {
         throw new Error(`No se encontró el psicólogo con ID: ${psicologo.id}`);
       }
       
-      await db.actualizarPsicologo(psicologo);
-      
+      await ApiService.actualizarPsicologo(psicologo);
       await cargarDatos(); // Recargar datos después de actualizar
       
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('❌ Error actualizando psicólogo:', errorMessage, error);
+      console.error('Error actualizando psicólogo:', errorMessage, error);
       
       setState(prev => ({ 
         ...prev, 
@@ -192,7 +180,7 @@ export function useDatabase() {
       }));
       return false;
     }
-  }, [db, cargarDatos, state.psicologos]);
+  }, [cargarDatos, state.psicologos]);
 
   // Obtener psicólogo por ID
   const obtenerPsicologoPorId = useCallback((id: string): Psicologo | null => {
@@ -234,6 +222,22 @@ export function useDatabase() {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
+  // Limpiar y recargar base de datos
+  const limpiarYRecargarDB = useCallback(async () => {
+    try {
+      await ApiService.limpiarBaseDatos();
+      await cargarDatos();
+      return true;
+    } catch (error) {
+      console.error('Error limpiando base de datos:', error);
+      setState(prev => ({ 
+        ...prev, 
+        error: 'Error al limpiar la base de datos del servidor' 
+      }));
+      return false;
+    }
+  }, [cargarDatos]);
+
   // Inicializar al montar el componente
   useEffect(() => {
     inicializar();
@@ -260,6 +264,7 @@ export function useDatabase() {
     filtrarPsicologos,
     obtenerSesionesPorPsicologo,
     limpiarError,
+    limpiarYRecargarDB,
     
     // Estadísticas
     stats: {

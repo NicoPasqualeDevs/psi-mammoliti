@@ -12,7 +12,8 @@ export const Admin: React.FC = () => {
     stats,
     insertarPsicologo,
     actualizarPsicologo,
-    eliminarPsicologo
+    eliminarPsicologo,
+    limpiarYRecargarDB
   } = useDatabase();
   
   const [procesando, setProcesando] = useState(false);
@@ -277,13 +278,15 @@ export const Admin: React.FC = () => {
         
         <button 
           onClick={async () => {
-            if (window.confirm('¿Estás seguro de que quieres limpiar y recargar toda la base de datos? Esto eliminará todos los datos y los volverá a importar.')) {
+            if (window.confirm('¿Estás seguro de que quieres limpiar toda la base de datos? Esto eliminará todos los datos del servidor.')) {
               setProcesando(true);
               try {
-                const { limpiarYReimportarDatos } = await import('../database/migration');
-                await limpiarYReimportarDatos();
-                mostrarMensaje('✅ Base de datos limpiada y recargada exitosamente');
-                window.location.reload();
+                const exito = await limpiarYRecargarDB();
+                if (exito) {
+                  mostrarMensaje('✅ Base de datos limpiada exitosamente');
+                } else {
+                  mostrarMensaje('❌ Error al limpiar la base de datos', 'error');
+                }
               } catch (error) {
                 console.error('Error limpiando base de datos:', error);
                 mostrarMensaje('❌ Error al limpiar la base de datos', 'error');
@@ -295,7 +298,7 @@ export const Admin: React.FC = () => {
           className="btn-danger"
           disabled={procesando}
         >
-          🗑️ Limpiar y Recargar DB
+          🗑️ Limpiar DB
         </button>
       </div>
 
