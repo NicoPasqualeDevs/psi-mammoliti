@@ -44,21 +44,24 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
             <span className="estrellas">{'★'.repeat(Math.floor(psicologo.rating))}</span>
             <span className="rating-numero">({psicologo.rating})</span>
           </div>
-          <p className={`experiencia ${expandido ? 'expandido' : ''}`}>
-            {psicologo.experiencia} años de experiencia
-          </p>
-          <p className={`descripcion ${expandido ? 'expandido' : ''}`}>
-            {truncarTexto(psicologo.descripcion, expandido)}
-          </p>
-          {psicologo.descripcion.length > LONGITUD_MAXIMA && (
-            <button 
-              className="btn-expandir"
-              onClick={() => setExpandido(!expandido)}
-            >
-              {expandido ? '▼ Ver menos' : '▲ Ver más'}
-            </button>
-          )}
         </div>
+      </div>
+      
+      <div className="psicologo-detalles">
+        <p className={`experiencia ${expandido ? 'expandido' : ''}`}>
+          {psicologo.experiencia} años de experiencia
+        </p>
+        <p className={`descripcion ${expandido ? 'expandido' : ''}`}>
+          {truncarTexto(psicologo.descripcion, expandido)}
+        </p>
+        {psicologo.descripcion.length > LONGITUD_MAXIMA && (
+          <button 
+            className="btn-expandir"
+            onClick={() => setExpandido(!expandido)}
+          >
+            {expandido ? '▼ Ver menos' : '▲ Ver más'}
+          </button>
+        )}
       </div>
       
       <div className="especialidades">
