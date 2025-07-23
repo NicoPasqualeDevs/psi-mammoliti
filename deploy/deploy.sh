@@ -95,6 +95,16 @@ if [ -f "package-lock.json" ]; then
 fi
 npm install --omit=dev
 
+# Instalar dependencias del backend
+log "Instalando dependencias del backend..."
+if [ -d "backend" ]; then
+    cd backend
+    npm install
+    cd ..
+else
+    error "Directorio backend/ no encontrado"
+fi
+
 # Configurar base de datos
 log "Configurando base de datos SQLite..."
 if [ -f "deploy/setup-db.sh" ]; then
@@ -133,8 +143,8 @@ module.exports = {
     },
     {
       name: '$APP_NAME-backend',
-      script: 'backend/server.js',
-      cwd: '$APP_DIR',
+      script: 'server.js',
+      cwd: '$APP_DIR/backend',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -260,17 +270,47 @@ case "$1" in
         ;;
     stop)
         echo "Deteniendo $APP_NAME..."
-        pm2 stop "$APP_NAME"
+        pm2 stop "$APP_NAME-frontend" "$APP_NAME-backend"
         ;;
     restart)
         echo "Reiniciando $APP_NAME..."
-        pm2 restart "$APP_NAME"
+        pm2 restart "$APP_NAME-frontend" "$APP_NAME-backend"
         ;;
     status)
+        echo "Estado de servicios:"
         pm2 status
+        echo ""
+        echo "Puertos en uso:"
+        netstat -tulpn | grep -E ":(3000|3001)" || echo "Ningún proceso en puertos 3000/3001"
         ;;
     logs)
-        pm2 logs "$APP_NAME" --lines 50
+        if [ "$2" = "backend" ]; then
+            pm2 logs "$APP_NAME-backend" --lines 50
+        elif [ "$2" = "frontend" ]; then
+            pm2 logs "$APP_NAME-frontend" --lines 50
+        else
+            echo "Logs del backend:"
+            pm2 logs "$APP_NAME-backend" --lines 25
+            echo ""
+            echo "Logs del frontend:"
+            pm2 logs "$APP_NAME-frontend" --lines 25
+        fi
+        ;;
+    diagnose)
+        echo "Ejecutando diagnóstico completo..."
+        if [ -f "$APP_DIR/deploy/diagnose-backend.sh" ]; then
+            chmod +x "$APP_DIR/deploy/diagnose-backend.sh"
+            "$APP_DIR/deploy/diagnose-backend.sh"
+        else
+            echo "Script de diagnóstico no encontrado"
+        fi
+        ;;
+    test-api)
+        echo "Probando APIs..."
+        echo "Backend directo (puerto 3001):"
+        curl -s -f http://localhost:3001/api/psicologos > /dev/null && echo "✅ OK" || echo "❌ FALLO"
+        echo "A través de nginx:"
+        curl -s -f http://localhost/api/psicologos > /dev/null && echo "✅ OK" || echo "❌ FALLO"
         ;;
     update)
         echo "Actualizando $APP_NAME..."
@@ -278,10 +318,22 @@ case "$1" in
         git pull
         npm ci --only=production
         npm run build
-        pm2 restart "$APP_NAME"
+        # Actualizar dependencias del backend
+        cd backend && npm install && cd ..
+        pm2 restart "$APP_NAME-frontend" "$APP_NAME-backend"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart|status|logs|update}"
+        echo "Uso: $0 {start|stop|restart|status|logs|diagnose|test-api|update}"
+        echo ""
+        echo "Comandos disponibles:"
+        echo "  start     - Iniciar aplicación"
+        echo "  stop      - Detener aplicación"
+        echo "  restart   - Reiniciar aplicación"
+        echo "  status    - Ver estado de servicios"
+        echo "  logs      - Ver logs (logs backend|frontend para específicos)"
+        echo "  diagnose  - Ejecutar diagnóstico completo"
+        echo "  test-api  - Probar APIs"
+        echo "  update    - Actualizar aplicación"
         exit 1
         ;;
 esac
@@ -316,12 +368,14 @@ echo -e "   📊 Logs: /var/log/$APP_NAME/"
 echo -e "   ⚡ Node.js: $(node --version) (compatible con react-router-dom v7)"
 echo ""
 echo -e "${YELLOW}🛠️ Comandos útiles:${NC}"
-echo -e "   $APP_NAME-manage start     # Iniciar aplicación"
-echo -e "   $APP_NAME-manage stop      # Detener aplicación"
-echo -e "   $APP_NAME-manage restart   # Reiniciar aplicación"
-echo -e "   $APP_NAME-manage status    # Ver estado"
-echo -e "   $APP_NAME-manage logs      # Ver logs"
-echo -e "   $APP_NAME-manage update    # Actualizar aplicación"
+echo -e "   $APP_NAME-manage start       # Iniciar aplicación"
+echo -e "   $APP_NAME-manage stop        # Detener aplicación"
+echo -e "   $APP_NAME-manage restart     # Reiniciar aplicación"
+echo -e "   $APP_NAME-manage status      # Ver estado de servicios"
+echo -e "   $APP_NAME-manage logs        # Ver logs (logs backend|frontend)"
+echo -e "   $APP_NAME-manage diagnose    # Diagnóstico completo"
+echo -e "   $APP_NAME-manage test-api    # Probar APIs"
+echo -e "   $APP_NAME-manage update      # Actualizar aplicación"
 echo ""
 echo -e "   systemctl status nginx     # Estado de nginx"
 echo -e "   pm2 monit                  # Monitor PM2"
