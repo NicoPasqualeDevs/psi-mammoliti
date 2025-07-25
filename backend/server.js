@@ -79,6 +79,65 @@ db.serialize(() => {
       FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
     )
   `);
+
+  // Tabla de configuracion_horarios
+  db.run(`
+    CREATE TABLE IF NOT EXISTS configuracion_horarios (
+      psicologoId TEXT PRIMARY KEY,
+      duracion_sesion INTEGER NOT NULL,
+      tiempo_buffer INTEGER NOT NULL,
+      dias_anticipacion INTEGER NOT NULL,
+      zona_horaria TEXT NOT NULL,
+      auto_generar INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Tabla de horarios_trabajo
+  db.run(`
+    CREATE TABLE IF NOT EXISTS horarios_trabajo (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      psicologoId TEXT NOT NULL,
+      dia_semana INTEGER NOT NULL,
+      hora_inicio TEXT NOT NULL,
+      hora_fin TEXT NOT NULL,
+      modalidades TEXT NOT NULL,
+      activo BOOLEAN DEFAULT 1,
+      FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
+    )
+  `);
+
+  // Tabla de horarios_excepciones
+  db.run(`
+    CREATE TABLE IF NOT EXISTS horarios_excepciones (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      psicologoId TEXT NOT NULL,
+      fecha TEXT NOT NULL,
+      tipo TEXT NOT NULL,
+      hora_inicio TEXT NOT NULL,
+      hora_fin TEXT NOT NULL,
+      modalidades TEXT,
+      motivo TEXT,
+      FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
+    )
+  `);
+
+  // Tabla de citas
+  db.run(`
+    CREATE TABLE IF NOT EXISTS citas (
+      id TEXT PRIMARY KEY,
+      psicologoId TEXT NOT NULL,
+      fecha TEXT NOT NULL,
+      hora_inicio TEXT NOT NULL,
+      hora_fin TEXT NOT NULL,
+      modalidad TEXT NOT NULL,
+      sesionId TEXT,
+      estado TEXT DEFAULT 'pendiente',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
+    )
+  `);
 });
 
 // ENDPOINTS API
@@ -583,6 +642,484 @@ app.post('/api/reset', (req, res) => {
     });
   });
 });
+
+// NUEVOS ENDPOINTS PARA SISTEMA DE HORARIOS REALES
+
+// === CONFIGURACIÓN DE HORARIOS ===
+
+// Obtener configuración de horarios de un psicólogo
+app.get('/api/psicologos/:id/configuracion-horarios', (req, res) => {
+  const { id } = req.params;
+  
+  const query = 'SELECT * FROM configuracion_horarios WHERE psicologoId = ?';
+  
+  db.get(query, [id], (err, configuracion) => {
+    if (err) {
+      console.error('Error obteniendo configuración de horarios:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (!configuracion) {
+      // Crear configuración por defecto
+      const configPorDefecto = {
+        psicologoId: id,
+        duracion_sesion: 60,
+        tiempo_buffer: 15,
+        dias_anticipacion: 30,
+        zona_horaria: 'America/Mexico_City',
+        auto_generar: 1
+      };
+      
+      const insertQuery = `
+        INSERT INTO configuracion_horarios (psicologoId, duracion_sesion, tiempo_buffer, dias_anticipacion, zona_horaria, auto_generar)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `;
+      
+      db.run(insertQuery, [
+        configPorDefecto.psicologoId,
+        configPorDefecto.duracion_sesion,
+        configPorDefecto.tiempo_buffer,
+        configPorDefecto.dias_anticipacion,
+        configPorDefecto.zona_horaria,
+        configPorDefecto.auto_generar
+      ], function(err) {
+        if (err) {
+          console.error('Error creando configuración por defecto:', err);
+          return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        res.json({
+          id: this.lastID,
+          ...configPorDefecto
+        });
+      });
+    } else {
+      res.json(configuracion);
+    }
+  });
+});
+
+// Actualizar configuración de horarios
+app.put('/api/psicologos/:id/configuracion-horarios', (req, res) => {
+  const { id } = req.params;
+  const { duracion_sesion, tiempo_buffer, dias_anticipacion, zona_horaria, auto_generar } = req.body;
+  
+  const query = `
+    UPDATE configuracion_horarios 
+    SET duracion_sesion = ?, tiempo_buffer = ?, dias_anticipacion = ?, zona_horaria = ?, auto_generar = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE psicologoId = ?
+  `;
+  
+  db.run(query, [duracion_sesion, tiempo_buffer, dias_anticipacion, zona_horaria, auto_generar, id], function(err) {
+    if (err) {
+      console.error('Error actualizando configuración:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Configuración no encontrada' });
+    }
+    
+    res.json({ message: 'Configuración actualizada exitosamente' });
+  });
+});
+
+// === HORARIOS DE TRABAJO ===
+
+// Obtener horarios de trabajo de un psicólogo
+app.get('/api/psicologos/:id/horarios-trabajo', (req, res) => {
+  const { id } = req.params;
+  
+  const query = 'SELECT * FROM horarios_trabajo WHERE psicologoId = ? ORDER BY dia_semana, hora_inicio';
+  
+  db.all(query, [id], (err, horarios) => {
+    if (err) {
+      console.error('Error obteniendo horarios de trabajo:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    const horariosFormateados = horarios.map(horario => ({
+      ...horario,
+      modalidades: JSON.parse(horario.modalidades)
+    }));
+    
+    res.json(horariosFormateados);
+  });
+});
+
+// Crear horario de trabajo
+app.post('/api/psicologos/:id/horarios-trabajo', (req, res) => {
+  const { id } = req.params;
+  const { dia_semana, hora_inicio, hora_fin, modalidades, activo = true } = req.body;
+  
+  const query = `
+    INSERT INTO horarios_trabajo (psicologoId, dia_semana, hora_inicio, hora_fin, modalidades, activo)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.run(query, [id, dia_semana, hora_inicio, hora_fin, JSON.stringify(modalidades), activo], function(err) {
+    if (err) {
+      console.error('Error creando horario de trabajo:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    res.status(201).json({ 
+      id: this.lastID,
+      message: 'Horario de trabajo creado exitosamente' 
+    });
+  });
+});
+
+// Actualizar horario de trabajo
+app.put('/api/horarios-trabajo/:horarioId', (req, res) => {
+  const { horarioId } = req.params;
+  const { dia_semana, hora_inicio, hora_fin, modalidades, activo } = req.body;
+  
+  const query = `
+    UPDATE horarios_trabajo 
+    SET dia_semana = ?, hora_inicio = ?, hora_fin = ?, modalidades = ?, activo = ?
+    WHERE id = ?
+  `;
+  
+  db.run(query, [dia_semana, hora_inicio, hora_fin, JSON.stringify(modalidades), activo, horarioId], function(err) {
+    if (err) {
+      console.error('Error actualizando horario de trabajo:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Horario no encontrado' });
+    }
+    
+    res.json({ message: 'Horario actualizado exitosamente' });
+  });
+});
+
+// Eliminar horario de trabajo
+app.delete('/api/horarios-trabajo/:horarioId', (req, res) => {
+  const { horarioId } = req.params;
+  
+  db.run('DELETE FROM horarios_trabajo WHERE id = ?', [horarioId], function(err) {
+    if (err) {
+      console.error('Error eliminando horario de trabajo:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Horario no encontrado' });
+    }
+    
+    res.json({ message: 'Horario eliminado exitosamente' });
+  });
+});
+
+// === EXCEPCIONES DE HORARIOS ===
+
+// Obtener excepciones de un psicólogo
+app.get('/api/psicologos/:id/horarios-excepciones', (req, res) => {
+  const { id } = req.params;
+  
+  const query = 'SELECT * FROM horarios_excepciones WHERE psicologoId = ? ORDER BY fecha';
+  
+  db.all(query, [id], (err, excepciones) => {
+    if (err) {
+      console.error('Error obteniendo excepciones:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    const excepcionesFormateadas = excepciones.map(exc => ({
+      ...exc,
+      modalidades: exc.modalidades ? JSON.parse(exc.modalidades) : null
+    }));
+    
+    res.json(excepcionesFormateadas);
+  });
+});
+
+// Crear excepción de horario
+app.post('/api/psicologos/:id/horarios-excepciones', (req, res) => {
+  const { id } = req.params;
+  const { fecha, tipo, hora_inicio, hora_fin, modalidades, motivo } = req.body;
+  
+  const query = `
+    INSERT INTO horarios_excepciones (psicologoId, fecha, tipo, hora_inicio, hora_fin, modalidades, motivo)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.run(query, [
+    id, 
+    fecha, 
+    tipo, 
+    hora_inicio, 
+    hora_fin, 
+    modalidades ? JSON.stringify(modalidades) : null, 
+    motivo
+  ], function(err) {
+    if (err) {
+      console.error('Error creando excepción:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    res.status(201).json({ 
+      id: this.lastID,
+      message: 'Excepción creada exitosamente' 
+    });
+  });
+});
+
+// Eliminar excepción
+app.delete('/api/horarios-excepciones/:excepcionId', (req, res) => {
+  const { excepcionId } = req.params;
+  
+  db.run('DELETE FROM horarios_excepciones WHERE id = ?', [excepcionId], function(err) {
+    if (err) {
+      console.error('Error eliminando excepción:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Excepción no encontrada' });
+    }
+    
+    res.json({ message: 'Excepción eliminada exitosamente' });
+  });
+});
+
+// === DISPONIBILIDAD EN TIEMPO REAL ===
+
+// Generar disponibilidad para un psicólogo en un rango de fechas
+app.get('/api/psicologos/:id/disponibilidad', (req, res) => {
+  const { id } = req.params;
+  const { fecha_inicio, fecha_fin } = req.query;
+  
+  if (!fecha_inicio || !fecha_fin) {
+    return res.status(400).json({ error: 'Se requieren fecha_inicio y fecha_fin' });
+  }
+  
+  // Obtener configuración
+  const configQuery = 'SELECT * FROM configuracion_horarios WHERE psicologoId = ?';
+  
+  db.get(configQuery, [id], (err, configuracion) => {
+    if (err) {
+      console.error('Error obteniendo configuración:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    if (!configuracion) {
+      return res.status(404).json({ error: 'Configuración de horarios no encontrada' });
+    }
+    
+    // Obtener horarios de trabajo
+    const horariosQuery = 'SELECT * FROM horarios_trabajo WHERE psicologoId = ? AND activo = 1';
+    
+    db.all(horariosQuery, [id], (err, horariosTrabajoRaw) => {
+      if (err) {
+        console.error('Error obteniendo horarios de trabajo:', err);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+      }
+      
+      // Obtener excepciones
+      const excepcionesQuery = 'SELECT * FROM horarios_excepciones WHERE psicologoId = ? AND fecha BETWEEN ? AND ?';
+      
+      db.all(excepcionesQuery, [id, fecha_inicio, fecha_fin], (err, excepcionesRaw) => {
+        if (err) {
+          console.error('Error obteniendo excepciones:', err);
+          return res.status(500).json({ error: 'Error interno del servidor' });
+        }
+        
+        // Obtener citas agendadas
+        const citasQuery = 'SELECT * FROM citas WHERE psicologoId = ? AND fecha BETWEEN ? AND ? AND estado = "confirmada"';
+        
+        db.all(citasQuery, [id, fecha_inicio, fecha_fin], (err, citas) => {
+          if (err) {
+            console.error('Error obteniendo citas:', err);
+            return res.status(500).json({ error: 'Error interno del servidor' });
+          }
+          
+          // Formatear datos
+          const horariosTrabajoFormateados = horariosTrabajoRaw.map(h => ({
+            ...h,
+            modalidades: JSON.parse(h.modalidades)
+          }));
+          
+          const excepcionesFormateadas = excepcionesRaw.map(e => ({
+            ...e,
+            modalidades: e.modalidades ? JSON.parse(e.modalidades) : null
+          }));
+          
+          // Generar disponibilidad usando lógica similar al servicio
+          const disponibilidad = generarDisponibilidadBackend(
+            new Date(fecha_inicio),
+            new Date(fecha_fin),
+            horariosTrabajoFormateados,
+            excepcionesFormateadas,
+            citas,
+            configuracion
+          );
+          
+          res.json(disponibilidad);
+        });
+      });
+    });
+  });
+});
+
+// === CITAS ===
+
+// Crear cita (al agendar sesión)
+app.post('/api/citas', (req, res) => {
+  const { psicologoId, fecha, hora_inicio, hora_fin, modalidad, sesionId } = req.body;
+  const citaId = `cita_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  const query = `
+    INSERT INTO citas (id, psicologoId, fecha, hora_inicio, hora_fin, modalidad, sesionId)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.run(query, [citaId, psicologoId, fecha, hora_inicio, hora_fin, modalidad, sesionId], function(err) {
+    if (err) {
+      console.error('Error creando cita:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+    
+    res.status(201).json({ 
+      id: citaId,
+      message: 'Cita creada exitosamente' 
+    });
+  });
+});
+
+// === FUNCIONES AUXILIARES ===
+
+function generarDisponibilidadBackend(fechaInicio, fechaFin, horariosTrabajoSemanales, excepciones, citasAgendadas, configuracion) {
+  const resultado = [];
+  const fechaActual = new Date(fechaInicio);
+
+  while (fechaActual <= fechaFin) {
+    const fechaStr = fechaActual.toISOString().split('T')[0];
+    const diaSemana = fechaActual.getDay();
+    
+    // Verificar si hay una excepción para este día
+    const excepcionDia = excepciones.find(exc => exc.fecha === fechaStr);
+    
+    let horariosDelDia = [];
+
+    if (excepcionDia?.tipo === 'bloqueado') {
+      // Día completamente bloqueado
+      horariosDelDia = [];
+    } else if (excepcionDia?.tipo === 'horario_especial') {
+      // Día con horario especial
+      horariosDelDia = generarHorariosDiaBackend(
+        fechaStr,
+        [{
+          dia_semana: diaSemana,
+          hora_inicio: excepcionDia.hora_inicio,
+          hora_fin: excepcionDia.hora_fin,
+          modalidades: excepcionDia.modalidades
+        }],
+        citasAgendadas,
+        configuracion
+      );
+    } else {
+      // Día normal según plantilla semanal
+      const plantillasDelDia = horariosTrabajoSemanales.filter(horario => horario.dia_semana === diaSemana);
+      horariosDelDia = generarHorariosDiaBackend(fechaStr, plantillasDelDia, citasAgendadas, configuracion);
+    }
+
+    resultado.push({
+      fecha: fechaStr,
+      horarios: horariosDelDia.filter(h => h.disponible).map(h => ({
+        hora: h.hora_inicio,
+        modalidades: h.modalidades
+      }))
+    });
+
+    // Avanzar al siguiente día
+    fechaActual.setDate(fechaActual.getDate() + 1);
+  }
+
+  return resultado;
+}
+
+function generarHorariosDiaBackend(fecha, plantillas, citasAgendadas, configuracion) {
+  const horarios = [];
+  const citasDelDia = citasAgendadas.filter(cita => cita.fecha === fecha);
+
+  plantillas.forEach(plantilla => {
+    const horariosGenerados = generarIntervalosHorarioBackend(
+      plantilla.hora_inicio,
+      plantilla.hora_fin,
+      configuracion.duracion_sesion,
+      configuracion.tiempo_buffer
+    );
+
+    horariosGenerados.forEach(intervalo => {
+      // Verificar si el horario está ocupado
+      const citaConflicto = citasDelDia.find(cita => 
+        hayConflictoHorarioBackend(
+          intervalo.hora_inicio,
+          intervalo.hora_fin,
+          cita.hora_inicio,
+          cita.hora_fin
+        )
+      );
+
+      horarios.push({
+        fecha,
+        hora_inicio: intervalo.hora_inicio,
+        hora_fin: intervalo.hora_fin,
+        modalidades: plantilla.modalidades,
+        disponible: !citaConflicto,
+        ocupado_por: citaConflicto?.id
+      });
+    });
+  });
+
+  return horarios.sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
+}
+
+function generarIntervalosHorarioBackend(horaInicio, horaFin, duracionMinutos, bufferMinutos) {
+  const intervalos = [];
+  
+  const [horaIni, minIni] = horaInicio.split(':').map(Number);
+  const [horaFin_, minFin] = horaFin.split(':').map(Number);
+  
+  const inicioMinutos = horaIni * 60 + minIni;
+  const finMinutos = horaFin_ * 60 + minFin;
+  const intervaloTotal = duracionMinutos + bufferMinutos;
+  
+  for (let minutos = inicioMinutos; minutos + duracionMinutos <= finMinutos; minutos += intervaloTotal) {
+    const horaInicioIntervalo = minutosAHoraBackend(minutos);
+    const horaFinIntervalo = minutosAHoraBackend(minutos + duracionMinutos);
+    
+    intervalos.push({
+      hora_inicio: horaInicioIntervalo,
+      hora_fin: horaFinIntervalo
+    });
+  }
+  
+  return intervalos;
+}
+
+function minutosAHoraBackend(minutos) {
+  const horas = Math.floor(minutos / 60);
+  const mins = minutos % 60;
+  return `${horas.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
+function hayConflictoHorarioBackend(inicio1, fin1, inicio2, fin2) {
+  const [h1i, m1i] = inicio1.split(':').map(Number);
+  const [h1f, m1f] = fin1.split(':').map(Number);
+  const [h2i, m2i] = inicio2.split(':').map(Number);
+  const [h2f, m2f] = fin2.split(':').map(Number);
+  
+  const min1i = h1i * 60 + m1i;
+  const min1f = h1f * 60 + m1f;
+  const min2i = h2i * 60 + m2i;
+  const min2f = h2f * 60 + m2f;
+  
+  return min1i < min2f && min2i < min1f;
+}
 
 // Servir archivos estáticos en producción
 if (process.env.NODE_ENV === 'production') {

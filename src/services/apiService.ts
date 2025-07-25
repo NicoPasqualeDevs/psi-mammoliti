@@ -1,147 +1,174 @@
-import { Psicologo, Sesion } from '../types';
+import { Psicologo, Sesion, HorarioTrabajo, HorarioExcepcion, ConfiguracionHorarios, DisponibilidadRespuesta } from '../types';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
-// Función helper para hacer peticiones HTTP
-async function fetchAPI(endpoint: string, options: RequestInit = {}): Promise<any> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  });
+class ApiService {
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-export class ApiService {
-  // Psicólogos
-  static async obtenerPsicologos(): Promise<Psicologo[]> {
-    try {
-      return await fetchAPI('/psicologos');
-    } catch (error) {
-      console.error('Error obteniendo psicólogos:', error);
-      throw new Error('Error al cargar psicólogos');
+  // === PSICÓLOGOS ===
+  async obtenerPsicologos(): Promise<Psicologo[]> {
+    const response = await fetch(`${API_BASE_URL}/psicologos`);
+    if (!response.ok) {
+      throw new Error('Error al obtener psicólogos');
     }
+    return response.json();
   }
 
-  static async obtenerPsicologoPorId(id: string): Promise<Psicologo | null> {
-    try {
-      return await fetchAPI(`/psicologos/${id}`);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('404')) {
-        return null;
-      }
-      console.error('Error obteniendo psicólogo:', error);
-      throw new Error('Error al cargar psicólogo');
+  async obtenerPsicologoPorId(id: string): Promise<Psicologo> {
+    const response = await fetch(`${API_BASE_URL}/psicologos/${id}`);
+    if (!response.ok) {
+      throw new Error('Error al obtener psicólogo');
     }
+    return response.json();
   }
 
-  static async crearPsicologo(psicologo: Psicologo): Promise<void> {
-    try {
-      await fetchAPI('/psicologos', {
-        method: 'POST',
-        body: JSON.stringify(psicologo),
-      });
-    } catch (error) {
-      console.error('Error creando psicólogo:', error);
-      throw new Error('Error al crear psicólogo');
+  // === SESIONES ===
+  async obtenerSesiones(): Promise<Sesion[]> {
+    const response = await fetch(`${API_BASE_URL}/sesiones`);
+    if (!response.ok) {
+      throw new Error('Error al obtener sesiones');
     }
+    return response.json();
   }
 
-  static async actualizarPsicologo(psicologo: Psicologo): Promise<void> {
-    try {
-      await fetchAPI(`/psicologos/${psicologo.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(psicologo),
-      });
-    } catch (error) {
-      console.error('Error actualizando psicólogo:', error);
-      throw new Error('Error al actualizar psicólogo');
-    }
-  }
-
-  static async eliminarPsicologo(id: string): Promise<void> {
-    try {
-      await fetchAPI(`/psicologos/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      console.error('Error eliminando psicólogo:', error);
-      throw new Error('Error al eliminar psicólogo');
-    }
-  }
-
-  // Sesiones
-  static async obtenerSesiones(): Promise<Sesion[]> {
-    try {
-      return await fetchAPI('/sesiones');
-    } catch (error) {
-      console.error('Error obteniendo sesiones:', error);
-      throw new Error('Error al cargar sesiones');
-    }
-  }
-
-  static async crearSesion(sesion: Omit<Sesion, 'id' | 'estado'>): Promise<string> {
-    try {
-      const response = await fetchAPI('/sesiones', {
-        method: 'POST',
-        body: JSON.stringify(sesion),
-      });
-      return response.id;
-    } catch (error) {
-      console.error('Error creando sesión:', error);
+  async crearSesion(sesion: Omit<Sesion, 'id' | 'estado'>): Promise<Sesion> {
+    const response = await fetch(`${API_BASE_URL}/sesiones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sesion),
+    });
+    
+    if (!response.ok) {
       throw new Error('Error al crear sesión');
     }
+    
+    return response.json();
   }
 
-  // Especialidades
-  static async obtenerEspecialidades(): Promise<string[]> {
-    try {
-      return await fetchAPI('/especialidades');
-    } catch (error) {
-      console.error('Error obteniendo especialidades:', error);
-      return [];
+  // === HORARIOS REALES ===
+
+  /**
+   * Obtiene la disponibilidad real de un psicólogo para un rango de fechas
+   */
+  async obtenerDisponibilidadReal(
+    psicologoId: string,
+    fechaInicio: string,
+    fechaFin: string
+  ): Promise<DisponibilidadRespuesta[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/psicologos/${psicologoId}/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener disponibilidad');
     }
+    
+    return response.json();
   }
 
-  // Estadísticas
-  static async obtenerEstadisticas(): Promise<{
-    totalPsicologos: number;
-    totalSesiones: number;
-    especialidadesUnicas: number;
-  }> {
-    try {
-      return await fetchAPI('/stats');
-    } catch (error) {
-      console.error('Error obteniendo estadísticas:', error);
-      return {
-        totalPsicologos: 0,
-        totalSesiones: 0,
-        especialidadesUnicas: 0
-      };
+  /**
+   * Obtiene la configuración de horarios de un psicólogo
+   */
+  async obtenerConfiguracionHorarios(psicologoId: string): Promise<ConfiguracionHorarios> {
+    const response = await fetch(`${API_BASE_URL}/psicologos/${psicologoId}/configuracion-horarios`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener configuración de horarios');
     }
+    
+    return response.json();
   }
 
-  // Limpiar base de datos
-  static async limpiarBaseDatos(): Promise<void> {
-    try {
-      await fetchAPI('/reset', {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Error limpiando base de datos:', error);
-      throw new Error('Error al limpiar base de datos');
+  /**
+   * Obtiene los horarios de trabajo semanales de un psicólogo
+   */
+  async obtenerHorariosTrabajo(psicologoId: string): Promise<HorarioTrabajo[]> {
+    const response = await fetch(`${API_BASE_URL}/psicologos/${psicologoId}/horarios-trabajo`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener horarios de trabajo');
     }
+    
+    return response.json();
+  }
+
+  /**
+   * Obtiene las excepciones de horarios de un psicólogo
+   */
+  async obtenerExcepciones(psicologoId: string): Promise<HorarioExcepcion[]> {
+    const response = await fetch(`${API_BASE_URL}/psicologos/${psicologoId}/horarios-excepciones`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener excepciones');
+    }
+    
+    return response.json();
+  }
+
+  /**
+   * Agenda una cita real en el sistema
+   */
+  async agendarCita(datos: {
+    psicologoId: string;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
+    modalidad: string;
+    pacienteNombre: string;
+    pacienteEmail: string;
+    pacienteTelefono?: string;
+    especialidad: string;
+  }): Promise<{ citaId: string; sesionId: string }> {
+    const response = await fetch(`${API_BASE_URL}/citas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(datos),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al agendar cita');
+    }
+    
+    return response.json();
+  }
+
+  // === UTILIDADES ===
+
+  /**
+   * Calcula el rango de fechas para mostrar disponibilidad (próximas 4 semanas)
+   */
+  obtenerRangoFechasDisponibilidad(): { fechaInicio: string; fechaFin: string } {
+    const hoy = new Date();
+    const fechaInicio = hoy.toISOString().split('T')[0];
+    
+    const fechaLimite = new Date(hoy);
+    fechaLimite.setDate(fechaLimite.getDate() + 28); // 4 semanas
+    const fechaFin = fechaLimite.toISOString().split('T')[0];
+    
+    return { fechaInicio, fechaFin };
+  }
+
+  /**
+   * Convierte la disponibilidad del backend al formato legacy para compatibilidad
+   */
+  convertirDisponibilidadALegacy(
+    disponibilidad: DisponibilidadRespuesta[]
+  ): { fecha: string; horarios: { hora: string; modalidades: string[] }[] }[] {
+    return disponibilidad.map(dia => ({
+      fecha: dia.fecha,
+      horarios: dia.horarios
+        .filter(horario => horario.disponible)
+        .map(horario => ({
+          hora: horario.horaInicio,
+          modalidades: horario.modalidades
+        }))
+    }));
   }
 }
 
-export default ApiService; 
+export const apiService = new ApiService();
+export default apiService; 

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import ApiService from '../services/apiService';
-import { Psicologo, Sesion, Modalidad } from '../types';
+import { useState, useEffect } from 'react';
+import { Psicologo, Sesion } from '../types';
+import { apiService } from '../services/apiService';
 
 interface DatabaseState {
   psicologos: Psicologo[];
@@ -9,6 +9,12 @@ interface DatabaseState {
   loading: boolean;
   error: string | null;
   initialized: boolean;
+}
+
+interface DatabaseStats {
+  totalPsicologos: number;
+  totalSesiones: number;
+  especialidadesUnicas: number;
 }
 
 export function useDatabase() {
@@ -21,256 +27,216 @@ export function useDatabase() {
     initialized: false
   });
 
-  // Cargar datos del backend
-  const cargarDatos = useCallback(async () => {
+  const [stats, setStats] = useState<DatabaseStats>({
+    totalPsicologos: 0,
+    totalSesiones: 0,
+    especialidadesUnicas: 0
+  });
+
+  // Función para cargar todos los datos
+  const cargarDatos = async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+
     try {
-      const [psicologos, sesiones, especialidades] = await Promise.all([
-        ApiService.obtenerPsicologos(),
-        ApiService.obtenerSesiones(),
-        ApiService.obtenerEspecialidades()
+      // Cargar datos en paralelo desde el backend real
+      const [psicologosData, sesionesData] = await Promise.all([
+        apiService.obtenerPsicologos(),
+        apiService.obtenerSesiones()
       ]);
 
-      setState(prev => ({
-        ...prev,
-        psicologos,
-        sesiones,
+      // Extraer especialidades únicas de los psicólogos
+      const especialidadesSet = new Set<string>();
+      psicologosData.forEach(psicologo => {
+        psicologo.especialidades.forEach(esp => especialidadesSet.add(esp));
+      });
+      const especialidades = Array.from(especialidadesSet).sort();
+
+      // Actualizar estado
+      setState({
+        psicologos: psicologosData,
+        sesiones: sesionesData,
         especialidades,
         loading: false,
-        error: null
-      }));
-      
+        error: null,
+        initialized: true
+      });
+
+      // Actualizar estadísticas
+      setStats({
+        totalPsicologos: psicologosData.length,
+        totalSesiones: sesionesData.length,
+        especialidadesUnicas: especialidades.length
+      });
+
     } catch (error) {
-      console.error('Error cargando datos del backend:', error);
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Error al conectar con el servidor. Verifica que el backend esté ejecutándose.', 
-        loading: false 
+      console.error('Error cargando datos:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Error desconocido al cargar datos',
+        initialized: false
       }));
     }
+  };
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    cargarDatos();
   }, []);
 
-  // Inicializar conexión con el backend
-  const inicializar = useCallback(async () => {
+  // Función para insertar nuevo psicólogo
+  const insertarPsicologo = async (psicologo: Psicologo): Promise<boolean> => {
     try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-      
-      // Intentar cargar datos del backend
+      // Crear el psicólogo en el backend
+      const response = await fetch('/api/psicologos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(psicologo),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear psicólogo en el servidor');
+      }
+
+      // Recargar datos para mostrar el nuevo psicólogo
       await cargarDatos();
       
-      setState(prev => ({ ...prev, initialized: true, loading: false }));
-      
-    } catch (error) {
-      console.error('Error inicializando conexión con backend:', error);
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Error al inicializar la conexión con el servidor', 
-        loading: false 
-      }));
-    }
-  }, [cargarDatos]);
-
-  // Recargar datos
-  const refrescar = useCallback(async () => {
-    await cargarDatos();
-  }, [cargarDatos]);
-
-  // Insertar nueva sesión
-  const insertarSesion = useCallback(async (sesion: Sesion) => {
-    try {
-      await ApiService.crearSesion(sesion);
-      await cargarDatos(); // Recargar datos después de insertar
       return true;
     } catch (error) {
-      console.error('Error insertando sesión:', error);
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Error al agendar la sesión en el servidor' 
+      console.error('Error insertando psicólogo:', error);
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error al insertar psicólogo'
       }));
       return false;
     }
-  }, [cargarDatos]);
+  };
 
-  // Eliminar psicólogo
-  const eliminarPsicologo = useCallback(async (id: string) => {
+  // Función para actualizar psicólogo
+  const actualizarPsicologo = async (psicologo: Psicologo): Promise<boolean> => {
     try {
-      await ApiService.eliminarPsicologo(id);
-      await cargarDatos(); // Recargar datos después de eliminar
+      const response = await fetch(`/api/psicologos/${psicologo.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(psicologo),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar psicólogo en el servidor');
+      }
+
+      // Recargar datos para mostrar los cambios
+      await cargarDatos();
+      
+      return true;
+    } catch (error) {
+      console.error('Error actualizando psicólogo:', error);
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error al actualizar psicólogo'
+      }));
+      return false;
+    }
+  };
+
+  // Función para eliminar psicólogo
+  const eliminarPsicologo = async (id: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/api/psicologos/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar psicólogo del servidor');
+      }
+
+      // Recargar datos para mostrar los cambios
+      await cargarDatos();
+      
       return true;
     } catch (error) {
       console.error('Error eliminando psicólogo:', error);
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Error al eliminar el psicólogo del servidor' 
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error al eliminar psicólogo'
       }));
       return false;
     }
-  }, [cargarDatos]);
+  };
 
-  // Insertar psicólogo
-  const insertarPsicologo = useCallback(async (psicologo: Psicologo) => {
+  // Función para insertar nueva sesión
+  const insertarSesion = async (sesion: Omit<Sesion, 'id' | 'estado'>): Promise<boolean> => {
     try {
-      // Validar datos antes de enviar
-      if (!psicologo.id || !psicologo.nombre || !psicologo.apellido) {
-        throw new Error('Datos del psicólogo incompletos: falta ID, nombre o apellido');
-      }
-      
-      if (!psicologo.especialidades || psicologo.especialidades.length === 0) {
-        throw new Error('El psicólogo debe tener al menos una especialidad');
-      }
-      
-      if (!psicologo.modalidades || psicologo.modalidades.length === 0) {
-        throw new Error('El psicólogo debe tener al menos una modalidad disponible');
-      }
-      
-      // Verificar que no existe un psicólogo con el mismo ID
-      const psicologoExistente = state.psicologos.find(p => p.id === psicologo.id);
-      if (psicologoExistente) {
-        throw new Error(`Ya existe un psicólogo con el ID: ${psicologo.id}`);
-      }
-      
-      await ApiService.crearPsicologo(psicologo);
-      await cargarDatos(); // Recargar datos después de insertar
-      
+      const sesionCompleta = await apiService.crearSesion(sesion);
+
+      // Actualizar estado local inmediatamente para mejor UX
+      setState(prev => ({
+        ...prev,
+        sesiones: [...prev.sesiones, { ...sesionCompleta, estado: 'confirmada' }]
+      }));
+
+      // Actualizar estadísticas
+      setStats(prev => ({
+        ...prev,
+        totalSesiones: prev.totalSesiones + 1
+      }));
+
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error insertando psicólogo:', errorMessage, error);
-      
-      setState(prev => ({ 
-        ...prev, 
-        error: `Error al agregar el psicólogo: ${errorMessage}` 
+      console.error('Error insertando sesión:', error);
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error al insertar sesión'
       }));
       return false;
     }
-  }, [cargarDatos, state.psicologos]);
+  };
 
-  // Actualizar psicólogo
-  const actualizarPsicologo = useCallback(async (psicologo: Psicologo) => {
+  // Función para limpiar y recargar base de datos
+  const limpiarYRecargarDB = async (): Promise<boolean> => {
     try {
-      // Validar datos antes de actualizar
-      if (!psicologo.id || !psicologo.nombre || !psicologo.apellido) {
-        throw new Error('Datos del psicólogo incompletos: falta ID, nombre o apellido');
-      }
-      
-      if (!psicologo.especialidades || psicologo.especialidades.length === 0) {
-        throw new Error('El psicólogo debe tener al menos una especialidad');
-      }
-      
-      if (!psicologo.modalidades || psicologo.modalidades.length === 0) {
-        throw new Error('El psicólogo debe tener al menos una modalidad disponible');
-      }
-      
-      // Verificar que el psicólogo existe
-      const psicologoExistente = state.psicologos.find(p => p.id === psicologo.id);
-      if (!psicologoExistente) {
-        throw new Error(`No se encontró el psicólogo con ID: ${psicologo.id}`);
-      }
-      
-      await ApiService.actualizarPsicologo(psicologo);
-      await cargarDatos(); // Recargar datos después de actualizar
-      
-      return true;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error actualizando psicólogo:', errorMessage, error);
-      
-      setState(prev => ({ 
-        ...prev, 
-        error: `Error al actualizar el psicólogo: ${errorMessage}` 
-      }));
-      return false;
-    }
-  }, [cargarDatos, state.psicologos]);
+      const response = await fetch('/api/reset', {
+        method: 'POST',
+      });
 
-  // Obtener psicólogo por ID
-  const obtenerPsicologoPorId = useCallback((id: string): Psicologo | null => {
-    return state.psicologos.find(p => p.id === id) || null;
-  }, [state.psicologos]);
-
-  // Filtrar psicólogos
-  const filtrarPsicologos = useCallback((
-    especialidad?: string,
-    precioMax?: number,
-    modalidad?: string
-  ): Psicologo[] => {
-    return state.psicologos.filter(psicologo => {
-      if (especialidad && especialidad !== '' && 
-          !psicologo.especialidades.includes(especialidad)) {
-        return false;
+      if (!response.ok) {
+        throw new Error('Error al limpiar la base de datos');
       }
-      
-      if (precioMax && psicologo.precio > precioMax) {
-        return false;
-      }
-      
-      if (modalidad && modalidad !== '' && 
-          !psicologo.modalidades.includes(modalidad as Modalidad)) {
-        return false;
-      }
-      
-      return true;
-    });
-  }, [state.psicologos]);
 
-  // Obtener sesiones por psicólogo
-  const obtenerSesionesPorPsicologo = useCallback((psicologoId: string): Sesion[] => {
-    return state.sesiones.filter(sesion => sesion.psicologoId === psicologoId);
-  }, [state.sesiones]);
-
-  // Limpiar error
-  const limpiarError = useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
-  }, []);
-
-  // Limpiar y recargar base de datos
-  const limpiarYRecargarDB = useCallback(async () => {
-    try {
-      await ApiService.limpiarBaseDatos();
+      // Recargar todos los datos
       await cargarDatos();
+      
       return true;
     } catch (error) {
       console.error('Error limpiando base de datos:', error);
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Error al limpiar la base de datos del servidor' 
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Error al limpiar base de datos'
       }));
       return false;
     }
-  }, [cargarDatos]);
-
-  // Inicializar al montar el componente
-  useEffect(() => {
-    inicializar();
-  }, [inicializar]);
+  };
 
   return {
-    // Datos
+    // Estado
     psicologos: state.psicologos,
     sesiones: state.sesiones,
     especialidades: state.especialidades,
-    
-    // Estado
     loading: state.loading,
     error: state.error,
     initialized: state.initialized,
-    
-    // Métodos
-    refrescar,
-    insertarSesion,
-    eliminarPsicologo,
+    stats,
+
+    // Funciones
+    cargarDatos,
     insertarPsicologo,
     actualizarPsicologo,
-    obtenerPsicologoPorId,
-    filtrarPsicologos,
-    obtenerSesionesPorPsicologo,
-    limpiarError,
-    limpiarYRecargarDB,
-    
-    // Estadísticas
-    stats: {
-      totalPsicologos: state.psicologos.length,
-      totalSesiones: state.sesiones.length,
-      especialidadesUnicas: state.especialidades.length
-    }
+    eliminarPsicologo,
+    insertarSesion,
+    limpiarYRecargarDB
   };
 } 

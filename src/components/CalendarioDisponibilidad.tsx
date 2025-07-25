@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Psicologo, CalendarioSemana, CalendarioDia, CalendarioHorario } from '../types';
 import { detectarTimezone, convertirHorario, obtenerSemanaActual } from '../utils/timezone';
+import { useHorariosReales } from '../hooks/useHorariosReales';
 
 interface CalendarioDisponibilidadProps {
   psicologo: Psicologo;
@@ -24,6 +25,16 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
   const timezoneUsuario = detectarTimezone();
   const timezonePsicologo = 'America/Mexico_City';
 
+  // Usar horarios reales del backend
+  const { 
+    disponibilidad: disponibilidadReal, 
+    cargando: cargandoHorarios, 
+    error: errorHorarios,
+    refrescar 
+  } = useHorariosReales({ 
+    psicologoId: psicologo.id 
+  });
+
   const calendarioSemana: CalendarioSemana = useMemo(() => {
     const dias: CalendarioDia[] = [];
     
@@ -32,7 +43,9 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
       fecha.setDate(semanaActual.inicio.getDate() + i);
       
       const fechaStr = fecha.toISOString().split('T')[0];
-      const disponibilidadDia = psicologo.disponibilidad.find(d => d.fecha === fechaStr);
+      
+      // Buscar disponibilidad en los horarios reales
+      const disponibilidadDia = disponibilidadReal.find(d => d.fecha === fechaStr);
       
       const horarios: CalendarioHorario[] = disponibilidadDia?.horarios.map(horarioData => ({
         hora: horarioData.hora,
@@ -48,22 +61,23 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
     }
     
     return {
-      inicio: semanaActual.inicio,
-      fin: semanaActual.fin,
+      semana: semanaActual,
       dias
     };
-  }, [psicologo.disponibilidad, semanaActual, timezoneUsuario]);
+  }, [semanaActual, disponibilidadReal, timezoneUsuario]);
 
   const cambiarSemana = (direccion: 'anterior' | 'siguiente') => {
     const nuevaFecha = new Date(semanaActual.inicio);
-    nuevaFecha.setDate(nuevaFecha.getDate() + (direccion === 'siguiente' ? 7 : -7));
+    if (direccion === 'siguiente') {
+      nuevaFecha.setDate(nuevaFecha.getDate() + 7);
+    } else {
+      nuevaFecha.setDate(nuevaFecha.getDate() - 7);
+    }
     
-    const nuevaSemana = {
+    setSemanaActual({
       inicio: nuevaFecha,
       fin: new Date(nuevaFecha.getTime() + 6 * 24 * 60 * 60 * 1000)
-    };
-    
-    setSemanaActual(nuevaSemana);
+    });
   };
 
   const esHoy = (fecha: Date): boolean => {
@@ -80,143 +94,163 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
   const toggleDiaExpandido = (fechaStr: string, tieneHorarios: boolean) => {
     if (!tieneHorarios) return;
     
-    setDiasExpandidos(prev => {
-      const nuevoSet = new Set(prev);
-      if (nuevoSet.has(fechaStr)) {
-        nuevoSet.delete(fechaStr);
-      } else {
-        nuevoSet.add(fechaStr);
-      }
-      return nuevoSet;
-    });
+    const nuevosExpandidos = new Set(diasExpandidos);
+    if (nuevosExpandidos.has(fechaStr)) {
+      nuevosExpandidos.delete(fechaStr);
+    } else {
+      nuevosExpandidos.add(fechaStr);
+    }
+    setDiasExpandidos(nuevosExpandidos);
   };
+
+  const formatearHorario = (hora: string, horaLocal: string): string => {
+    if (timezoneUsuario === timezonePsicologo) {
+      return hora;
+    }
+    return `${hora} (${horaLocal} tu hora)`;
+  };
+
+  // Mostrar estado de carga
+  if (cargandoHorarios) {
+    return (
+      <div className="calendario-loading">
+        <div className="loading-spinner"></div>
+        <p>Cargando horarios disponibles...</p>
+      </div>
+    );
+  }
+
+  // Mostrar error con opción de reintentar
+  if (errorHorarios) {
+    return (
+      <div className="calendario-error">
+        <p>❌ Error al cargar horarios: {errorHorarios}</p>
+        <button onClick={refrescar} className="btn-secondary">
+          🔄 Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="calendario-disponibilidad">
       <div className="calendario-header">
         <button 
-          className="btn-navegacion"
           onClick={() => cambiarSemana('anterior')}
+          className="btn-navegacion"
+          aria-label="Semana anterior"
         >
-          ← Semana anterior
+          ←
         </button>
         <h3>
-          {semanaActual.inicio.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+          {semanaActual.inicio.toLocaleDateString('es-ES', { 
+            month: 'long', 
+            year: 'numeric' 
+          })}
         </h3>
         <button 
-          className="btn-navegacion"
           onClick={() => cambiarSemana('siguiente')}
+          className="btn-navegacion"
+          aria-label="Semana siguiente"
         >
-          Semana siguiente →
+          →
         </button>
       </div>
 
-      <div className="timezone-info">
-        <p>
-          <strong>Tu zona horaria:</strong> {timezoneUsuario}
-          <br />
-          <small>Los horarios se muestran adaptados a tu ubicación</small>
-        </p>
-      </div>
+      {/* Mostrar información de zona horaria si es diferente */}
+      {timezoneUsuario !== timezonePsicologo && (
+        <div className="info-timezone">
+          ℹ️ Los horarios se muestran en hora del psicólogo y tu hora local
+        </div>
+      )}
 
       <div className="calendario-grid">
-        {calendarioSemana.dias.map((dia, index) => {
+        {calendarioSemana.dias.map((dia) => {
           const fechaStr = dia.fecha.toISOString().split('T')[0];
           const tieneHorarios = dia.horarios.length > 0;
+          const esExpandido = diasExpandidos.has(fechaStr);
+          const esDiaActual = esHoy(dia.fecha);
           const esDiaPasado = esPasado(dia.fecha);
-          const estaExpandido = diasExpandidos.has(fechaStr);
-          
+
           return (
             <div 
-              key={index} 
-              className={`calendario-dia ${esHoy(dia.fecha) ? 'es-hoy' : ''} ${esDiaPasado ? 'es-pasado' : ''} ${estaExpandido ? 'expandido' : 'colapsado'} ${tieneHorarios && !esDiaPasado ? 'clickeable' : ''}`}
+              key={fechaStr} 
+              className={`calendario-dia ${esDiaActual ? 'hoy' : ''} ${esDiaPasado ? 'pasado' : ''} ${!tieneHorarios ? 'sin-horarios' : ''}`}
             >
               <div 
                 className="dia-header"
-                onClick={() => toggleDiaExpandido(fechaStr, tieneHorarios && !esDiaPasado)}
+                onClick={() => toggleDiaExpandido(fechaStr, tieneHorarios)}
+                style={{ cursor: tieneHorarios ? 'pointer' : 'default' }}
               >
-                <span className="dia-nombre">
-                  {dia.fecha.toLocaleDateString('es-ES', { weekday: 'short' })}
-                </span>
-                <span className="dia-numero">
-                  {dia.fecha.getDate()}
-                </span>
-                {tieneHorarios && !esDiaPasado && (
-                  <span className="indicador-expandir">
-                    {estaExpandido ? '▼' : '▶'}
+                <div className="dia-info">
+                  <span className="dia-nombre">
+                    {dia.fecha.toLocaleDateString('es-ES', { weekday: 'short' })}
                   </span>
-                )}
-                {tieneHorarios && !esDiaPasado && (
-                  <span className="contador-horarios">
-                    {dia.horarios.length}
+                  <span className="dia-numero">
+                    {dia.fecha.getDate()}
                   </span>
-                )}
+                  {esDiaActual && <span className="hoy-badge">Hoy</span>}
+                </div>
+                <div className="dia-stats">
+                  {tieneHorarios ? (
+                    <>
+                      <span className="horarios-count">{dia.horarios.length} horarios</span>
+                      <span className={`expand-icon ${esExpandido ? 'expanded' : ''}`}>▼</span>
+                    </>
+                  ) : (
+                    <span className="sin-disponibilidad">Sin horarios</span>
+                  )}
+                </div>
               </div>
-              
-              <div className="horarios-dia">
-                {!tieneHorarios && !esDiaPasado && !estaExpandido && (
-                  <div className="sin-horarios-colapsado">Sin disponibilidad</div>
-                )}
-                
-                {esDiaPasado && !estaExpandido && (
-                  <div className="dia-pasado-colapsado">Fecha pasada</div>
-                )}
-                
-                {estaExpandido && (
-                  <>
-                    {!tieneHorarios && !esDiaPasado && (
-                      <div className="sin-horarios">Sin disponibilidad</div>
-                    )}
+
+              {tieneHorarios && esExpandido && (
+                <div className="horarios-lista">
+                  {dia.horarios.map((horario) => {
+                    const esSeleccionado = fechaSeleccionada === fechaStr && horaSeleccionada === horario.hora;
                     
-                    {esDiaPasado && (
-                      <div className="dia-pasado">Fecha pasada</div>
-                    )}
-                    
-                    {tieneHorarios && !esDiaPasado && dia.horarios.map((horario, horarioIndex) => {
-                      const isSelected = fechaSeleccionada === fechaStr && horaSeleccionada === horario.hora;
-                      const modalidadesIconos = horario.modalidades.map(getModalidadEmoji).join(' ');
-                      
-                      return (
-                        <button
-                          key={horarioIndex}
-                          className={`horario-slot ${isSelected ? 'seleccionado' : ''}`}
-                          onClick={() => onSeleccionarHorario(fechaStr, horario.hora, horario.horaLocal, horario.modalidades)}
-                        >
-                          <div className="horario-info">
-                            <div className="horario-original">{horario.hora}</div>
-                            <div className="horario-local">({horario.horaLocal})</div>
+                    return (
+                      <button
+                        key={horario.hora}
+                        className={`horario-slot ${esSeleccionado ? 'seleccionado' : ''}`}
+                        onClick={() => onSeleccionarHorario(
+                          fechaStr, 
+                          horario.hora, 
+                          horario.horaLocal,
+                          horario.modalidades
+                        )}
+                        disabled={!horario.disponible}
+                      >
+                        <div className="horario-info">
+                          <span className="horario-tiempo">
+                            {formatearHorario(horario.hora, horario.horaLocal)}
+                          </span>
+                          <div className="modalidades">
+                            {horario.modalidades.map(modalidad => (
+                              <span key={modalidad} className="modalidad-badge">
+                                {getModalidadEmoji(modalidad)}
+                              </span>
+                            ))}
                           </div>
-                          <div className="modalidades-horario">
-                            {modalidadesIconos}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
-              </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="leyenda-calendario">
-        <div className="leyenda-item">
-          <div className="color-disponible"></div>
-          <span>Disponible</span>
+      {/* Mensaje si no hay horarios en toda la semana */}
+      {calendarioSemana.dias.every(dia => dia.horarios.length === 0) && (
+        <div className="semana-sin-horarios">
+          <p>No hay horarios disponibles esta semana</p>
+          <button onClick={refrescar} className="btn-secondary">
+            🔄 Actualizar
+          </button>
         </div>
-        <div className="leyenda-item">
-          <div className="color-seleccionado"></div>
-          <span>Seleccionado</span>
-        </div>
-        <div className="leyenda-item">
-          <div className="color-no-disponible"></div>
-          <span>No disponible</span>
-        </div>
-        <div className="leyenda-item">
-          <span>💻 Online | 🏢 Presencial</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }; 

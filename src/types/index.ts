@@ -68,3 +68,74 @@ export interface ConfiguracionTimezone {
   timezone: string;
   offset: number;
 } 
+
+// Nuevos tipos para sistema de horarios reales
+
+export interface HorarioTrabajo {
+  id?: number;
+  psicologoId: string;
+  diaSemana: number; // 0=Domingo, 1=Lunes, etc.
+  horaInicio: string; // "09:00"
+  horaFin: string; // "17:00"
+  modalidades: Modalidad[];
+  activo: boolean;
+  createdAt?: Date;
+}
+
+export interface HorarioExcepcion {
+  id?: number;
+  psicologoId: string;
+  fecha: string; // "YYYY-MM-DD"
+  tipo: 'bloqueado' | 'horario_especial';
+  horaInicio?: string;
+  horaFin?: string;
+  modalidades?: Modalidad[];
+  motivo?: string;
+  createdAt?: Date;
+}
+
+export interface Cita {
+  id: string;
+  psicologoId: string;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  modalidad: Modalidad;
+  estado: 'confirmada' | 'pendiente' | 'cancelada';
+  sesionId?: string;
+  createdAt?: Date;
+}
+
+export interface ConfiguracionHorarios {
+  id?: number;
+  psicologoId: string;
+  duracionSesion: number; // minutos
+  tiempoBuffer: number; // minutos entre sesiones
+  diasAnticipacion: number; // días máximos para agendar
+  zonaHoraria: string;
+  autoGenerar: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface HorarioGenerado {
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  modalidades: Modalidad[];
+  disponible: boolean;
+  ocupadoPor?: string; // ID de la cita
+}
+
+export interface PlantillaHorario {
+  diaSemana: number;
+  horaInicio: string;
+  horaFin: string;
+  modalidades: Modalidad[];
+  intervaloMinutos: number;
+}
+
+export interface DisponibilidadRespuesta {
+  fecha: string;
+  horarios: HorarioGenerado[];
+} 

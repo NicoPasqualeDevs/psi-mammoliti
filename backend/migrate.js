@@ -89,6 +89,70 @@ function crearTablas() {
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
         )
+      `);
+
+      // Tabla de horarios de trabajo (plantillas semanales)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS horarios_trabajo (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          psicologoId TEXT NOT NULL,
+          dia_semana INTEGER NOT NULL, -- 0=Domingo, 1=Lunes, etc.
+          hora_inicio TEXT NOT NULL,
+          hora_fin TEXT NOT NULL,
+          modalidades TEXT NOT NULL,
+          activo BOOLEAN DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
+        )
+      `);
+
+      // Tabla de excepciones de horarios (días específicos)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS horarios_excepciones (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          psicologoId TEXT NOT NULL,
+          fecha TEXT NOT NULL,
+          tipo TEXT NOT NULL, -- 'bloqueado', 'horario_especial'
+          hora_inicio TEXT,
+          hora_fin TEXT,
+          modalidades TEXT,
+          motivo TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
+        )
+      `);
+
+      // Tabla de citas agendadas (para bloquear horarios ocupados)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS citas (
+          id TEXT PRIMARY KEY,
+          psicologoId TEXT NOT NULL,
+          fecha TEXT NOT NULL,
+          hora_inicio TEXT NOT NULL,
+          hora_fin TEXT NOT NULL,
+          modalidad TEXT NOT NULL,
+          estado TEXT DEFAULT 'confirmada',
+          sesionId TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (psicologoId) REFERENCES psicologos(id),
+          FOREIGN KEY (sesionId) REFERENCES sesiones(id)
+        )
+      `);
+
+      // Tabla de configuración de horarios por psicólogo
+      db.run(`
+        CREATE TABLE IF NOT EXISTS configuracion_horarios (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          psicologoId TEXT UNIQUE NOT NULL,
+          duracion_sesion INTEGER DEFAULT 60, -- minutos
+          tiempo_buffer INTEGER DEFAULT 15, -- minutos entre sesiones
+          dias_anticipacion INTEGER DEFAULT 30, -- días máximos para agendar
+          zona_horaria TEXT DEFAULT 'America/Mexico_City',
+          auto_generar BOOLEAN DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
+        )
       `, (err) => {
         if (err) {
           reject(err);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDatabase } from '../hooks/useDatabase';
 import { Psicologo, Modalidad } from '../types';
 import { generarHorariosAleatorios } from '../utils/horarioGenerator';
+import { GestionHorarios } from './GestionHorarios';
 
 export const Admin: React.FC = () => {
   const { 
@@ -20,6 +21,8 @@ export const Admin: React.FC = () => {
   const [mensaje, setMensaje] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [psicologoEditando, setPsicologoEditando] = useState<Psicologo | null>(null);
+  const [mostrarGestionHorarios, setMostrarGestionHorarios] = useState(false);
+  const [psicologoParaHorarios, setPsicologoParaHorarios] = useState<Psicologo | null>(null);
   
   // Estado del formulario
   const [formulario, setFormulario] = useState({
@@ -201,6 +204,16 @@ export const Admin: React.FC = () => {
         modalidades: nuevasModalidades
       };
     });
+  };
+
+  const abrirGestionHorarios = (psicologo: Psicologo) => {
+    setPsicologoParaHorarios(psicologo);
+    setMostrarGestionHorarios(true);
+  };
+
+  const cerrarGestionHorarios = () => {
+    setMostrarGestionHorarios(false);
+    setPsicologoParaHorarios(null);
   };
 
   if (loading) {
@@ -455,6 +468,13 @@ export const Admin: React.FC = () => {
                       {psicologo.disponibilidad.reduce((total, dia) => total + dia.horarios.length, 0)} horarios
                     </span>
                     <button 
+                      onClick={() => abrirGestionHorarios(psicologo)}
+                      disabled={procesando}
+                      className="btn-special"
+                    >
+                      🕒 Horarios
+                    </button>
+                    <button 
                       onClick={() => iniciarEdicion(psicologo)}
                       disabled={procesando}
                       className="btn-edit"
@@ -475,6 +495,14 @@ export const Admin: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de gestión de horarios */}
+      {mostrarGestionHorarios && psicologoParaHorarios && (
+        <GestionHorarios
+          psicologo={psicologoParaHorarios}
+          onCerrar={cerrarGestionHorarios}
+        />
+      )}
     </div>
   );
 }; 
