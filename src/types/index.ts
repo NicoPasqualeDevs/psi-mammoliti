@@ -12,6 +12,7 @@ export interface Psicologo {
   rating: number;
   disponibilidad: HorarioDisponible[];
   modalidades: Modalidad[];
+  tieneHorariosConfigurados?: boolean;
 }
 
 export interface HorarioDisponible {

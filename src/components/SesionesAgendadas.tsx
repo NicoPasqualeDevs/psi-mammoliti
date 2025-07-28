@@ -1,8 +1,8 @@
 import React from 'react';
-import { Sesion, Psicologo } from '../types';
+import { Psicologo } from '../types';
+import { useUserSesiones } from '../hooks/useUserSesiones';
 
 interface SesionesAgendadasProps {
-  sesiones: Sesion[];
   psicologos: Psicologo[];
 }
 
@@ -14,7 +14,35 @@ const getModalidadTexto = (modalidad: string): string => {
   return modalidad === 'online' ? 'Online' : 'Presencial';
 };
 
-export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ sesiones, psicologos }) => {
+export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ psicologos }) => {
+  const { sesiones, cargando, error, refrescar } = useUserSesiones();
+
+  if (cargando) {
+    return (
+      <div className="sesiones-agendadas">
+        <h3>Mis Sesiones Agendadas</h3>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Cargando tus sesiones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="sesiones-agendadas">
+        <h3>Mis Sesiones Agendadas</h3>
+        <div className="error-container">
+          <p>❌ Error al cargar sesiones: {error}</p>
+          <button onClick={refrescar} className="btn-secondary">
+            🔄 Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (sesiones.length === 0) {
     return (
       <div className="sesiones-agendadas">
@@ -26,7 +54,12 @@ export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ sesiones, 
 
   return (
     <div className="sesiones-agendadas">
-      <h3>Mis Sesiones Agendadas ({sesiones.length})</h3>
+      <div className="sesiones-header">
+        <h3>Mis Sesiones Agendadas ({sesiones.length})</h3>
+        <button onClick={refrescar} className="btn-refresh" title="Actualizar">
+          🔄
+        </button>
+      </div>
       
       <div className="lista-sesiones">
         {sesiones.map(sesion => {

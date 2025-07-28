@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Psicologo } from '../types';
 import { detectarTimezone, convertirHorario } from '../utils/timezone';
+import { useHorariosCard } from '../hooks/useHorariosCard';
 
 interface PsicologoCardProps {
   psicologo: Psicologo;
   onSeleccionar: (psicologo: Psicologo) => void;
+  onSeleccionarHorario: (psicologo: Psicologo, fecha: string, hora: string, modalidades: string[]) => void;
 }
 
 const LONGITUD_MAXIMA = 86; // Longitud del texto de ejemplo
@@ -22,13 +24,30 @@ const getModalidadTexto = (modalidad: string): string => {
   return modalidad === 'online' ? 'Online' : 'Presencial';
 };
 
-export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSeleccionar }) => {
+export const PsicologoCard: React.FC<PsicologoCardProps> = ({ 
+  psicologo, 
+  onSeleccionar, 
+  onSeleccionarHorario 
+}) => {
   const [expandido, setExpandido] = useState(false);
-  const proximaDisponibilidad = psicologo.disponibilidad[0];
   const timezoneUsuario = detectarTimezone();
   const timezonePsicologo = 'America/Mexico_City';
 
-  const totalHorarios = psicologo.disponibilidad.reduce((total, dia) => total + dia.horarios.length, 0);
+  // Usar horarios reales si tiene configuración, sino usar estáticos
+  const { proximaDisponibilidad: horarioReal, cargando: cargandoHorarios } = useHorariosCard({
+    psicologoId: psicologo.id,
+    habilitado: psicologo.tieneHorariosConfigurados || false
+  });
+
+  // Determinar qué horarios mostrar
+  const tieneHorarios = psicologo.tieneHorariosConfigurados || false;
+  const proximaDisponibilidad = tieneHorarios && horarioReal 
+    ? horarioReal 
+    : psicologo.disponibilidad[0]; // Fallback a horarios estáticos
+
+  const handleClickHorario = (fecha: string, hora: string, modalidades: string[]) => {
+    onSeleccionarHorario(psicologo, fecha, hora, modalidades);
+  };
 
   return (
     <div className="psicologo-card">
@@ -84,10 +103,18 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
       <div className="disponibilidad-info">
         <div className="disponibilidad-header">
           <p><strong>Disponibilidad:</strong></p>
-          <span className="total-horarios">{totalHorarios} horarios totales</span>
+          <span className={`estado-horarios ${tieneHorarios ? 'con-horarios' : 'sin-horarios'}`}>
+            {tieneHorarios ? '✅ Horarios configurados' : '❌ Sin horarios'}
+          </span>
         </div>
         
-        {proximaDisponibilidad && (
+        {cargandoHorarios && tieneHorarios && (
+          <div className="cargando-horarios">
+            <small>🔄 Cargando horarios disponibles...</small>
+          </div>
+        )}
+
+        {proximaDisponibilidad && !cargandoHorarios && (
           <div className="proxima-cita">
             <p className="fecha-proxima">
               <strong>Próxima fecha:</strong> {new Date(proximaDisponibilidad.fecha).toLocaleDateString('es-ES', {
@@ -95,21 +122,44 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
                 day: 'numeric',
                 month: 'short'
               })}
+              {tieneHorarios && (
+                <span className="horarios-tipo"> (Horarios reales)</span>
+              )}
             </p>
             <div className="horarios-preview">
-              {proximaDisponibilidad.horarios.slice(0, 3).map((horarioData, index) => {
-                const horaLocal = convertirHorario(horarioData.hora, timezonePsicologo, timezoneUsuario);
-                const modalidadesTexto = horarioData.modalidades.map(getModalidadEmoji).join('');
-                return (
-                  <span key={index} className="horario-preview">
-                    {modalidadesTexto} {horarioData.hora} ({horaLocal})
-                  </span>
-                );
-              })}
-              {proximaDisponibilidad.horarios.length > 3 && (
-                <span className="mas-horarios">+{proximaDisponibilidad.horarios.length - 3} más</span>
-              )}
+              <small className="horarios-hint">👆 Haz click en un horario para agendar directamente:</small>
+              <div className="horarios-container">
+                {proximaDisponibilidad.horarios.slice(0, 3).map((horarioData, index) => {
+                  const horaLocal = convertirHorario(horarioData.hora, timezonePsicologo, timezoneUsuario);
+                  const modalidadesTexto = horarioData.modalidades.map(getModalidadEmoji).join('');
+                  return (
+                    <button
+                      key={index} 
+                      className="horario-preview horario-clickeable"
+                      onClick={() => handleClickHorario(proximaDisponibilidad.fecha, horarioData.hora, horarioData.modalidades)}
+                      title={`Hacer click para agendar directamente en ${horarioData.hora}`}
+                    >
+                      {modalidadesTexto} {horarioData.hora} ({horaLocal})
+                    </button>
+                  );
+                })}
+                {proximaDisponibilidad.horarios.length > 3 && (
+                  <span className="mas-horarios">+{proximaDisponibilidad.horarios.length - 3} más</span>
+                )}
+              </div>
             </div>
+          </div>
+        )}
+
+        {!proximaDisponibilidad && !cargandoHorarios && tieneHorarios && (
+          <div className="sin-horarios-disponibles">
+            <p><small>⚠️ No hay horarios disponibles en los próximos 7 días</small></p>
+          </div>
+        )}
+
+        {!tieneHorarios && (
+          <div className="sin-configuracion">
+            <p><small>⚠️ Este psicólogo aún no ha configurado sus horarios de trabajo</small></p>
           </div>
         )}
         
@@ -124,7 +174,7 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({ psicologo, onSelec
           className="btn-agendar"
           onClick={() => onSeleccionar(psicologo)}
         >
-          Ver Horarios
+          Ver Todos los Horarios
         </button>
       </div>
     </div>

@@ -7,6 +7,12 @@ import { GestionHorarios } from './GestionHorarios';
 
 type TabType = 'dashboard' | 'psicologos' | 'formulario' | 'configuracion';
 
+// Función para obtener la URL base de la API
+const getApiBaseUrl = () => {
+  // En desarrollo, el backend corre en puerto 3001
+  return 'http://localhost:3001/api';
+};
+
 export const Admin: React.FC = () => {
   const { 
     psicologos, 
@@ -36,6 +42,10 @@ export const Admin: React.FC = () => {
   const [filtroModalidad, setFiltroModalidad] = useState<Modalidad | ''>('');
   const [vistaLista, setVistaLista] = useState<'cards' | 'tabla'>('cards');
   
+  // Estados para modal de limpiar BD
+  const [mostrarModalLimpiar, setMostrarModalLimpiar] = useState(false);
+  const [regenerarDatos, setRegenerarDatos] = useState(true);
+  
   // Estado del formulario
   const [formulario, setFormulario] = useState({
     nombre: '',
@@ -55,6 +65,47 @@ export const Admin: React.FC = () => {
     setMensaje(msg);
     setTipoMensaje(tipo);
     setTimeout(() => setMensaje(''), 5000);
+  };
+
+  // Función para manejar la limpieza de BD con regeneración opcional
+  const manejarLimpiarBD = async () => {
+    setProcesando(true);
+    setMostrarModalLimpiar(false);
+    
+    try {
+      mostrarMensaje(regenerarDatos ? '🧹 Limpiando BD y regenerando datos...' : '🧹 Limpiando base de datos...');
+      
+      // Usar el nuevo endpoint unificado
+      const response = await fetch(`${getApiBaseUrl()}/limpiar-y-regenerar`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          regenerarDatos: regenerarDatos
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        if (data.regeneracionRealizada) {
+          mostrarMensaje('✅ Base de datos limpiada y datos de prueba regenerados exitosamente');
+        } else {
+          mostrarMensaje('✅ Base de datos limpiada exitosamente');
+        }
+        
+        // Recargar los datos en el frontend
+        window.location.reload();
+      } else {
+        mostrarMensaje(`❌ ${data.error || 'Error en la operación'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error en operación de limpieza:', error);
+      mostrarMensaje('❌ Error al procesar la operación', 'error');
+    } finally {
+      setProcesando(false);
+    }
   };
 
   // Especialidades únicas para filtros
@@ -449,23 +500,7 @@ export const Admin: React.FC = () => {
                 </button>
                 <button 
                   className="action-button danger"
-                  onClick={async () => {
-                    if (window.confirm('¿Estás seguro de que quieres limpiar toda la base de datos?')) {
-                      setProcesando(true);
-                      try {
-                        const exito = await limpiarYRecargarDB();
-                        if (exito) {
-                          mostrarMensaje('✅ Base de datos limpiada exitosamente');
-                        } else {
-                          mostrarMensaje('❌ Error al limpiar la base de datos', 'error');
-                        }
-                      } catch (error) {
-                        mostrarMensaje('❌ Error al limpiar la base de datos', 'error');
-                      } finally {
-                        setProcesando(false);
-                      }
-                    }
-                  }}
+                  onClick={() => setMostrarModalLimpiar(true)}
                   disabled={procesando}
                 >
                   🗑️ Limpiar DB
@@ -609,7 +644,9 @@ export const Admin: React.FC = () => {
                         </div>
                         
                         <div className="horarios-info">
-                          {psicologo.disponibilidad.reduce((total, dia) => total + dia.horarios.length, 0)} horarios
+                          {psicologo.tieneHorariosConfigurados 
+                            ? '✅ Horarios configurados' 
+                            : '❌ Sin horarios'}
                         </div>
                       </div>
                       
@@ -675,7 +712,11 @@ export const Admin: React.FC = () => {
                             <td>{psicologo.experiencia} años</td>
                             <td>${psicologo.precio}</td>
                             <td>⭐ {psicologo.rating}</td>
-                            <td>{psicologo.disponibilidad.reduce((total, dia) => total + dia.horarios.length, 0)}</td>
+                            <td>
+                              {psicologo.tieneHorariosConfigurados 
+                                ? '✅ Configurados' 
+                                : '❌ Sin configurar'}
+                            </td>
                             <td>
                               <div className="table-actions">
                                 <button 
@@ -902,23 +943,7 @@ export const Admin: React.FC = () => {
               <div className="config-actions">
                 <button 
                   className="config-button danger"
-                  onClick={async () => {
-                    if (window.confirm('¿Estás seguro de que quieres limpiar toda la base de datos? Esta acción eliminará todos los psicólogos y sesiones.')) {
-                      setProcesando(true);
-                      try {
-                        const exito = await limpiarYRecargarDB();
-                        if (exito) {
-                          mostrarMensaje('✅ Base de datos limpiada exitosamente');
-                        } else {
-                          mostrarMensaje('❌ Error al limpiar la base de datos', 'error');
-                        }
-                      } catch (error) {
-                        mostrarMensaje('❌ Error al limpiar la base de datos', 'error');
-                      } finally {
-                        setProcesando(false);
-                      }
-                    }
-                  }}
+                  onClick={() => setMostrarModalLimpiar(true)}
                   disabled={procesando}
                 >
                   🗑️ Limpiar Base de Datos
@@ -953,6 +978,56 @@ export const Admin: React.FC = () => {
           psicologo={psicologoParaHorarios}
           onCerrar={cerrarGestionHorarios}
         />
+      )}
+
+      {/* Modal de confirmación para limpiar BD */}
+      {mostrarModalLimpiar && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>🗑️ Limpiar Base de Datos</h3>
+            </div>
+            
+            <div className="modal-body">
+              <p className="warning-text">
+                <strong>⚠️ ¿Estás seguro de que quieres limpiar toda la base de datos?</strong>
+              </p>
+              <p>Esta acción eliminará todos los psicólogos y sesiones.</p>
+              
+              <div className="regenerar-option">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={regenerarDatos}
+                    onChange={(e) => setRegenerarDatos(e.target.checked)}
+                  />
+                  <span className="checkmark"></span>
+                  Regenerar datos de prueba después de limpiar
+                </label>
+                <p className="option-description">
+                  Incluye psicólogos de ejemplo y sesiones de prueba para facilitar el testing
+                </p>
+              </div>
+            </div>
+            
+            <div className="modal-actions">
+              <button 
+                className="btn-secondary"
+                onClick={() => setMostrarModalLimpiar(false)}
+                disabled={procesando}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-danger"
+                onClick={manejarLimpiarBD}
+                disabled={procesando}
+              >
+                {procesando ? 'Procesando...' : 'Confirmar Limpieza'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

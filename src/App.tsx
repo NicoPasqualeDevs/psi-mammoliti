@@ -2,18 +2,22 @@ import React, { useState, useMemo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import { useDatabase } from './hooks/useDatabase';
+import { useUserSesiones } from './hooks/useUserSesiones';
 import { FiltrosBusquedaComponent } from './components/FiltrosBusqueda';
 import { PsicologoCard } from './components/PsicologoCard';
 import { ModalAgendamiento } from './components/ModalAgendamiento';
 import { SesionesAgendadas } from './components/SesionesAgendadas';
 import { Admin } from './components/Admin';
+import { Login } from './components/Login';
+import { UserBar } from './components/UserBar';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Psicologo, FiltrosBusqueda, Sesion } from './types';
 
 // Componente principal de la aplicación pública
 const MainApp: React.FC = () => {
+  const { estaAutenticado } = useAuth();
   const {
     psicologos,
-    sesiones,
     loading,
     error,
     initialized,
@@ -22,8 +26,16 @@ const MainApp: React.FC = () => {
     limpiarError
   } = useDatabase();
 
+  // Hook para obtener solo las sesiones del usuario actual
+  const { sesiones: sesionesUsuario, refrescar: refrescarSesiones } = useUserSesiones();
+
   const [vistaActual, setVistaActual] = useState<'busqueda' | 'sesiones'>('busqueda');
   const [psicologoSeleccionado, setPsicologoSeleccionado] = useState<Psicologo | null>(null);
+  const [horarioPreseleccionado, setHorarioPreseleccionado] = useState<{
+    fecha: string;
+    hora: string;
+    modalidades: string[];
+  } | null>(null);
   const [filtros, setFiltros] = useState<FiltrosBusqueda>({
     especialidad: '',
     precioMax: 200,
@@ -41,6 +53,11 @@ const MainApp: React.FC = () => {
     );
   }, [filtros, filtrarPsicologos, initialized, loading]);
 
+  // Mostrar login si no está autenticado
+  if (!estaAutenticado) {
+    return <Login />;
+  }
+
   const handleAgendar = async (nuevaSesion: Omit<Sesion, 'id' | 'estado'>) => {
     const sesion: Sesion = {
       ...nuevaSesion,
@@ -51,17 +68,27 @@ const MainApp: React.FC = () => {
     const exito = await insertarSesion(sesion);
     
     if (exito) {
+      // Refrescar las sesiones del usuario para actualizar el contador
+      await refrescarSesiones();
       setPsicologoSeleccionado(null);
+      setHorarioPreseleccionado(null);
       setVistaActual('sesiones');
     }
   };
 
   const handleSeleccionarPsicologo = (psicologo: Psicologo) => {
     setPsicologoSeleccionado(psicologo);
+    setHorarioPreseleccionado(null); // Limpiar horario preseleccionado al ver todos los horarios
+  };
+
+  const handleSeleccionarHorario = (psicologo: Psicologo, fecha: string, hora: string, modalidades: string[]) => {
+    setPsicologoSeleccionado(psicologo);
+    setHorarioPreseleccionado({ fecha, hora, modalidades });
   };
 
   const handleCerrarModal = () => {
     setPsicologoSeleccionado(null);
+    setHorarioPreseleccionado(null);
   };
 
   const handleFiltrosChange = (nuevosFiltros: FiltrosBusqueda) => {
@@ -105,6 +132,8 @@ const MainApp: React.FC = () => {
 
   return (
     <>
+      <UserBar />
+      
       <header className="app-header">
         <div className="header-content">
           <div className="logo-container">
@@ -158,7 +187,7 @@ const MainApp: React.FC = () => {
               userSelect: 'none'
             }}
           >
-            Mis Sesiones ({sesiones.length})
+            Mis Sesiones ({sesionesUsuario.length})
           </button>
         </nav>
       </header>
@@ -194,6 +223,7 @@ const MainApp: React.FC = () => {
                       key={psicologo.id}
                       psicologo={psicologo}
                       onSeleccionar={handleSeleccionarPsicologo}
+                      onSeleccionarHorario={handleSeleccionarHorario}
                     />
                   ))}
                 </div>
@@ -202,7 +232,6 @@ const MainApp: React.FC = () => {
           </div>
         ) : (
           <SesionesAgendadas 
-            sesiones={sesiones}
             psicologos={psicologos}
           />
         )}
@@ -213,6 +242,7 @@ const MainApp: React.FC = () => {
           psicologo={psicologoSeleccionado}
           onCerrar={handleCerrarModal}
           onAgendar={handleAgendar}
+          horarioPreseleccionado={horarioPreseleccionado}
         />
       )}
     </>
@@ -221,12 +251,14 @@ const MainApp: React.FC = () => {
 
 function App() {
   return (
-    <div className="app">
-      <Routes>
-        <Route path="/" element={<MainApp />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
-    </div>
+    <AuthProvider>
+      <div className="app">
+        <Routes>
+          <Route path="/" element={<MainApp />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </div>
+    </AuthProvider>
   );
 }
 

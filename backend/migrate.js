@@ -230,42 +230,82 @@ function insertarPsicologo(psicologo) {
 
         Promise.all(especialidadesPromesas)
           .then(() => {
-            // Insertar horarios
-            if (!psicologo.disponibilidad || psicologo.disponibilidad.length === 0) {
-              db.run('COMMIT');
-              resolve();
-              return;
-            }
-
-            let horariosPromesas = [];
-            psicologo.disponibilidad.forEach(dia => {
-              dia.horarios.forEach(horario => {
-                const promesa = new Promise((resolve, reject) => {
-                  db.run('INSERT INTO horarios (psicologoId, fecha, hora, modalidades) VALUES (?, ?, ?, ?)',
-                    [psicologo.id, dia.fecha, horario.hora, JSON.stringify(horario.modalidades)],
-                    (err) => {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resolve();
-                      }
-                    });
-                });
-                horariosPromesas.push(promesa);
-              });
+            // PRIMERO: Limpiar configuración y plantillas existentes para este psicólogo
+            db.run('DELETE FROM configuracion_horarios WHERE psicologoId = ?', [psicologo.id], (err) => {
+              if (err) {
+                console.log('⚠️ Error limpiando configuración anterior:', err.message);
+              }
             });
 
-            Promise.all(horariosPromesas)
-              .then(() => {
-                db.run('COMMIT');
-                resolve();
-              })
-              .catch(err => {
-                db.run('ROLLBACK');
-                reject(err);
+            db.run('DELETE FROM horarios_trabajo WHERE psicologoId = ?', [psicologo.id], (err) => {
+              if (err) {
+                console.log('⚠️ Error limpiando plantillas anteriores:', err.message);
+                return;
+              }
+
+              // NUEVA LÓGICA: Insertar plantilla semanal única para cada psicólogo
+              const plantillasPorDefecto = [
+                // Lunes a Viernes: 09:00-18:00
+                { dia_semana: 1, hora_inicio: '09:00', hora_fin: '18:00', modalidades: ['online', 'presencial'] },
+                { dia_semana: 2, hora_inicio: '09:00', hora_fin: '18:00', modalidades: ['online', 'presencial'] },
+                { dia_semana: 3, hora_inicio: '09:00', hora_fin: '18:00', modalidades: ['online', 'presencial'] },
+                { dia_semana: 4, hora_inicio: '09:00', hora_fin: '18:00', modalidades: ['online', 'presencial'] },
+                { dia_semana: 5, hora_inicio: '09:00', hora_fin: '18:00', modalidades: ['online', 'presencial'] },
+                // Sábado: 10:00-14:00 (solo online)
+                { dia_semana: 6, hora_inicio: '10:00', hora_fin: '14:00', modalidades: ['online'] }
+              ];
+
+              // Insertar configuración por defecto
+              const configQuery = `
+                INSERT INTO configuracion_horarios (psicologoId, duracion_sesion, tiempo_buffer, dias_anticipacion, zona_horaria, auto_generar)
+                VALUES (?, ?, ?, ?, ?, ?)
+              `;
+              
+              db.run(configQuery, [psicologo.id, 60, 15, 30, 'America/Mexico_City', 1], (err) => {
+                if (err) {
+                  console.log('⚠️ Error insertando configuración:', err.message);
+                }
               });
+
+              // Insertar plantillas semanales (UNA SOLA VEZ POR DÍA)
+              let plantillasPromesas = plantillasPorDefecto.map(plantilla => {
+                return new Promise((resolve, reject) => {
+                  const plantillaQuery = `
+                    INSERT INTO horarios_trabajo (psicologoId, dia_semana, hora_inicio, hora_fin, modalidades, activo)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                  `;
+                  
+                  db.run(plantillaQuery, [
+                    psicologo.id, 
+                    plantilla.dia_semana, 
+                    plantilla.hora_inicio, 
+                    plantilla.hora_fin, 
+                    JSON.stringify(plantilla.modalidades),
+                    1
+                  ], (err) => {
+                    if (err) {
+                      reject(err);
+                    } else {
+                      resolve();
+                    }
+                  });
+                });
+              });
+
+              Promise.all(plantillasPromesas)
+                .then(() => {
+                  db.run('COMMIT');
+                  resolve();
+                })
+                .catch(err => {
+                  console.error('Error insertando plantillas:', err);
+                  db.run('ROLLBACK');
+                  reject(err);
+                });
+            });
           })
           .catch(err => {
+            console.error('Error insertando especialidades:', err);
             db.run('ROLLBACK');
             reject(err);
           });

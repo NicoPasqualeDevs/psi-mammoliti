@@ -195,11 +195,11 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
                 <div className="dia-stats">
                   {tieneHorarios ? (
                     <>
-                      <span className="horarios-count">{dia.horarios.length} horarios</span>
+                      <span className="horarios-disponibles">✅ Disponible</span>
                       <span className={`expand-icon ${esExpandido ? 'expanded' : ''}`}>▼</span>
                     </>
                   ) : (
-                    <span className="sin-disponibilidad">Sin horarios</span>
+                    <span className="sin-disponibilidad">❌ Sin horarios</span>
                   )}
                 </div>
               </div>

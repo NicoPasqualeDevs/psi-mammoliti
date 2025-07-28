@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Psicologo, Sesion, Modalidad } from '../types';
 import { CalendarioDisponibilidad } from './CalendarioDisponibilidad';
 import { useHorariosReales, useAgendarCita } from '../hooks/useHorariosReales';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ModalAgendamientoProps {
   psicologo: Psicologo | null;
   onCerrar: () => void;
   onAgendar: (sesion: Omit<Sesion, 'id' | 'estado'>) => void;
+  horarioPreseleccionado?: {
+    fecha: string;
+    hora: string;
+    modalidades: string[];
+  } | null;
 }
 
 const getModalidadEmoji = (modalidad: string): string => {
@@ -20,7 +26,8 @@ const getModalidadTexto = (modalidad: string): string => {
 export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
   psicologo,
   onCerrar,
-  onAgendar
+  onAgendar,
+  horarioPreseleccionado = null
 }) => {
   const [vistaCalendario, setVistaCalendario] = useState(true);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('');
@@ -36,6 +43,9 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
     telefono: ''
   });
 
+  // Hook de autenticación
+  const { usuario } = useAuth();
+
   // Hooks para horarios reales y agendamiento
   const { configuracion } = useHorariosReales({ 
     psicologoId: psicologo?.id || '',
@@ -43,6 +53,49 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
   });
   
   const { agendarCita, agendando, error: errorAgendamiento } = useAgendarCita();
+
+  // Establecer el email del usuario logueado automáticamente
+  useEffect(() => {
+    if (usuario?.email) {
+      setDatosPersonales(prev => ({
+        ...prev,
+        email: usuario.email
+      }));
+    }
+  }, [usuario?.email]);
+
+  // Manejar horario preseleccionado
+  useEffect(() => {
+    if (horarioPreseleccionado && psicologo) {
+      setFechaSeleccionada(horarioPreseleccionado.fecha);
+      setHoraSeleccionada(horarioPreseleccionado.hora);
+      setModalidadesDisponibles(horarioPreseleccionado.modalidades);
+      
+      // Auto-seleccionar modalidad si solo hay una disponible
+      if (horarioPreseleccionado.modalidades.length === 1) {
+        setModalidadSeleccionada(horarioPreseleccionado.modalidades[0] as Modalidad);
+      } else {
+        setModalidadSeleccionada('');
+      }
+      
+      // Auto-seleccionar especialidad si solo hay una
+      if (psicologo.especialidades.length === 1) {
+        setEspecialidadSeleccionada(psicologo.especialidades[0]);
+      }
+      
+      // Ir directamente al formulario si hay horario preseleccionado
+      setVistaCalendario(false);
+    } else {
+      // Reset values when no preselected time
+      setFechaSeleccionada('');
+      setHoraSeleccionada('');
+      setHoraLocal('');
+      setModalidadesDisponibles([]);
+      setModalidadSeleccionada('');
+      setEspecialidadSeleccionada('');
+      setVistaCalendario(true);
+    }
+  }, [horarioPreseleccionado, psicologo]);
 
   if (!psicologo) return null;
 
@@ -71,7 +124,7 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
     e.preventDefault();
     
     if (!fechaSeleccionada || !horaSeleccionada || !modalidadSeleccionada || 
-        !especialidadSeleccionada || !datosPersonales.nombre || !datosPersonales.email) {
+        !especialidadSeleccionada || !datosPersonales.nombre) {
       alert('Por favor completa todos los campos requeridos');
       return;
     }
@@ -239,10 +292,11 @@ ID de la sesión: ${resultado.sesionId}`);
                   type="email"
                   id="email"
                   value={datosPersonales.email}
-                  onChange={(e) => setDatosPersonales({...datosPersonales, email: e.target.value})}
-                  placeholder="tu@correo.com"
-                  required
+                  readOnly
+                  className="readonly-field"
+                  title="Email de tu cuenta activa"
                 />
+                <small>Usando el email de tu cuenta activa</small>
               </div>
 
               <div className="form-group">
@@ -287,7 +341,7 @@ ID de la sesión: ${resultado.sesionId}`);
               <button 
                 type="submit" 
                 className="btn-primary"
-                disabled={agendando || !fechaSeleccionada || !horaSeleccionada || !modalidadSeleccionada || !especialidadSeleccionada || !datosPersonales.nombre || !datosPersonales.email}
+                disabled={agendando || !fechaSeleccionada || !horaSeleccionada || !modalidadSeleccionada || !especialidadSeleccionada || !datosPersonales.nombre}
               >
                 {agendando ? 'Agendando...' : 'Confirmar Cita'}
               </button>

@@ -140,6 +140,78 @@ db.serialize(() => {
   `);
 });
 
+// FUNCIÓN AUXILIAR: Generar horarios desde plantillas semanales
+function generarHorariosDesdeP lantillas(plantillas) {
+  if (!plantillas || plantillas.length === 0) {
+    return [];
+  }
+
+  const disponibilidad = [];
+  const fechaHoy = new Date();
+  
+  // Generar horarios para las próximas 2 semanas (14 días)
+  for (let i = 1; i <= 14; i++) {
+    const fecha = new Date(fechaHoy);
+    fecha.setDate(fechaHoy.getDate() + i);
+    const fechaStr = fecha.toISOString().split('T')[0];
+    const diaSemana = fecha.getDay(); // 0=Domingo, 1=Lunes, etc.
+    
+    // Buscar plantillas para este día de la semana
+    const plantillasDelDia = plantillas.filter(p => p.dia_semana === diaSemana);
+    
+    if (plantillasDelDia.length > 0) {
+      const horariosDelDia = [];
+      
+      plantillasDelDia.forEach(plantilla => {
+        // Generar intervalos para esta plantilla
+        const intervalos = generarIntervalosDeP lantilla(
+          plantilla.hora_inicio,
+          plantilla.hora_fin,
+          plantilla.duracion_sesion,
+          plantilla.tiempo_buffer
+        );
+        
+        intervalos.forEach(hora => {
+          horariosDelDia.push({
+            hora,
+            modalidades: JSON.parse(plantilla.modalidades)
+          });
+        });
+      });
+      
+      if (horariosDelDia.length > 0) {
+        disponibilidad.push({
+          fecha: fechaStr,
+          horarios: horariosDelDia.sort((a, b) => a.hora.localeCompare(b.hora))
+        });
+      }
+    }
+  }
+  
+  return disponibilidad;
+}
+
+// FUNCIÓN AUXILIAR: Generar intervalos de tiempo desde una plantilla
+function generarIntervalosDeP lantilla(horaInicio, horaFin, duracionMinutos = 60, bufferMinutos = 15) {
+  const intervalos = [];
+  
+  const [horaIni, minIni] = horaInicio.split(':').map(Number);
+  const [horaFin_, minFin] = horaFin.split(':').map(Number);
+  
+  const inicioMinutos = horaIni * 60 + minIni;
+  const finMinutos = horaFin_ * 60 + minFin;
+  const intervaloTotal = duracionMinutos + bufferMinutos;
+  
+  for (let minutos = inicioMinutos; minutos + duracionMinutos <= finMinutos; minutos += intervaloTotal) {
+    const horas = Math.floor(minutos / 60);
+    const mins = minutos % 60;
+    const horaFormateada = `${horas.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    intervalos.push(horaFormateada);
+  }
+  
+  return intervalos;
+}
+
 // ENDPOINTS API
 
 // Obtener todos los psicólogos
@@ -160,24 +232,40 @@ app.get('/api/psicologos', (req, res) => {
       return res.status(500).json({ error: 'Error interno del servidor' });
     }
 
-    // Verificar si cada psicólogo tiene plantillas de horarios configuradas
+    // Obtener horarios generados desde plantillas semanales para cada psicólogo
     const promesas = psicologos.map(psicologo => {
       return new Promise((resolve) => {
+        // Obtener plantillas semanales y configuración
         const plantillasQuery = `
-          SELECT COUNT(*) as count 
-          FROM horarios_trabajo 
-          WHERE psicologoId = ? AND activo = 1
+          SELECT ht.dia_semana, ht.hora_inicio, ht.hora_fin, ht.modalidades,
+                 COALESCE(ch.duracion_sesion, 60) as duracion_sesion,
+                 COALESCE(ch.tiempo_buffer, 15) as tiempo_buffer
+          FROM horarios_trabajo ht
+          LEFT JOIN configuracion_horarios ch ON ht.psicologoId = ch.psicologoId
+          WHERE ht.psicologoId = ? AND ht.activo = 1
+          ORDER BY ht.dia_semana, ht.hora_inicio
         `;
         
-        db.get(plantillasQuery, [psicologo.id], (err, result) => {
-          const tieneHorarios = !err && result && result.count > 0;
-          
+        db.all(plantillasQuery, [psicologo.id], (err, plantillas) => {
+          if (err) {
+            console.error('Error obteniendo plantillas:', err);
+            resolve({
+              ...psicologo,
+              especialidades: psicologo.especialidades ? psicologo.especialidades.split(',') : [],
+              modalidades: JSON.parse(psicologo.modalidades || '[]'),
+              disponibilidad: []
+            });
+            return;
+          }
+
+          // Generar horarios para las próximas 2 semanas desde plantillas
+          const disponibilidad = generarHorariosDesdeP lantillas(plantillas);
+
           resolve({
             ...psicologo,
             especialidades: psicologo.especialidades ? psicologo.especialidades.split(',') : [],
             modalidades: JSON.parse(psicologo.modalidades || '[]'),
-            disponibilidad: tieneHorarios ? [{ fecha: 'configurado', horarios: [{ hora: 'plantillas', modalidades: [] }] }] : [],
-            tieneHorariosConfigurados: tieneHorarios
+            disponibilidad
           });
         });
       });
@@ -213,22 +301,42 @@ app.get('/api/psicologos/:id', (req, res) => {
       return res.status(404).json({ error: 'Psicólogo no encontrado' });
     }
 
-    // Verificar si tiene plantillas de horarios configuradas
-    const plantillasQuery = `
-      SELECT COUNT(*) as count 
-      FROM horarios_trabajo 
-      WHERE psicologoId = ? AND activo = 1
+    // Obtener horarios
+    const horarioQuery = `
+      SELECT fecha, hora, modalidades 
+      FROM horarios 
+      WHERE psicologoId = ? AND disponible = 1
+      ORDER BY fecha, hora
     `;
     
-    db.get(plantillasQuery, [id], (err, result) => {
-      const tieneHorarios = !err && result && result.count > 0;
+    db.all(horarioQuery, [id], (err, horarios) => {
+      if (err) {
+        console.error('Error obteniendo horarios:', err);
+        return res.status(500).json({ error: 'Error interno del servidor' });
+      }
+
+      // Agrupar horarios por fecha
+      const disponibilidadMap = {};
+      horarios.forEach(horario => {
+        if (!disponibilidadMap[horario.fecha]) {
+          disponibilidadMap[horario.fecha] = [];
+        }
+        disponibilidadMap[horario.fecha].push({
+          hora: horario.hora,
+          modalidades: JSON.parse(horario.modalidades || '[]')
+        });
+      });
+
+      const disponibilidad = Object.entries(disponibilidadMap).map(([fecha, horarios]) => ({
+        fecha,
+        horarios
+      }));
 
       res.json({
         ...psicologo,
         especialidades: psicologo.especialidades ? psicologo.especialidades.split(',') : [],
         modalidades: JSON.parse(psicologo.modalidades || '[]'),
-        disponibilidad: tieneHorarios ? [{ fecha: 'configurado', horarios: [{ hora: 'plantillas', modalidades: [] }] }] : [],
-        tieneHorariosConfigurados: tieneHorarios
+        disponibilidad
       });
     });
   });

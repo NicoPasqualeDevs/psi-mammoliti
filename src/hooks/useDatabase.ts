@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { Psicologo, Sesion, Modalidad } from '../types';
 import { apiService } from '../services/apiService';
 
+// Función para obtener la URL base de la API
+const getApiBaseUrl = () => {
+  // En desarrollo, el backend corre en puerto 3001
+  return 'http://localhost:3001/api';
+};
+
 interface DatabaseState {
   psicologos: Psicologo[];
   sesiones: Sesion[];
@@ -88,7 +94,7 @@ export function useDatabase() {
   const insertarPsicologo = async (psicologo: Psicologo): Promise<boolean> => {
     try {
       // Crear el psicólogo en el backend
-      const response = await fetch('/api/psicologos', {
+      const response = await fetch(`${getApiBaseUrl()}/psicologos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +123,7 @@ export function useDatabase() {
   // Función para actualizar psicólogo
   const actualizarPsicologo = async (psicologo: Psicologo): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/psicologos/${psicologo.id}`, {
+      const response = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +152,7 @@ export function useDatabase() {
   // Función para eliminar psicólogo
   const eliminarPsicologo = async (id: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/psicologos/${id}`, {
+      const response = await fetch(`${getApiBaseUrl()}/psicologos/${id}`, {
         method: 'DELETE',
       });
 
@@ -199,7 +205,7 @@ export function useDatabase() {
   // Función para limpiar y recargar base de datos
   const limpiarYRecargarDB = async (): Promise<boolean> => {
     try {
-      const response = await fetch('/api/reset', {
+      const response = await fetch(`${getApiBaseUrl()}/reset`, {
         method: 'POST',
       });
 

@@ -68,10 +68,18 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
   const [tipoMensaje, setTipoMensaje] = useState<'success' | 'error'>('success');
   const [tabActiva, setTabActiva] = useState<'configuracion' | 'plantilla'>('configuracion');
   const [guardando, setGuardando] = useState(false);
+  const [erroresHorarios, setErroresHorarios] = useState<Record<number, string>>({});
 
   useEffect(() => {
     cargarDatos();
   }, [psicologo.id]);
+
+  // Validar horarios cuando cambie la plantilla
+  useEffect(() => {
+    if (plantillaSemanal.length > 0) {
+      validarTodosLosHorarios();
+    }
+  }, [plantillaSemanal]);
 
   const cargarDatos = async () => {
     try {
@@ -107,6 +115,10 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
       mostrarMensaje('Error al cargar configuración', 'error');
     } finally {
       setCargando(false);
+      // Validar datos cargados
+      setTimeout(() => {
+        validarTodosLosHorarios();
+      }, 0);
     }
   };
 
@@ -114,6 +126,86 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     setMensaje(msg);
     setTipoMensaje(tipo);
     setTimeout(() => setMensaje(''), 4000);
+  };
+
+  // Función para convertir hora string a minutos para facilitar comparaciones
+  const horaAMinutos = (hora: string): number => {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
+  };
+
+  // Función para detectar superposición entre dos horarios
+  const haySuperposicion = (inicio1: string, fin1: string, inicio2: string, fin2: string): boolean => {
+    const min1 = horaAMinutos(inicio1);
+    const max1 = horaAMinutos(fin1);
+    const min2 = horaAMinutos(inicio2);
+    const max2 = horaAMinutos(fin2);
+    
+    return min1 < max2 && min2 < max1;
+  };
+
+  // Función para validar horarios de un día específico
+  const validarHorariosDia = (diaSemana: number): string | null => {
+    const horariosDelDia = plantillaSemanal.filter(h => h.diaSemana === diaSemana && h.activo);
+    
+    for (let i = 0; i < horariosDelDia.length; i++) {
+      const horario1 = horariosDelDia[i];
+      
+      // Validar que hora inicio sea menor que hora fin
+      if (horaAMinutos(horario1.horaInicio) >= horaAMinutos(horario1.horaFin)) {
+        return 'La hora de inicio debe ser menor que la hora de fin';
+      }
+      
+      // Validar superposiciones con otros horarios del mismo día
+      for (let j = i + 1; j < horariosDelDia.length; j++) {
+        const horario2 = horariosDelDia[j];
+        
+        if (haySuperposicion(horario1.horaInicio, horario1.horaFin, horario2.horaInicio, horario2.horaFin)) {
+          return `Horario ${horario1.horaInicio}-${horario1.horaFin} se superpone con ${horario2.horaInicio}-${horario2.horaFin}`;
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  // Función para validar todos los horarios y actualizar errores
+  const validarTodosLosHorarios = () => {
+    const nuevosErrores: Record<number, string> = {};
+    
+    diasSemana.forEach(dia => {
+      const error = validarHorariosDia(dia.id);
+      if (error) {
+        nuevosErrores[dia.id] = error;
+      }
+    });
+    
+    setErroresHorarios(nuevosErrores);
+    return Object.keys(nuevosErrores).length === 0;
+  };
+
+  // Función para sugerir horarios válidos cuando hay conflictos
+  const sugerirHorarioValido = (diaSemana: number): { horaInicio: string; horaFin: string } | null => {
+    const horariosDelDia = plantillaSemanal
+      .filter(h => h.diaSemana === diaSemana && h.activo)
+      .sort((a, b) => horaAMinutos(a.horaInicio) - horaAMinutos(b.horaInicio));
+
+    if (horariosDelDia.length === 0) {
+      return { horaInicio: '09:00', horaFin: '17:00' };
+    }
+
+    // Buscar el último horario del día y sugerir después
+    const ultimoHorario = horariosDelDia[horariosDelDia.length - 1];
+    const finUltimo = horaAMinutos(ultimoHorario.horaFin);
+    
+    // Sugerir 1 hora después del último horario
+    if (finUltimo + 60 <= 21 * 60) { // No pasar de 21:00
+      const nuevaHoraInicio = `${Math.floor((finUltimo + 60) / 60).toString().padStart(2, '0')}:${((finUltimo + 60) % 60).toString().padStart(2, '0')}`;
+      const nuevaHoraFin = `${Math.floor((finUltimo + 120) / 60).toString().padStart(2, '0')}:${((finUltimo + 120) % 60).toString().padStart(2, '0')}`;
+      return { horaInicio: nuevaHoraInicio, horaFin: nuevaHoraFin };
+    }
+
+    return null;
   };
 
   const guardarConfiguracion = async (e: React.FormEvent) => {
@@ -146,20 +238,32 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
   };
 
   const agregarHorarioDia = (diaSemana: number) => {
+    const horarioSugerido = sugerirHorarioValido(diaSemana);
+    
     const nuevaPlantilla: PlantillaSemanal = {
       diaSemana,
-      horaInicio: '09:00',
-      horaFin: '17:00',
+      horaInicio: horarioSugerido?.horaInicio || '09:00',
+      horaFin: horarioSugerido?.horaFin || '17:00',
       modalidades: ['online', 'presencial'],
       activo: true
     };
     setPlantillaSemanal([...plantillaSemanal, nuevaPlantilla]);
+    
+    // Validar horarios después de agregar
+    setTimeout(() => {
+      validarTodosLosHorarios();
+    }, 0);
   };
 
   const actualizarHorarioDia = (index: number, campo: keyof PlantillaSemanal, valor: any) => {
     const nuevaPlantilla = [...plantillaSemanal];
     nuevaPlantilla[index] = { ...nuevaPlantilla[index], [campo]: valor };
     setPlantillaSemanal(nuevaPlantilla);
+    
+    // Validar horarios después de la actualización usando setTimeout para permitir que el estado se actualice
+    setTimeout(() => {
+      validarTodosLosHorarios();
+    }, 0);
   };
 
   const eliminarHorarioDia = async (index: number) => {
@@ -184,9 +288,20 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     const nuevaPlantilla = plantillaSemanal.filter((_, i) => i !== index);
     setPlantillaSemanal(nuevaPlantilla);
     mostrarMensaje('✅ Horario eliminado');
+    
+    // Validar horarios después de eliminar
+    setTimeout(() => {
+      validarTodosLosHorarios();
+    }, 0);
   };
 
   const guardarPlantillaSemanal = async () => {
+    // Validar antes de guardar
+    if (!validarTodosLosHorarios()) {
+      mostrarMensaje('❌ No se puede guardar: hay errores en los horarios. Revisa las superposiciones.', 'error');
+      return;
+    }
+    
     setGuardando(true);
     try {
       // Eliminar horarios existentes
@@ -237,10 +352,16 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     ];
     setPlantillaSemanal(plantillaPorDefecto);
     mostrarMensaje('✅ Plantilla por defecto cargada');
+    
+    // Validar plantilla por defecto
+    setTimeout(() => {
+      validarTodosLosHorarios();
+    }, 0);
   };
 
   const limpiarPlantilla = () => {
     setPlantillaSemanal([]);
+    setErroresHorarios({});
     mostrarMensaje('✅ Plantilla limpiada');
   };
 
@@ -374,6 +495,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                     {guardando ? '💾 Guardando...' : '💾 Guardar Configuración'}
                   </button>
                 </div>
+                {/* Eliminamos el botón de guardar plantilla de aquí */}
               </form>
             </div>
           )}
@@ -384,6 +506,12 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                 <div>
                   <h3>📅 Plantilla Semanal</h3>
                   <p>Define los horarios de trabajo para cada día de la semana</p>
+                  {Object.keys(erroresHorarios).length > 0 && (
+                    <div className="plantilla-errors-summary">
+                      <span className="error-icon">⚠️</span>
+                      <span>Hay {Object.keys(erroresHorarios).length} día{Object.keys(erroresHorarios).length !== 1 ? 's' : ''} con errores de superposición</span>
+                    </div>
+                  )}
                 </div>
                 <div className="plantilla-actions-header">
                   <button onClick={generarPlantillaPorDefecto} className="btn-template" disabled={guardando}>
@@ -391,9 +519,6 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                   </button>
                   <button onClick={limpiarPlantilla} className="btn-clear" disabled={guardando}>
                     🗑️ Limpiar Todo
-                  </button>
-                  <button onClick={guardarPlantillaSemanal} className="btn-save" disabled={guardando}>
-                    {guardando ? '💾 Guardando...' : '💾 Guardar Plantilla'}
                   </button>
                 </div>
               </div>
@@ -403,11 +528,16 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                   const horariosDelDia = plantillaSemanal.filter(h => h.diaSemana === dia.id);
                   
                   return (
-                    <div key={dia.id} className="day-card">
+                    <div key={dia.id} className={`day-card ${erroresHorarios[dia.id] ? 'day-card-error' : ''}`}>
                       <div className="day-header">
                         <div className="day-info">
                           <span className="day-emoji">{dia.emoji}</span>
                           <span className="day-name">{dia.nombre}</span>
+                          {erroresHorarios[dia.id] && (
+                            <span className="error-indicator" title={erroresHorarios[dia.id]}>
+                              ⚠️
+                            </span>
+                          )}
                         </div>
                         <div className="day-stats">
                           <span className="horarios-count">
@@ -422,6 +552,18 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                           </button>
                         </div>
                       </div>
+                      
+                      {erroresHorarios[dia.id] && (
+                        <div className="day-error-message">
+                          <div className="error-main">
+                            <span className="error-icon">⚠️</span>
+                            <span className="error-text">{erroresHorarios[dia.id]}</span>
+                          </div>
+                          <small className="error-hint">
+                            💡 Ajusta las horas para que no se superpongan o desactiva uno de los horarios
+                          </small>
+                        </div>
+                      )}
 
                       {horariosDelDia.length === 0 ? (
                         <div className="empty-day">
@@ -537,6 +679,15 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
           <button onClick={onCerrar} className="btn-close" disabled={guardando}>
             Cerrar
           </button>
+          {tabActiva === 'plantilla' && (
+            <button 
+              onClick={guardarPlantillaSemanal} 
+              className="btn-save" 
+              disabled={guardando || Object.keys(erroresHorarios).length > 0}
+            >
+              {guardando ? '💾 Guardando...' : '💾 Guardar Plantilla'}
+            </button>
+          )}
         </div>
       </div>
     </div>
