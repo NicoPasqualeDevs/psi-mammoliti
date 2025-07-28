@@ -48,6 +48,14 @@ const zonasHorarias = [
   { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires (GMT-3)' }
 ];
 
+// Configuración dinámica de URL base
+const getApiBaseUrl = () => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3001/api';
+  }
+  return '/api';
+};
+
 export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onCerrar }) => {
   const [plantillaSemanal, setPlantillaSemanal] = useState<PlantillaSemanal[]>([]);
   const [configuracion, setConfiguracion] = useState<ConfiguracionHorarios>({
@@ -70,7 +78,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
       setCargando(true);
       
       // Cargar configuración
-      const configResponse = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/configuracion-horarios`);
+      const configResponse = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}/configuracion-horarios`);
       if (configResponse.ok) {
         const configData = await configResponse.json();
         setConfiguracion({
@@ -81,7 +89,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
       }
 
       // Cargar plantilla semanal
-      const plantillaResponse = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/horarios-trabajo`);
+      const plantillaResponse = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}/horarios-trabajo`);
       if (plantillaResponse.ok) {
         const plantillaData: HorarioTrabajoBackend[] = await plantillaResponse.json();
         setPlantillaSemanal(plantillaData.map((h: HorarioTrabajoBackend) => ({
@@ -113,7 +121,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     
     setGuardando(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/configuracion-horarios`, {
+      const response = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}/configuracion-horarios`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +167,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     
     if (horario.id) {
       try {
-        const response = await fetch(`http://localhost:3001/api/horarios-trabajo/${horario.id}`, {
+        const response = await fetch(`${getApiBaseUrl()}/horarios-trabajo/${horario.id}`, {
           method: 'DELETE'
         });
         
@@ -184,14 +192,14 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
       // Eliminar horarios existentes
       const horariosExistentes = plantillaSemanal.filter(h => h.id);
       for (const horario of horariosExistentes) {
-        await fetch(`http://localhost:3001/api/horarios-trabajo/${horario.id}`, {
+        await fetch(`${getApiBaseUrl()}/horarios-trabajo/${horario.id}`, {
           method: 'DELETE'
         });
       }
 
       // Crear nuevos horarios
       for (const horario of plantillaSemanal) {
-        const response = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/horarios-trabajo`, {
+        const response = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}/horarios-trabajo`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -1,6 +1,17 @@
 import { Psicologo, Sesion } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+// Configuración dinámica de URL base según el entorno
+const getApiBaseUrl = () => {
+  // En desarrollo (localhost)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3001/api';
+  }
+  
+  // En producción, usar rutas relativas que nginx manejará
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
 

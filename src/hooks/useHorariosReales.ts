@@ -40,9 +40,17 @@ export function useHorariosReales({
       fechaLimite.setDate(fechaLimite.getDate() + 28); // 4 semanas
       const fechaFin = fechaLimite.toISOString().split('T')[0];
 
+      // Configuración dinámica de URL base
+      const getApiBaseUrl = () => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return 'http://localhost:3001/api';
+        }
+        return '/api';
+      };
+      
       // Cargar disponibilidad directamente desde el backend simplificado
       const disponibilidadResponse = await fetch(
-        `http://localhost:3001/api/psicologos/${psicologoId}/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+        `${getApiBaseUrl()}/psicologos/${psicologoId}/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
       );
 
       if (!disponibilidadResponse.ok) {
@@ -54,7 +62,7 @@ export function useHorariosReales({
 
       // Cargar configuración
       try {
-        const configResponse = await fetch(`http://localhost:3001/api/psicologos/${psicologoId}/configuracion-horarios`);
+        const configResponse = await fetch(`${getApiBaseUrl()}/psicologos/${psicologoId}/configuracion-horarios`);
         if (configResponse.ok) {
           const configData = await configResponse.json();
           setConfiguracion({
@@ -129,8 +137,16 @@ export function useAgendarCita() {
       const horaFinMinutos = finMinutos % 60;
       const horaFin = `${horaFinHoras.toString().padStart(2, '0')}:${horaFinMinutos.toString().padStart(2, '0')}`;
 
+      // Configuración dinámica de URL base para agendamiento
+      const getApiBaseUrl = () => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return 'http://localhost:3001/api';
+        }
+        return '/api';
+      };
+      
       // Crear sesión
-      const sesionResponse = await fetch('http://localhost:3001/api/sesiones', {
+      const sesionResponse = await fetch(`${getApiBaseUrl()}/sesiones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -154,7 +170,7 @@ export function useAgendarCita() {
       const sesionData = await sesionResponse.json();
 
       // Crear cita para bloquear el horario
-      const citaResponse = await fetch('http://localhost:3001/api/citas', {
+      const citaResponse = await fetch(`${getApiBaseUrl()}/citas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
