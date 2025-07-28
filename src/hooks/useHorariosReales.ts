@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DisponibilidadRespuesta, ConfiguracionHorarios, HorarioDisponible } from '../types';
+import { HorarioDisponible, ConfiguracionHorarios } from '../types';
 import { apiService } from '../services/apiService';
 
 interface UseHorariosRealesProps {
@@ -32,26 +32,49 @@ export function useHorariosReales({
     setError(null);
 
     try {
-      // Obtener rango de fechas (próximas 4 semanas)
-      const { fechaInicio, fechaFin } = apiService.obtenerRangoFechasDisponibilidad();
-
-      // Cargar datos en paralelo
-      const [disponibilidadData, configuracionData] = await Promise.all([
-        apiService.obtenerDisponibilidadReal(psicologoId, fechaInicio, fechaFin),
-        apiService.obtenerConfiguracionHorarios(psicologoId)
-      ]);
-
-      // Convertir al formato legacy para compatibilidad
-      const disponibilidadLegacy = apiService.convertirDisponibilidadALegacy(disponibilidadData);
+      // Obtener rango de fechas (próximas 4 semanas desde hoy)
+      const hoy = new Date();
+      const fechaInicio = hoy.toISOString().split('T')[0];
       
-      setDisponibilidad(disponibilidadLegacy);
-      setConfiguracion(configuracionData);
+      const fechaLimite = new Date(hoy);
+      fechaLimite.setDate(fechaLimite.getDate() + 28); // 4 semanas
+      const fechaFin = fechaLimite.toISOString().split('T')[0];
+
+      // Cargar disponibilidad directamente desde el backend simplificado
+      const disponibilidadResponse = await fetch(
+        `http://localhost:3001/api/psicologos/${psicologoId}/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`
+      );
+
+      if (!disponibilidadResponse.ok) {
+        throw new Error('Error al obtener disponibilidad');
+      }
+
+      const disponibilidadData = await disponibilidadResponse.json();
+      setDisponibilidad(disponibilidadData);
+
+      // Cargar configuración
+      try {
+        const configResponse = await fetch(`http://localhost:3001/api/psicologos/${psicologoId}/configuracion-horarios`);
+        if (configResponse.ok) {
+          const configData = await configResponse.json();
+          setConfiguracion({
+            id: configData.id,
+            psicologoId: configData.psicologoId,
+            duracionSesion: configData.duracion_sesion,
+            tiempoBuffer: configData.tiempo_buffer,
+            diasAnticipacion: configData.dias_anticipacion || 30,
+            zonaHoraria: configData.zona_horaria,
+            autoGenerar: configData.auto_generar === 1
+          });
+        }
+      } catch (configError) {
+        console.warn('No se pudo cargar la configuración, usando valores por defecto');
+        setConfiguracion(null);
+      }
 
     } catch (err) {
-      console.error('Error cargando horarios reales:', err);
+      console.error('Error cargando horarios:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
-      
-      // Fallback: mantener disponibilidad vacía
       setDisponibilidad([]);
       setConfiguracion(null);
     } finally {
@@ -77,7 +100,7 @@ export function useHorariosReales({
   };
 }
 
-// Hook para agendar citas
+// Hook para agendar citas (simplificado)
 export function useAgendarCita() {
   const [agendando, setAgendando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,19 +129,49 @@ export function useAgendarCita() {
       const horaFinMinutos = finMinutos % 60;
       const horaFin = `${horaFinHoras.toString().padStart(2, '0')}:${horaFinMinutos.toString().padStart(2, '0')}`;
 
-      const resultado = await apiService.agendarCita({
-        psicologoId: datos.psicologoId,
-        fecha: datos.fecha,
-        horaInicio: datos.hora,
-        horaFin: horaFin,
-        modalidad: datos.modalidad,
-        pacienteNombre: datos.pacienteNombre,
-        pacienteEmail: datos.pacienteEmail,
-        pacienteTelefono: datos.pacienteTelefono,
-        especialidad: datos.especialidad
+      // Crear sesión
+      const sesionResponse = await fetch('http://localhost:3001/api/sesiones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          psicologoId: datos.psicologoId,
+          fecha: datos.fecha,
+          hora: datos.hora,
+          modalidad: datos.modalidad,
+          paciente: {
+            nombre: datos.pacienteNombre,
+            email: datos.pacienteEmail,
+            telefono: datos.pacienteTelefono
+          },
+          especialidad: datos.especialidad
+        })
       });
 
-      return resultado;
+      if (!sesionResponse.ok) {
+        throw new Error('Error al crear sesión');
+      }
+
+      const sesionData = await sesionResponse.json();
+
+      // Crear cita para bloquear el horario
+      const citaResponse = await fetch('http://localhost:3001/api/citas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          psicologoId: datos.psicologoId,
+          fecha: datos.fecha,
+          hora_inicio: datos.hora,
+          hora_fin: horaFin,
+          modalidad: datos.modalidad,
+          sesionId: sesionData.id
+        })
+      });
+
+      if (!citaResponse.ok) {
+        throw new Error('Error al crear cita');
+      }
+
+      return { sesionId: sesionData.id, citaId: (await citaResponse.json()).id };
 
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al agendar cita';

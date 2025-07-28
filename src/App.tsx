@@ -68,6 +68,21 @@ const MainApp: React.FC = () => {
     setFiltros(nuevosFiltros);
   };
 
+  // Funciones para manejar la navegación
+  const irABusqueda = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Navegando a búsqueda');
+    setVistaActual('busqueda');
+  };
+
+  const irASesiones = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Navegando a sesiones');
+    setVistaActual('sesiones');
+  };
+
   if (loading && !initialized) {
     return (
       <div className="loading-container">
@@ -121,13 +136,29 @@ const MainApp: React.FC = () => {
         <nav className="navegacion">
           <button 
             className={vistaActual === 'busqueda' ? 'activo' : ''}
-            onClick={() => setVistaActual('busqueda')}
+            onClick={irABusqueda}
+            type="button"
+            style={{ 
+              cursor: 'pointer', 
+              pointerEvents: 'auto', 
+              zIndex: 20,
+              position: 'relative',
+              userSelect: 'none'
+            }}
           >
             Buscar Psicólogos
           </button>
           <button 
             className={vistaActual === 'sesiones' ? 'activo' : ''}
-            onClick={() => setVistaActual('sesiones')}
+            onClick={irASesiones}
+            type="button"
+            style={{ 
+              cursor: 'pointer', 
+              pointerEvents: 'auto', 
+              zIndex: 20,
+              position: 'relative',
+              userSelect: 'none'
+            }}
           >
             Mis Sesiones ({sesiones.length})
           </button>
@@ -135,7 +166,7 @@ const MainApp: React.FC = () => {
       </header>
 
       <main className="app-main">
-        {vistaActual === 'busqueda' && (
+        {vistaActual === 'busqueda' ? (
           <div className="busqueda-container">
             <aside className="sidebar">
               <FiltrosBusquedaComponent 
@@ -171,9 +202,7 @@ const MainApp: React.FC = () => {
               )}
             </section>
           </div>
-        )}
-
-        {vistaActual === 'sesiones' && (
+        ) : (
           <SesionesAgendadas 
             sesiones={sesiones}
             psicologos={psicologos}

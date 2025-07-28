@@ -88,6 +88,8 @@ body {
   background-position: 0 0, 25px 25px;
   opacity: 0.1;
   animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
 }
 
 @keyframes float {
@@ -100,6 +102,7 @@ body {
   z-index: 2;
   max-width: 1200px;
   margin: 0 auto;
+  pointer-events: auto;
 }
 
 .logo-container {
@@ -171,6 +174,9 @@ body {
   gap: 1.5rem;
   justify-content: center;
   flex-wrap: wrap;
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
 }
 
 .navegacion button {
@@ -183,12 +189,16 @@ body {
   font-weight: 500;
   transition: all 0.3s ease;
   font-size: 14px;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .navegacion button:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.6);
   transform: translateY(-2px);
+  cursor: pointer !important;
 }
 
 .navegacion button.activo {
@@ -196,6 +206,15 @@ body {
   color: white;
   border-color: #764ba2;
   box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+  cursor: pointer !important;
+}
+
+/* Asegurar que los botones de navegación siempre tengan cursor pointer */
+.navegacion button,
+.navegacion button:focus,
+.navegacion button:active {
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 .app-main {
@@ -2699,5 +2718,1866 @@ body {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+  }
+}
+
+/* ===== NUEVA INTERFAZ MODERNA DEL ADMIN PANEL ===== */
+
+/* Loading y error estados */
+.admin-loading, .admin-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  color: var(--textos-azul);
+}
+
+.admin-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--lila-light);
+  border-top: 4px solid var(--lila-dark);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+/* Panel principal moderno */
+.admin-panel-modern {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--lila-lighter) 0%, var(--neutral-white) 50%, var(--lila-lighter) 100%);
+  position: relative;
+}
+
+/* Header moderno */
+.admin-header-modern {
+  background: linear-gradient(135deg, var(--lila-darkest) 0%, var(--lila-darker) 30%, var(--lila-dark) 70%);
+  color: var(--neutral-white);
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.admin-header-modern .header-content h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.admin-header-modern .header-content p {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.btn-back {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--neutral-white);
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Navegación por pestañas */
+.admin-tabs {
+  background: var(--neutral-white);
+  border-bottom: 1px solid var(--lila-light);
+  display: flex;
+  overflow-x: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--textos-gris);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  background: var(--lila-lighter);
+  color: var(--lila-darker);
+}
+
+.tab-button.active {
+  color: var(--lila-darker);
+  border-bottom-color: var(--lila-dark);
+  background: var(--lila-lighter);
+}
+
+/* Mensajes modernos */
+.admin-message-modern {
+  margin: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: slideInDown 0.3s ease;
+}
+
+.admin-message-modern.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.admin-message-modern.error {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+/* Contenido principal */
+.admin-content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* === DASHBOARD === */
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.stats-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card-modern {
+  background: var(--neutral-white);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card-modern:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--lila-light), var(--lila));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--textos-gris);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--lila-darker);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-change {
+  font-size: 0.8rem;
+  color: var(--textos-gris);
+  opacity: 0.8;
+}
+
+/* Acciones rápidas */
+.quick-actions {
+  background: var(--neutral-white);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.quick-actions h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--textos-azul);
+  font-size: 1.3rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.action-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, var(--lila-dark), var(--lila));
+  color: var(--neutral-white);
+}
+
+.action-button.secondary {
+  background: linear-gradient(135deg, var(--secundario-celeste), #7fb3d3);
+  color: var(--neutral-white);
+}
+
+.action-button.danger {
+  background: linear-gradient(135deg, var(--secundario-salmón), #d73527);
+  color: var(--neutral-white);
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Estadísticas por especialidad */
+.specialty-stats {
+  background: var(--neutral-white);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.specialty-stats h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--textos-azul);
+  font-size: 1.3rem;
+}
+
+.specialty-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.specialty-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.specialty-name {
+  flex: 0 0 200px;
+  font-weight: 500;
+  color: var(--textos-azul);
+  font-size: 0.9rem;
+}
+
+.specialty-progress {
+  flex: 1;
+  height: 8px;
+  background: var(--lila-lighter);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.specialty-fill {
+  height: 100%;
+  background: linear-gradient(135deg, var(--lila-dark), var(--lila));
+  transition: width 0.3s ease;
+}
+
+.specialty-count {
+  flex: 0 0 30px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--lila-darker);
+  font-size: 0.9rem;
+}
+
+/* === PSICÓLOGOS === */
+.psicologos-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Controles de filtro */
+.filter-controls {
+  background: var(--neutral-white);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--lila-dark);
+}
+
+.filter-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  background: var(--neutral-white);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--lila-dark);
+}
+
+.view-controls {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--lila-lighter);
+  padding: 0.25rem;
+  border-radius: 12px;
+}
+
+.view-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  color: var(--textos-gris);
+}
+
+.view-button.active {
+  background: var(--neutral-white);
+  color: var(--lila-darker);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Información de resultados */
+.results-info {
+  color: var(--textos-gris);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Grid de psicólogos (vista cards) */
+.psicologos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.psicologo-card-admin {
+  background: var(--neutral-white);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.psicologo-card-admin:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--lila-lighter), var(--neutral-white));
+}
+
+.psicologo-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--neutral-white);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--textos-azul);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.rating {
+  font-size: 0.9rem;
+  color: var(--secundario-naranja);
+  font-weight: 500;
+}
+
+.card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.experiencia, .precio {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--textos-gris);
+}
+
+.precio {
+  font-weight: 600;
+  color: var(--lila-darker);
+}
+
+.especialidades-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.especialidad-tag {
+  background: var(--lila-lighter);
+  color: var(--lila-darker);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.mas-tags {
+  background: var(--textos-gris);
+  color: var(--neutral-white);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.modalidades-badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modalidad-badge {
+  background: var(--secundario-celeste);
+  color: var(--neutral-white);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.horarios-info {
+  font-size: 0.8rem;
+  color: var(--textos-gris);
+  background: var(--lila-lighter);
+  padding: 0.5rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--lila-lighter);
+}
+
+.btn-action {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-action.horarios {
+  background: var(--secundario-celeste);
+  color: var(--neutral-white);
+}
+
+.btn-action.edit {
+  background: var(--secundario-naranja);
+  color: var(--neutral-white);
+}
+
+.btn-action.delete {
+  background: var(--secundario-salmón);
+  color: var(--neutral-white);
+}
+
+.btn-action:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Vista tabla */
+.table-wrapper {
+  background: var(--neutral-white);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.psicologos-table-view {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.psicologos-table-view th {
+  background: var(--lila-darker);
+  color: var(--neutral-white);
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.psicologos-table-view td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--lila-lighter);
+  vertical-align: middle;
+}
+
+.psicologos-table-view tr:hover {
+  background: var(--lila-lighter);
+}
+
+.table-psicologo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.table-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.table-name {
+  font-weight: 600;
+  color: var(--textos-azul);
+}
+
+.table-modalidades {
+  font-size: 0.8rem;
+  color: var(--textos-gris);
+}
+
+.table-especialidades {
+  font-size: 0.9rem;
+  color: var(--textos-gris);
+}
+
+.table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-action-small {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-action-small.horarios {
+  background: var(--secundario-celeste);
+  color: var(--neutral-white);
+}
+
+.btn-action-small.edit {
+  background: var(--secundario-naranja);
+  color: var(--neutral-white);
+}
+
+.btn-action-small.delete {
+  background: var(--secundario-salmón);
+  color: var(--neutral-white);
+}
+
+.btn-action-small:hover {
+  transform: scale(1.1);
+}
+
+/* === FORMULARIO === */
+.formulario-content {
+  background: var(--neutral-white);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.formulario-content h3 {
+  margin: 0 0 2rem 0;
+  color: var(--textos-azul);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.formulario-moderno {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section h4 {
+  margin: 0;
+  color: var(--lila-darker);
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--lila-lighter);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field label {
+  font-weight: 600;
+  color: var(--textos-azul);
+  font-size: 0.9rem;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  background: var(--neutral-white);
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: var(--lila-dark);
+}
+
+.form-field input.error,
+.form-field textarea.error {
+  border-color: var(--secundario-salmón);
+}
+
+.form-field small {
+  color: var(--textos-gris);
+  font-size: 0.8rem;
+}
+
+.error-message {
+  color: var(--secundario-salmón);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.modalidades-checkboxes {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--lila-lighter);
+  border-radius: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--textos-azul);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  height: auto;
+  accent-color: var(--lila-dark);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid var(--lila-lighter);
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--lila-dark), var(--lila));
+  color: var(--neutral-white);
+}
+
+.btn-secondary {
+  background: var(--lila-light);
+  color: var(--textos-azul);
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* === CONFIGURACIÓN === */
+.configuracion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.configuracion-content h3 {
+  margin: 0;
+  color: var(--textos-azul);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.config-section {
+  background: var(--neutral-white);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.config-section h4 {
+  margin: 0 0 1rem 0;
+  color: var(--lila-darker);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.config-section p {
+  margin: 0 0 1.5rem 0;
+  color: var(--textos-gris);
+}
+
+.config-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.config-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.config-button.danger {
+  background: linear-gradient(135deg, var(--secundario-salmón), #d73527);
+  color: var(--neutral-white);
+}
+
+.config-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.config-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.system-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.system-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--lila-lighter);
+  border-radius: 12px;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: var(--textos-azul);
+}
+
+.stat-value {
+  font-weight: 700;
+  color: var(--lila-darker);
+  font-size: 1.1rem;
+}
+
+/* Estado vacío */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--neutral-white);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--textos-azul);
+  font-size: 1.3rem;
+}
+
+.empty-state p {
+  margin: 0 0 1.5rem 0;
+  color: var(--textos-gris);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-header-modern {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .admin-content {
+    padding: 1rem;
+  }
+
+  .stats-grid-modern {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    min-width: auto;
+  }
+
+  .filter-group {
+    flex-direction: column;
+  }
+
+  .psicologos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .admin-tabs {
+    overflow-x: auto;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .psicologos-table-view {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-header-modern .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .stat-card-modern {
+    padding: 1.5rem;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    padding: 0.75rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .psicologo-card-admin {
+    margin: 0 0.5rem;
+  }
+
+  .card-header {
+    padding: 1rem;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+}
+
+/* ===== MODAL DE GESTIÓN DE HORARIOS MODERNO ===== */
+
+/* Modal overlay y contenido principal */
+.modal-overlay-horarios {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content-horarios {
+  background: var(--neutral-white);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-content-horarios.loading {
+  max-width: 400px;
+  height: auto;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Loading state */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.loading-spinner-horarios {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--lila-light);
+  border-top: 4px solid var(--lila-dark);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Header del modal */
+.modal-header-horarios {
+  background: linear-gradient(135deg, var(--lila-darkest) 0%, var(--lila-darker) 100%);
+  color: var(--neutral-white);
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.psicologo-info-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.psicologo-avatar-modal {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--neutral-white);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.psicologo-info-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.psicologo-info-header p {
+  margin: 0.25rem 0 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.btn-close-modal {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: var(--neutral-white);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-modal:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Navegación por pestañas */
+.horarios-tabs {
+  background: var(--neutral-white);
+  border-bottom: 2px solid var(--lila-lighter);
+  display: flex;
+  padding: 0 2rem;
+}
+
+.tab-button-horarios {
+  background: none;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--textos-gris);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.tab-button-horarios:hover {
+  color: var(--lila-darker);
+  background: var(--lila-lighter);
+}
+
+.tab-button-horarios.active {
+  color: var(--lila-darker);
+  border-bottom-color: var(--lila-dark);
+  background: var(--lila-lighter);
+}
+
+/* Mensajes */
+.message-horarios {
+  margin: 1rem 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: slideInDown 0.3s ease;
+}
+
+.message-horarios.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+.message-horarios.error {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+}
+
+/* Cuerpo del modal */
+.modal-body-horarios {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* === CONFIGURACIÓN === */
+.config-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.config-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.config-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--textos-azul);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.config-header p {
+  margin: 0;
+  color: var(--textos-gris);
+  font-size: 1.1rem;
+}
+
+.config-form {
+  background: var(--neutral-white);
+  border: 2px solid var(--lila-light);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.config-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.config-field label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--textos-azul);
+  font-size: 1rem;
+}
+
+.field-icon {
+  font-size: 1.2rem;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--lila-dark);
+  box-shadow: 0 0 0 3px rgba(132, 117, 179, 0.1);
+}
+
+.input-group input {
+  flex: 1;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background: transparent;
+}
+
+.input-group input:focus {
+  outline: none;
+}
+
+.input-suffix {
+  background: var(--lila-lighter);
+  color: var(--lila-darker);
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.config-field select {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 12px;
+  font-size: 1rem;
+  background: var(--neutral-white);
+  transition: border-color 0.3s ease;
+}
+
+.config-field select:focus {
+  outline: none;
+  border-color: var(--lila-dark);
+  box-shadow: 0 0 0 3px rgba(132, 117, 179, 0.1);
+}
+
+.config-field small {
+  color: var(--textos-gris);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.config-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--lila-lighter);
+}
+
+.btn-save {
+  background: linear-gradient(135deg, var(--lila-dark), var(--lila));
+  color: var(--neutral-white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(132, 117, 179, 0.3);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* === PLANTILLA SEMANAL === */
+.plantilla-content {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.plantilla-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 2rem;
+}
+
+.plantilla-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--textos-azul);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.plantilla-header p {
+  margin: 0;
+  color: var(--textos-gris);
+  font-size: 1.1rem;
+}
+
+.plantilla-actions-header {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-template,
+.btn-clear {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-template {
+  background: linear-gradient(135deg, var(--secundario-celeste), #7fb3d3);
+  color: var(--neutral-white);
+}
+
+.btn-clear {
+  background: linear-gradient(135deg, var(--secundario-salmón), #d73527);
+  color: var(--neutral-white);
+}
+
+.btn-template:hover:not(:disabled),
+.btn-clear:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-template:disabled,
+.btn-clear:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Container de días */
+.days-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.day-card {
+  background: var(--neutral-white);
+  border: 2px solid var(--lila-light);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.day-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--lila);
+}
+
+.day-header {
+  background: var(--lila-lighter);
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.day-emoji {
+  font-size: 1.5rem;
+}
+
+.day-name {
+  font-weight: 700;
+  color: var(--textos-azul);
+  font-size: 1.2rem;
+}
+
+.day-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.horarios-count {
+  background: var(--lila);
+  color: var(--neutral-white);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.btn-add-horario {
+  background: var(--lila-dark);
+  color: var(--neutral-white);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-add-horario:hover:not(:disabled) {
+  background: var(--lila-darker);
+  transform: scale(1.1);
+}
+
+.btn-add-horario:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Estado vacío de día */
+.empty-day {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--textos-gris);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-day p {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+}
+
+.btn-add-first {
+  background: var(--lila-dark);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-add-first:hover:not(:disabled) {
+  background: var(--lila-darker);
+  transform: translateY(-2px);
+}
+
+/* Lista de horarios */
+.horarios-list {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.horario-item {
+  background: var(--lila-lighter);
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.horario-times {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-field label {
+  font-size: 0.8rem;
+  color: var(--textos-gris);
+  font-weight: 600;
+}
+
+.time-field input {
+  padding: 0.5rem;
+  border: 2px solid var(--lila-light);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: var(--neutral-white);
+  transition: border-color 0.3s ease;
+}
+
+.time-field input:focus {
+  outline: none;
+  border-color: var(--lila-dark);
+}
+
+.time-separator {
+  font-size: 1.2rem;
+  color: var(--lila-dark);
+  font-weight: bold;
+  margin: 1rem 0 0 0;
+}
+
+.horario-modalidades {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.horario-modalidades > label {
+  font-size: 0.8rem;
+  color: var(--textos-gris);
+  font-weight: 600;
+}
+
+.modalidades-checkboxes-horarios {
+  display: flex;
+  gap: 1rem;
+}
+
+.checkbox-label-horarios {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--textos-azul);
+  font-size: 0.9rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.checkbox-label-horarios:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.checkbox-label-horarios input[type="checkbox"] {
+  accent-color: var(--lila-dark);
+  transform: scale(1.2);
+}
+
+.horario-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Switch personalizado */
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch-label input[type="checkbox"] {
+  display: none;
+}
+
+.switch-slider {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background: var(--textos-gris);
+  border-radius: 26px;
+  transition: background 0.3s ease;
+}
+
+.switch-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: var(--neutral-white);
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+
+.switch-label input:checked + .switch-slider {
+  background: var(--lila-dark);
+}
+
+.switch-label input:checked + .switch-slider::before {
+  transform: translateX(24px);
+}
+
+.switch-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--textos-azul);
+}
+
+.btn-delete-horario {
+  background: var(--secundario-salmón);
+  color: var(--neutral-white);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-delete-horario:hover:not(:disabled) {
+  background: #d73527;
+  transform: scale(1.1);
+}
+
+.btn-delete-horario:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Footer del modal */
+.modal-footer-horarios {
+  background: var(--lila-lighter);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--lila-light);
+}
+
+.btn-close {
+  background: var(--textos-gris);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-close:hover:not(:disabled) {
+  background: var(--lila-darker);
+  transform: translateY(-2px);
+}
+
+.btn-close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive para modal de horarios */
+@media (max-width: 768px) {
+  .modal-overlay-horarios {
+    padding: 0.5rem;
+  }
+
+  .modal-header-horarios {
+    padding: 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .psicologo-info-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .horarios-tabs {
+    padding: 0 1rem;
+    overflow-x: auto;
+  }
+
+  .tab-button-horarios {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .modal-body-horarios {
+    padding: 1rem;
+  }
+
+  .config-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .plantilla-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .plantilla-actions-header {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .horario-item {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .horario-times {
+    justify-content: center;
+  }
+
+  .modalidades-checkboxes-horarios {
+    justify-content: center;
+  }
+
+  .horario-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content-horarios {
+    margin: 0.5rem;
+    border-radius: 16px;
+  }
+
+  .psicologo-avatar-modal {
+    width: 50px;
+    height: 50px;
+  }
+
+  .config-header h3,
+  .plantilla-header h3 {
+    font-size: 1.5rem;
+  }
+
+  .day-header {
+    padding: 1rem;
+  }
+
+  .horario-item {
+    padding: 1rem;
+  }
+
+  .horarios-list {
+    padding: 1rem;
   }
 }

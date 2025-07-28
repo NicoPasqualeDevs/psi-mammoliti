@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "migrate": "node migrate.js",
+    "migrate-horarios": "node migrate-horarios.js",
+    "setup-plantillas": "node setup-plantillas.js",
     "dev": "node server.js"
   },
   "dependencies": {

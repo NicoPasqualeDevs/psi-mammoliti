@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Psicologo, Sesion } from '../types';
+import { Psicologo, Sesion, Modalidad } from '../types';
 import { apiService } from '../services/apiService';
 
 interface DatabaseState {
@@ -221,6 +221,40 @@ export function useDatabase() {
     }
   };
 
+  // Función para filtrar psicólogos
+  const filtrarPsicologos = (
+    especialidad: string,
+    precioMax: number,
+    modalidad: Modalidad | ''
+  ) => {
+    return state.psicologos.filter(psicologo => {
+      // Filtro por especialidad
+      if (especialidad && !psicologo.especialidades.includes(especialidad)) {
+        return false;
+      }
+      
+      // Filtro por precio máximo
+      if (psicologo.precio > precioMax) {
+        return false;
+      }
+      
+      // Filtro por modalidad
+      if (modalidad && !psicologo.modalidades.includes(modalidad)) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  // Función para limpiar errores
+  const limpiarError = () => {
+    setState(prev => ({
+      ...prev,
+      error: null
+    }));
+  };
+
   return {
     // Estado
     psicologos: state.psicologos,
@@ -237,6 +271,8 @@ export function useDatabase() {
     actualizarPsicologo,
     eliminarPsicologo,
     insertarSesion,
-    limpiarYRecargarDB
+    limpiarYRecargarDB,
+    filtrarPsicologos,
+    limpiarError
   };
 } 

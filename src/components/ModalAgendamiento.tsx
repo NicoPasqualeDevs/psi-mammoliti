@@ -78,7 +78,7 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
 
     try {
       // Usar duración de la configuración o 60 minutos por defecto
-      const duracionMinutos = configuracion?.duracion_sesion || 60;
+      const duracionMinutos = configuracion?.duracionSesion || 60;
 
       // Agendar la cita usando el sistema real
       const resultado = await agendarCita({
@@ -180,7 +180,7 @@ ID de la sesión: ${resultado.sesionId}`);
                     day: 'numeric'
                   })}</p>
                   <p><strong>Hora:</strong> {horaSeleccionada} {horaLocal && `(${horaLocal} tu hora)`}</p>
-                  <p><strong>Duración:</strong> {configuracion?.duracion_sesion || 60} minutos</p>
+                  <p><strong>Duración:</strong> {configuracion?.duracionSesion || 60} minutos</p>
                   <p><strong>Modalidades disponibles:</strong> {modalidadesDisponibles.map(m => getModalidadEmoji(m) + ' ' + getModalidadTexto(m)).join(', ')}</p>
                 </div>
               </div>

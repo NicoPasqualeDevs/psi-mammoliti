@@ -50,9 +50,9 @@ export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ sesiones, 
               </div>
               
               <div className="sesion-paciente">
-                <p><strong>Paciente:</strong> {sesion.paciente.nombre}</p>
-                <p><strong>Email:</strong> {sesion.paciente.email}</p>
-                {sesion.paciente.telefono && (
+                <p><strong>Paciente:</strong> {sesion.paciente?.nombre || 'Sin datos'}</p>
+                <p><strong>Email:</strong> {sesion.paciente?.email || 'Sin datos'}</p>
+                {sesion.paciente?.telefono && (
                   <p><strong>Teléfono:</strong> {sesion.paciente.telefono}</p>
                 )}
               </div>

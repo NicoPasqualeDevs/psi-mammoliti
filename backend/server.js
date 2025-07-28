@@ -885,9 +885,9 @@ app.delete('/api/horarios-excepciones/:excepcionId', (req, res) => {
   });
 });
 
-// === DISPONIBILIDAD EN TIEMPO REAL ===
+// === DISPONIBILIDAD EN TIEMPO REAL (SIMPLIFICADA) ===
 
-// Generar disponibilidad para un psicólogo en un rango de fechas
+// Generar disponibilidad para un psicólogo en un rango de fechas basado en plantilla semanal
 app.get('/api/psicologos/:id/disponibilidad', (req, res) => {
   const { id } = req.params;
   const { fecha_inicio, fecha_fin } = req.query;
@@ -905,64 +905,151 @@ app.get('/api/psicologos/:id/disponibilidad', (req, res) => {
       return res.status(500).json({ error: 'Error interno del servidor' });
     }
     
-    if (!configuracion) {
-      return res.status(404).json({ error: 'Configuración de horarios no encontrada' });
-    }
+    // Usar configuración por defecto si no existe
+    const config = configuracion || {
+      duracion_sesion: 60,
+      tiempo_buffer: 15,
+      zona_horaria: 'America/Mexico_City'
+    };
     
-    // Obtener horarios de trabajo
-    const horariosQuery = 'SELECT * FROM horarios_trabajo WHERE psicologoId = ? AND activo = 1';
+    // Obtener plantilla semanal activa
+    const plantillaQuery = 'SELECT * FROM horarios_trabajo WHERE psicologoId = ? AND activo = 1 ORDER BY dia_semana';
     
-    db.all(horariosQuery, [id], (err, horariosTrabajoRaw) => {
+    db.all(plantillaQuery, [id], (err, plantillaSemanal) => {
       if (err) {
-        console.error('Error obteniendo horarios de trabajo:', err);
+        console.error('Error obteniendo plantilla semanal:', err);
         return res.status(500).json({ error: 'Error interno del servidor' });
       }
       
-      // Obtener excepciones
-      const excepcionesQuery = 'SELECT * FROM horarios_excepciones WHERE psicologoId = ? AND fecha BETWEEN ? AND ?';
+      if (!plantillaSemanal || plantillaSemanal.length === 0) {
+        return res.json([]); // Sin plantilla, sin horarios
+      }
       
-      db.all(excepcionesQuery, [id, fecha_inicio, fecha_fin], (err, excepcionesRaw) => {
+      // Obtener citas agendadas para evitar conflictos
+      const citasQuery = 'SELECT * FROM citas WHERE psicologoId = ? AND fecha BETWEEN ? AND ? AND estado = "confirmada"';
+      
+      db.all(citasQuery, [id, fecha_inicio, fecha_fin], (err, citas) => {
         if (err) {
-          console.error('Error obteniendo excepciones:', err);
+          console.error('Error obteniendo citas:', err);
           return res.status(500).json({ error: 'Error interno del servidor' });
         }
         
-        // Obtener citas agendadas
-        const citasQuery = 'SELECT * FROM citas WHERE psicologoId = ? AND fecha BETWEEN ? AND ? AND estado = "confirmada"';
+        // Generar disponibilidad basada en plantilla semanal
+        const disponibilidad = generarDisponibilidadDesdePlantilla(
+          fecha_inicio,
+          fecha_fin,
+          plantillaSemanal,
+          citas,
+          config
+        );
         
-        db.all(citasQuery, [id, fecha_inicio, fecha_fin], (err, citas) => {
-          if (err) {
-            console.error('Error obteniendo citas:', err);
-            return res.status(500).json({ error: 'Error interno del servidor' });
-          }
-          
-          // Formatear datos
-          const horariosTrabajoFormateados = horariosTrabajoRaw.map(h => ({
-            ...h,
-            modalidades: JSON.parse(h.modalidades)
-          }));
-          
-          const excepcionesFormateadas = excepcionesRaw.map(e => ({
-            ...e,
-            modalidades: e.modalidades ? JSON.parse(e.modalidades) : null
-          }));
-          
-          // Generar disponibilidad usando lógica similar al servicio
-          const disponibilidad = generarDisponibilidadBackend(
-            new Date(fecha_inicio),
-            new Date(fecha_fin),
-            horariosTrabajoFormateados,
-            excepcionesFormateadas,
-            citas,
-            configuracion
-          );
-          
-          res.json(disponibilidad);
-        });
+        res.json(disponibilidad);
       });
     });
   });
 });
+
+// === FUNCIONES AUXILIARES SIMPLIFICADAS ===
+
+function generarDisponibilidadDesdePlantilla(fechaInicio, fechaFin, plantillaSemanal, citasAgendadas, configuracion) {
+  const resultado = [];
+  const fechaActual = new Date(fechaInicio);
+  const fechaLimite = new Date(fechaFin);
+
+  while (fechaActual <= fechaLimite) {
+    const fechaStr = fechaActual.toISOString().split('T')[0];
+    const diaSemana = fechaActual.getDay(); // 0=Domingo, 1=Lunes, etc.
+    
+    // Buscar configuración para este día de la semana
+    const configuracionDia = plantillaSemanal.find(p => p.dia_semana === diaSemana);
+    
+    let horariosDelDia = [];
+    
+    if (configuracionDia) {
+      // Generar horarios para este día basado en la plantilla
+      const modalidades = JSON.parse(configuracionDia.modalidades);
+      const intervalos = generarIntervalosHorario(
+        configuracionDia.hora_inicio,
+        configuracionDia.hora_fin,
+        configuracion.duracion_sesion,
+        configuracion.tiempo_buffer
+      );
+      
+      // Filtrar horarios ocupados
+      const citasDelDia = citasAgendadas.filter(cita => cita.fecha === fechaStr);
+      
+      horariosDelDia = intervalos
+        .filter(intervalo => {
+          // Verificar si está ocupado
+          return !citasDelDia.some(cita => 
+            hayConflictoHorario(
+              intervalo.hora_inicio,
+              intervalo.hora_fin,
+              cita.hora_inicio,
+              cita.hora_fin
+            )
+          );
+        })
+        .map(intervalo => ({
+          hora: intervalo.hora_inicio,
+          modalidades: modalidades
+        }));
+    }
+
+    resultado.push({
+      fecha: fechaStr,
+      horarios: horariosDelDia
+    });
+
+    // Avanzar al siguiente día
+    fechaActual.setDate(fechaActual.getDate() + 1);
+  }
+
+  return resultado;
+}
+
+function generarIntervalosHorario(horaInicio, horaFin, duracionMinutos, bufferMinutos) {
+  const intervalos = [];
+  
+  const [horaIni, minIni] = horaInicio.split(':').map(Number);
+  const [horaFin_, minFin] = horaFin.split(':').map(Number);
+  
+  const inicioMinutos = horaIni * 60 + minIni;
+  const finMinutos = horaFin_ * 60 + minFin;
+  const intervaloTotal = duracionMinutos + bufferMinutos;
+  
+  for (let minutos = inicioMinutos; minutos + duracionMinutos <= finMinutos; minutos += intervaloTotal) {
+    const horaInicioIntervalo = minutosAHora(minutos);
+    const horaFinIntervalo = minutosAHora(minutos + duracionMinutos);
+    
+    intervalos.push({
+      hora_inicio: horaInicioIntervalo,
+      hora_fin: horaFinIntervalo
+    });
+  }
+  
+  return intervalos;
+}
+
+function minutosAHora(minutos) {
+  const horas = Math.floor(minutos / 60);
+  const mins = minutos % 60;
+  return `${horas.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
+function hayConflictoHorario(inicio1, fin1, inicio2, fin2) {
+  const [h1i, m1i] = inicio1.split(':').map(Number);
+  const [h1f, m1f] = fin1.split(':').map(Number);
+  const [h2i, m2i] = inicio2.split(':').map(Number);
+  const [h2f, m2f] = fin2.split(':').map(Number);
+  
+  const min1i = h1i * 60 + m1i;
+  const min1f = h1f * 60 + m1f;
+  const min2i = h2i * 60 + m2i;
+  const min2f = h2f * 60 + m2f;
+  
+  return min1i < min2f && min2i < min1f;
+}
 
 // === CITAS ===
 
@@ -988,138 +1075,6 @@ app.post('/api/citas', (req, res) => {
     });
   });
 });
-
-// === FUNCIONES AUXILIARES ===
-
-function generarDisponibilidadBackend(fechaInicio, fechaFin, horariosTrabajoSemanales, excepciones, citasAgendadas, configuracion) {
-  const resultado = [];
-  const fechaActual = new Date(fechaInicio);
-
-  while (fechaActual <= fechaFin) {
-    const fechaStr = fechaActual.toISOString().split('T')[0];
-    const diaSemana = fechaActual.getDay();
-    
-    // Verificar si hay una excepción para este día
-    const excepcionDia = excepciones.find(exc => exc.fecha === fechaStr);
-    
-    let horariosDelDia = [];
-
-    if (excepcionDia?.tipo === 'bloqueado') {
-      // Día completamente bloqueado
-      horariosDelDia = [];
-    } else if (excepcionDia?.tipo === 'horario_especial') {
-      // Día con horario especial
-      horariosDelDia = generarHorariosDiaBackend(
-        fechaStr,
-        [{
-          dia_semana: diaSemana,
-          hora_inicio: excepcionDia.hora_inicio,
-          hora_fin: excepcionDia.hora_fin,
-          modalidades: excepcionDia.modalidades
-        }],
-        citasAgendadas,
-        configuracion
-      );
-    } else {
-      // Día normal según plantilla semanal
-      const plantillasDelDia = horariosTrabajoSemanales.filter(horario => horario.dia_semana === diaSemana);
-      horariosDelDia = generarHorariosDiaBackend(fechaStr, plantillasDelDia, citasAgendadas, configuracion);
-    }
-
-    resultado.push({
-      fecha: fechaStr,
-      horarios: horariosDelDia.filter(h => h.disponible).map(h => ({
-        hora: h.hora_inicio,
-        modalidades: h.modalidades
-      }))
-    });
-
-    // Avanzar al siguiente día
-    fechaActual.setDate(fechaActual.getDate() + 1);
-  }
-
-  return resultado;
-}
-
-function generarHorariosDiaBackend(fecha, plantillas, citasAgendadas, configuracion) {
-  const horarios = [];
-  const citasDelDia = citasAgendadas.filter(cita => cita.fecha === fecha);
-
-  plantillas.forEach(plantilla => {
-    const horariosGenerados = generarIntervalosHorarioBackend(
-      plantilla.hora_inicio,
-      plantilla.hora_fin,
-      configuracion.duracion_sesion,
-      configuracion.tiempo_buffer
-    );
-
-    horariosGenerados.forEach(intervalo => {
-      // Verificar si el horario está ocupado
-      const citaConflicto = citasDelDia.find(cita => 
-        hayConflictoHorarioBackend(
-          intervalo.hora_inicio,
-          intervalo.hora_fin,
-          cita.hora_inicio,
-          cita.hora_fin
-        )
-      );
-
-      horarios.push({
-        fecha,
-        hora_inicio: intervalo.hora_inicio,
-        hora_fin: intervalo.hora_fin,
-        modalidades: plantilla.modalidades,
-        disponible: !citaConflicto,
-        ocupado_por: citaConflicto?.id
-      });
-    });
-  });
-
-  return horarios.sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
-}
-
-function generarIntervalosHorarioBackend(horaInicio, horaFin, duracionMinutos, bufferMinutos) {
-  const intervalos = [];
-  
-  const [horaIni, minIni] = horaInicio.split(':').map(Number);
-  const [horaFin_, minFin] = horaFin.split(':').map(Number);
-  
-  const inicioMinutos = horaIni * 60 + minIni;
-  const finMinutos = horaFin_ * 60 + minFin;
-  const intervaloTotal = duracionMinutos + bufferMinutos;
-  
-  for (let minutos = inicioMinutos; minutos + duracionMinutos <= finMinutos; minutos += intervaloTotal) {
-    const horaInicioIntervalo = minutosAHoraBackend(minutos);
-    const horaFinIntervalo = minutosAHoraBackend(minutos + duracionMinutos);
-    
-    intervalos.push({
-      hora_inicio: horaInicioIntervalo,
-      hora_fin: horaFinIntervalo
-    });
-  }
-  
-  return intervalos;
-}
-
-function minutosAHoraBackend(minutos) {
-  const horas = Math.floor(minutos / 60);
-  const mins = minutos % 60;
-  return `${horas.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-}
-
-function hayConflictoHorarioBackend(inicio1, fin1, inicio2, fin2) {
-  const [h1i, m1i] = inicio1.split(':').map(Number);
-  const [h1f, m1f] = fin1.split(':').map(Number);
-  const [h2i, m2i] = inicio2.split(':').map(Number);
-  const [h2f, m2f] = fin2.split(':').map(Number);
-  
-  const min1i = h1i * 60 + m1i;
-  const min1f = h1f * 60 + m1f;
-  const min2i = h2i * 60 + m2i;
-  const min2f = h2f * 60 + m2f;
-  
-  return min1i < min2f && min2i < min1f;
-}
 
 // Servir archivos estáticos en producción
 if (process.env.NODE_ENV === 'production') {

@@ -1,108 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  HorarioTrabajo, 
-  HorarioExcepcion, 
-  ConfiguracionHorarios, 
-  Modalidad,
-  Psicologo 
-} from '../types';
-import { HorariosService } from '../services/horariosService';
+import { Psicologo, Modalidad } from '../types';
+
+interface PlantillaSemanal {
+  id?: number;
+  diaSemana: number;
+  horaInicio: string;
+  horaFin: string;
+  modalidades: Modalidad[];
+  activo: boolean;
+}
+
+interface ConfiguracionHorarios {
+  duracionSesion: number;
+  tiempoBuffer: number;
+  zonaHoraria: string;
+}
+
+interface HorarioTrabajoBackend {
+  id: number;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+  modalidades: Modalidad[];
+  activo: boolean;
+}
 
 interface GestionHorariosProps {
   psicologo: Psicologo;
   onCerrar: () => void;
 }
 
+const diasSemana = [
+  { id: 1, nombre: 'Lunes', emoji: '📅' },
+  { id: 2, nombre: 'Martes', emoji: '📅' },
+  { id: 3, nombre: 'Miércoles', emoji: '📅' },
+  { id: 4, nombre: 'Jueves', emoji: '📅' },
+  { id: 5, nombre: 'Viernes', emoji: '📅' },
+  { id: 6, nombre: 'Sábado', emoji: '📅' },
+  { id: 0, nombre: 'Domingo', emoji: '📅' }
+];
+
+const zonasHorarias = [
+  { value: 'America/Mexico_City', label: 'Ciudad de México (GMT-6)' },
+  { value: 'America/New_York', label: 'Nueva York (GMT-5)' },
+  { value: 'America/Los_Angeles', label: 'Los Ángeles (GMT-8)' },
+  { value: 'Europe/Madrid', label: 'Madrid (GMT+1)' },
+  { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires (GMT-3)' }
+];
+
 export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onCerrar }) => {
-  // Estados principales
-  const [vistaActual, setVistaActual] = useState<'configuracion' | 'horarios' | 'excepciones'>('configuracion');
-  const [cargando, setCargando] = useState(true);
-  const [mensaje, setMensaje] = useState('');
-  
-  // Estados de datos
-  const [configuracion, setConfiguracion] = useState<ConfiguracionHorarios | null>(null);
-  const [horariosTrabajoSemanales, setHorariosTrabajoSemanales] = useState<HorarioTrabajo[]>([]);
-  const [excepciones, setExcepciones] = useState<HorarioExcepcion[]>([]);
-  
-  // Estados de formularios
-  const [mostrarFormularioHorario, setMostrarFormularioHorario] = useState(false);
-  const [mostrarFormularioExcepcion, setMostrarFormularioExcepcion] = useState(false);
-  const [horarioEditando, setHorarioEditando] = useState<HorarioTrabajo | null>(null);
-
-  const [formularioHorario, setFormularioHorario] = useState({
-    diaSemana: 1,
-    horaInicio: '09:00',
-    horaFin: '17:00',
-    modalidades: ['online'] as Modalidad[],
-    activo: true
-  });
-
-  const [formularioExcepcion, setFormularioExcepcion] = useState({
-    fecha: '',
-    tipo: 'bloqueado' as 'bloqueado' | 'horario_especial',
-    horaInicio: '09:00',
-    horaFin: '17:00',
-    modalidades: ['online'] as Modalidad[],
-    motivo: ''
-  });
-
-  const [formularioConfiguracion, setFormularioConfiguracion] = useState({
+  const [plantillaSemanal, setPlantillaSemanal] = useState<PlantillaSemanal[]>([]);
+  const [configuracion, setConfiguracion] = useState<ConfiguracionHorarios>({
     duracionSesion: 60,
     tiempoBuffer: 15,
-    diasAnticipacion: 30,
-    zonaHoraria: 'America/Mexico_City',
-    autoGenerar: true
+    zonaHoraria: 'America/Mexico_City'
   });
+  const [cargando, setCargando] = useState(true);
+  const [mensaje, setMensaje] = useState('');
+  const [tipoMensaje, setTipoMensaje] = useState<'success' | 'error'>('success');
+  const [tabActiva, setTabActiva] = useState<'configuracion' | 'plantilla'>('configuracion');
+  const [guardando, setGuardando] = useState(false);
 
-  const diasSemana = [
-    { valor: 1, nombre: 'Lunes' },
-    { valor: 2, nombre: 'Martes' },
-    { valor: 3, nombre: 'Miércoles' },
-    { valor: 4, nombre: 'Jueves' },
-    { valor: 5, nombre: 'Viernes' },
-    { valor: 6, nombre: 'Sábado' },
-    { valor: 0, nombre: 'Domingo' }
-  ];
-
-  // Cargar datos iniciales
   useEffect(() => {
     cargarDatos();
   }, [psicologo.id]);
 
   const cargarDatos = async () => {
-    setCargando(true);
     try {
+      setCargando(true);
+      
       // Cargar configuración
-      const respConfig = await fetch(`/api/psicologos/${psicologo.id}/configuracion-horarios`);
-      if (respConfig.ok) {
-        const configData = await respConfig.json();
-        setConfiguracion(configData);
-        setFormularioConfiguracion({
-          duracionSesion: configData.duracion_sesion,
-          tiempoBuffer: configData.tiempo_buffer,
-          diasAnticipacion: configData.dias_anticipacion,
-          zonaHoraria: configData.zona_horaria,
-          autoGenerar: configData.auto_generar === 1
+      const configResponse = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/configuracion-horarios`);
+      if (configResponse.ok) {
+        const configData = await configResponse.json();
+        setConfiguracion({
+          duracionSesion: configData.duracion_sesion || 60,
+          tiempoBuffer: configData.tiempo_buffer || 15,
+          zonaHoraria: configData.zona_horaria || 'America/Mexico_City'
         });
       }
 
-      // Cargar horarios de trabajo
-      const respHorarios = await fetch(`/api/psicologos/${psicologo.id}/horarios-trabajo`);
-      if (respHorarios.ok) {
-        const horariosData = await respHorarios.json();
-        setHorariosTrabajoSemanales(horariosData);
-      }
-
-      // Cargar excepciones
-      const respExcepciones = await fetch(`/api/psicologos/${psicologo.id}/horarios-excepciones`);
-      if (respExcepciones.ok) {
-        const excepcionesData = await respExcepciones.json();
-        setExcepciones(excepcionesData);
+      // Cargar plantilla semanal
+      const plantillaResponse = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/horarios-trabajo`);
+      if (plantillaResponse.ok) {
+        const plantillaData: HorarioTrabajoBackend[] = await plantillaResponse.json();
+        setPlantillaSemanal(plantillaData.map((h: HorarioTrabajoBackend) => ({
+          id: h.id,
+          diaSemana: h.dia_semana,
+          horaInicio: h.hora_inicio,
+          horaFin: h.hora_fin,
+          modalidades: h.modalidades,
+          activo: h.activo
+        })));
       }
 
     } catch (error) {
       console.error('Error cargando datos:', error);
-      mostrarMensaje('Error al cargar los datos de horarios', 'error');
+      mostrarMensaje('Error al cargar configuración', 'error');
     } finally {
       setCargando(false);
     }
@@ -110,241 +104,145 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
 
   const mostrarMensaje = (msg: string, tipo: 'success' | 'error' = 'success') => {
     setMensaje(msg);
-    setTimeout(() => setMensaje(''), 5000);
+    setTipoMensaje(tipo);
+    setTimeout(() => setMensaje(''), 4000);
   };
 
-  // Gestión de configuración
   const guardarConfiguracion = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    setGuardando(true);
     try {
-      const response = await fetch(`/api/psicologos/${psicologo.id}/configuracion-horarios`, {
+      const response = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/configuracion-horarios`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          duracion_sesion: formularioConfiguracion.duracionSesion,
-          tiempo_buffer: formularioConfiguracion.tiempoBuffer,
-          dias_anticipacion: formularioConfiguracion.diasAnticipacion,
-          zona_horaria: formularioConfiguracion.zonaHoraria,
-          auto_generar: formularioConfiguracion.autoGenerar ? 1 : 0
+          duracion_sesion: configuracion.duracionSesion,
+          tiempo_buffer: configuracion.tiempoBuffer,
+          zona_horaria: configuracion.zonaHoraria,
+          auto_generar: 1
         })
       });
 
       if (response.ok) {
         mostrarMensaje('✅ Configuración guardada exitosamente');
-        await cargarDatos();
       } else {
         throw new Error('Error al guardar configuración');
       }
     } catch (error) {
-      console.error('Error guardando configuración:', error);
-      mostrarMensaje('❌ Error al guardar la configuración', 'error');
+      console.error('Error:', error);
+      mostrarMensaje('❌ Error al guardar configuración', 'error');
+    } finally {
+      setGuardando(false);
     }
   };
 
-  // Gestión de horarios de trabajo
-  const iniciarCreacionHorario = () => {
-    setHorarioEditando(null);
-    setFormularioHorario({
-      diaSemana: 1,
+  const agregarHorarioDia = (diaSemana: number) => {
+    const nuevaPlantilla: PlantillaSemanal = {
+      diaSemana,
       horaInicio: '09:00',
       horaFin: '17:00',
-      modalidades: psicologo.modalidades,
+      modalidades: ['online', 'presencial'],
       activo: true
-    });
-    setMostrarFormularioHorario(true);
+    };
+    setPlantillaSemanal([...plantillaSemanal, nuevaPlantilla]);
   };
 
-  const iniciarEdicionHorario = (horario: HorarioTrabajo) => {
-    setHorarioEditando(horario);
-    setFormularioHorario({
-      diaSemana: horario.dia_semana,
-      horaInicio: horario.hora_inicio,
-      horaFin: horario.hora_fin,
-      modalidades: horario.modalidades,
-      activo: horario.activo
-    });
-    setMostrarFormularioHorario(true);
+  const actualizarHorarioDia = (index: number, campo: keyof PlantillaSemanal, valor: any) => {
+    const nuevaPlantilla = [...plantillaSemanal];
+    nuevaPlantilla[index] = { ...nuevaPlantilla[index], [campo]: valor };
+    setPlantillaSemanal(nuevaPlantilla);
   };
 
-  const guardarHorarioTrabajo = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const eliminarHorarioDia = async (index: number) => {
+    const horario = plantillaSemanal[index];
     
-    // Validar horario
-    const errores = HorariosService.validarHorarioTrabajo({
-      psicologoId: psicologo.id,
-      diaSemana: formularioHorario.diaSemana,
-      horaInicio: formularioHorario.horaInicio,
-      horaFin: formularioHorario.horaFin,
-      modalidades: formularioHorario.modalidades,
-      activo: formularioHorario.activo
-    });
-
-    if (errores.length > 0) {
-      mostrarMensaje(`❌ ${errores[0]}`, 'error');
-      return;
-    }
-
-    try {
-      let response;
-      if (horarioEditando) {
-        // Actualizar
-        response = await fetch(`/api/horarios-trabajo/${horarioEditando.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            dia_semana: formularioHorario.diaSemana,
-            hora_inicio: formularioHorario.horaInicio,
-            hora_fin: formularioHorario.horaFin,
-            modalidades: formularioHorario.modalidades,
-            activo: formularioHorario.activo
-          })
+    if (horario.id) {
+      try {
+        const response = await fetch(`http://localhost:3001/api/horarios-trabajo/${horario.id}`, {
+          method: 'DELETE'
         });
-      } else {
-        // Crear
-        response = await fetch(`/api/psicologos/${psicologo.id}/horarios-trabajo`, {
+        
+        if (!response.ok) {
+          throw new Error('Error al eliminar en servidor');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('❌ Error al eliminar horario', 'error');
+        return;
+      }
+    }
+    
+    const nuevaPlantilla = plantillaSemanal.filter((_, i) => i !== index);
+    setPlantillaSemanal(nuevaPlantilla);
+    mostrarMensaje('✅ Horario eliminado');
+  };
+
+  const guardarPlantillaSemanal = async () => {
+    setGuardando(true);
+    try {
+      // Eliminar horarios existentes
+      const horariosExistentes = plantillaSemanal.filter(h => h.id);
+      for (const horario of horariosExistentes) {
+        await fetch(`http://localhost:3001/api/horarios-trabajo/${horario.id}`, {
+          method: 'DELETE'
+        });
+      }
+
+      // Crear nuevos horarios
+      for (const horario of plantillaSemanal) {
+        const response = await fetch(`http://localhost:3001/api/psicologos/${psicologo.id}/horarios-trabajo`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            dia_semana: formularioHorario.diaSemana,
-            hora_inicio: formularioHorario.horaInicio,
-            hora_fin: formularioHorario.horaFin,
-            modalidades: formularioHorario.modalidades,
-            activo: formularioHorario.activo
+            dia_semana: horario.diaSemana,
+            hora_inicio: horario.horaInicio,
+            hora_fin: horario.horaFin,
+            modalidades: horario.modalidades,
+            activo: horario.activo
           })
         });
-      }
 
-      if (response.ok) {
-        mostrarMensaje(`✅ Horario ${horarioEditando ? 'actualizado' : 'creado'} exitosamente`);
-        setMostrarFormularioHorario(false);
-        await cargarDatos();
-      } else {
-        throw new Error('Error al guardar horario');
-      }
-    } catch (error) {
-      console.error('Error guardando horario:', error);
-      mostrarMensaje('❌ Error al guardar el horario', 'error');
-    }
-  };
-
-  const eliminarHorarioTrabajo = async (id: number, diaTexto: string) => {
-    if (!window.confirm(`¿Eliminar el horario del ${diaTexto}?`)) return;
-
-    try {
-      const response = await fetch(`/api/horarios-trabajo/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        mostrarMensaje('✅ Horario eliminado exitosamente');
-        await cargarDatos();
-      } else {
-        throw new Error('Error al eliminar horario');
-      }
-    } catch (error) {
-      console.error('Error eliminando horario:', error);
-      mostrarMensaje('❌ Error al eliminar el horario', 'error');
-    }
-  };
-
-  // Gestión de excepciones
-  const guardarExcepcion = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`/api/psicologos/${psicologo.id}/horarios-excepciones`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fecha: formularioExcepcion.fecha,
-          tipo: formularioExcepcion.tipo,
-          hora_inicio: formularioExcepcion.tipo === 'horario_especial' ? formularioExcepcion.horaInicio : null,
-          hora_fin: formularioExcepcion.tipo === 'horario_especial' ? formularioExcepcion.horaFin : null,
-          modalidades: formularioExcepcion.tipo === 'horario_especial' ? formularioExcepcion.modalidades : null,
-          motivo: formularioExcepcion.motivo
-        })
-      });
-
-      if (response.ok) {
-        mostrarMensaje('✅ Excepción creada exitosamente');
-        setMostrarFormularioExcepcion(false);
-        setFormularioExcepcion({
-          fecha: '',
-          tipo: 'bloqueado',
-          horaInicio: '09:00',
-          horaFin: '17:00',
-          modalidades: ['online'],
-          motivo: ''
-        });
-        await cargarDatos();
-      } else {
-        throw new Error('Error al crear excepción');
-      }
-    } catch (error) {
-      console.error('Error creando excepción:', error);
-      mostrarMensaje('❌ Error al crear la excepción', 'error');
-    }
-  };
-
-  const eliminarExcepcion = async (id: number, fecha: string) => {
-    if (!window.confirm(`¿Eliminar la excepción del ${fecha}?`)) return;
-
-    try {
-      const response = await fetch(`/api/horarios-excepciones/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        mostrarMensaje('✅ Excepción eliminada exitosamente');
-        await cargarDatos();
-      } else {
-        throw new Error('Error al eliminar excepción');
-      }
-    } catch (error) {
-      console.error('Error eliminando excepción:', error);
-      mostrarMensaje('❌ Error al eliminar la excepción', 'error');
-    }
-  };
-
-  const generarHorariosPorDefecto = async () => {
-    if (!window.confirm('¿Generar horarios por defecto (Lunes a Viernes 9:00-17:00)? Esto no afectará los horarios existentes.')) return;
-
-    try {
-      const horariosExistentes = new Set(horariosTrabajoSemanales.map(h => h.dia_semana));
-      const promesas = [];
-
-      for (let dia = 1; dia <= 5; dia++) {
-        if (!horariosExistentes.has(dia)) {
-          const promesa = fetch(`/api/psicologos/${psicologo.id}/horarios-trabajo`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              dia_semana: dia,
-              hora_inicio: '09:00',
-              hora_fin: '17:00',
-              modalidades: psicologo.modalidades,
-              activo: true
-            })
-          });
-          promesas.push(promesa);
+        if (!response.ok) {
+          throw new Error(`Error al guardar horario del ${diasSemana.find(d => d.id === horario.diaSemana)?.nombre}`);
         }
       }
 
-      await Promise.all(promesas);
-      mostrarMensaje('✅ Horarios por defecto generados exitosamente');
+      mostrarMensaje('✅ Plantilla semanal guardada exitosamente');
       await cargarDatos();
     } catch (error) {
-      console.error('Error generando horarios por defecto:', error);
-      mostrarMensaje('❌ Error al generar horarios por defecto', 'error');
+      console.error('Error:', error);
+      mostrarMensaje('❌ Error al guardar plantilla semanal', 'error');
+    } finally {
+      setGuardando(false);
     }
+  };
+
+  const generarPlantillaPorDefecto = () => {
+    const plantillaPorDefecto: PlantillaSemanal[] = [
+      { diaSemana: 1, horaInicio: '09:00', horaFin: '18:00', modalidades: ['online', 'presencial'], activo: true },
+      { diaSemana: 2, horaInicio: '09:00', horaFin: '18:00', modalidades: ['online', 'presencial'], activo: true },
+      { diaSemana: 3, horaInicio: '09:00', horaFin: '18:00', modalidades: ['online', 'presencial'], activo: true },
+      { diaSemana: 4, horaInicio: '09:00', horaFin: '18:00', modalidades: ['online', 'presencial'], activo: true },
+      { diaSemana: 5, horaInicio: '09:00', horaFin: '18:00', modalidades: ['online', 'presencial'], activo: true },
+      { diaSemana: 6, horaInicio: '10:00', horaFin: '14:00', modalidades: ['online'], activo: true }
+    ];
+    setPlantillaSemanal(plantillaPorDefecto);
+    mostrarMensaje('✅ Plantilla por defecto cargada');
+  };
+
+  const limpiarPlantilla = () => {
+    setPlantillaSemanal([]);
+    mostrarMensaje('✅ Plantilla limpiada');
   };
 
   if (cargando) {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content">
-          <div style={{ padding: '40px', textAlign: 'center' }}>
-            <div className="loading-spinner"></div>
-            <p>Cargando gestión de horarios...</p>
+      <div className="modal-overlay-horarios">
+        <div className="modal-content-horarios loading">
+          <div className="loading-container">
+            <div className="loading-spinner-horarios"></div>
+            <p>Cargando configuración de horarios...</p>
           </div>
         </div>
       </div>
@@ -352,488 +250,285 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content gestion-horarios">
-        <div className="modal-header">
-          <h2>🕒 Gestión de Horarios - {psicologo.nombre} {psicologo.apellido}</h2>
-          <button className="btn-cerrar" onClick={onCerrar}>×</button>
+    <div className="modal-overlay-horarios" onClick={onCerrar}>
+      <div className="modal-content-horarios" onClick={e => e.stopPropagation()}>
+        
+        {/* Header del modal */}
+        <div className="modal-header-horarios">
+          <div className="header-info">
+            <div className="psicologo-info-header">
+              <img src={psicologo.imagen} alt={psicologo.nombre} className="psicologo-avatar-modal" />
+              <div>
+                <h2>🕒 Gestión de Horarios</h2>
+                <p>{psicologo.nombre} {psicologo.apellido}</p>
+              </div>
+            </div>
+          </div>
+          <button onClick={onCerrar} className="btn-close-modal">
+            ✕
+          </button>
         </div>
 
+        {/* Navegación por pestañas */}
+        <div className="horarios-tabs">
+          <button 
+            className={`tab-button-horarios ${tabActiva === 'configuracion' ? 'active' : ''}`}
+            onClick={() => setTabActiva('configuracion')}
+          >
+            ⚙️ Configuración
+          </button>
+          <button 
+            className={`tab-button-horarios ${tabActiva === 'plantilla' ? 'active' : ''}`}
+            onClick={() => setTabActiva('plantilla')}
+          >
+            📅 Plantilla Semanal
+          </button>
+        </div>
+
+        {/* Mensajes */}
         {mensaje && (
-          <div className={`admin-message ${mensaje.includes('❌') ? 'error' : 'success'}`}>
+          <div className={`message-horarios ${tipoMensaje}`}>
             {mensaje}
           </div>
         )}
 
-        <div className="navegacion-gestion">
-          <button
-            className={`btn-vista ${vistaActual === 'configuracion' ? 'activo' : ''}`}
-            onClick={() => setVistaActual('configuracion')}
-          >
-            ⚙️ Configuración
-          </button>
-          <button
-            className={`btn-vista ${vistaActual === 'horarios' ? 'activo' : ''}`}
-            onClick={() => setVistaActual('horarios')}
-          >
-            📅 Horarios Semanales
-          </button>
-          <button
-            className={`btn-vista ${vistaActual === 'excepciones' ? 'activo' : ''}`}
-            onClick={() => setVistaActual('excepciones')}
-          >
-            🚫 Excepciones
-          </button>
-        </div>
+        {/* Contenido */}
+        <div className="modal-body-horarios">
+          
+          {tabActiva === 'configuracion' && (
+            <div className="config-content">
+              <div className="config-header">
+                <h3>⚙️ Configuración General</h3>
+                <p>Establece los parámetros básicos para la generación de horarios</p>
+              </div>
 
-        <div className="contenido-gestion">
-          {vistaActual === 'configuracion' && (
-            <div className="seccion-configuracion">
-              <h3>Configuración General</h3>
-              <form onSubmit={guardarConfiguracion}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Duración de sesión (minutos):</label>
-                    <input
-                      type="number"
-                      min="30"
-                      max="180"
-                      step="15"
-                      value={formularioConfiguracion.duracionSesion}
-                      onChange={(e) => setFormularioConfiguracion({
-                        ...formularioConfiguracion,
-                        duracionSesion: parseInt(e.target.value)
-                      })}
-                      required
-                    />
+              <form onSubmit={guardarConfiguracion} className="config-form">
+                <div className="config-grid">
+                  <div className="config-field">
+                    <label>
+                      <span className="field-icon">⏱️</span>
+                      Duración de Sesión
+                    </label>
+                    <div className="input-group">
+                      <input
+                        type="number"
+                        value={configuracion.duracionSesion}
+                        onChange={(e) => setConfiguracion({...configuracion, duracionSesion: parseInt(e.target.value)})}
+                        min="15"
+                        max="180"
+                        step="15"
+                      />
+                      <span className="input-suffix">minutos</span>
+                    </div>
+                    <small>Duración estándar de cada sesión terapéutica</small>
                   </div>
-                  <div className="form-group">
-                    <label>Tiempo entre sesiones (minutos):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="60"
-                      step="5"
-                      value={formularioConfiguracion.tiempoBuffer}
-                      onChange={(e) => setFormularioConfiguracion({
-                        ...formularioConfiguracion,
-                        tiempoBuffer: parseInt(e.target.value)
-                      })}
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Días máximos de anticipación:</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="90"
-                      value={formularioConfiguracion.diasAnticipacion}
-                      onChange={(e) => setFormularioConfiguracion({
-                        ...formularioConfiguracion,
-                        diasAnticipacion: parseInt(e.target.value)
-                      })}
-                      required
-                    />
+                  <div className="config-field">
+                    <label>
+                      <span className="field-icon">⏰</span>
+                      Tiempo Buffer
+                    </label>
+                    <div className="input-group">
+                      <input
+                        type="number"
+                        value={configuracion.tiempoBuffer}
+                        onChange={(e) => setConfiguracion({...configuracion, tiempoBuffer: parseInt(e.target.value)})}
+                        min="0"
+                        max="60"
+                        step="5"
+                      />
+                      <span className="input-suffix">minutos</span>
+                    </div>
+                    <small>Tiempo de descanso entre sesiones consecutivas</small>
                   </div>
-                  <div className="form-group">
-                    <label>Zona horaria:</label>
+
+                  <div className="config-field full-width">
+                    <label>
+                      <span className="field-icon">🌍</span>
+                      Zona Horaria
+                    </label>
                     <select
-                      value={formularioConfiguracion.zonaHoraria}
-                      onChange={(e) => setFormularioConfiguracion({
-                        ...formularioConfiguracion,
-                        zonaHoraria: e.target.value
-                      })}
+                      value={configuracion.zonaHoraria}
+                      onChange={(e) => setConfiguracion({...configuracion, zonaHoraria: e.target.value})}
                     >
-                      <option value="America/Mexico_City">México (Ciudad de México)</option>
-                      <option value="America/Tijuana">México (Tijuana)</option>
-                      <option value="America/Cancun">México (Cancún)</option>
-                      <option value="America/New_York">Estados Unidos (Este)</option>
-                      <option value="America/Los_Angeles">Estados Unidos (Oeste)</option>
+                      {zonasHorarias.map(zona => (
+                        <option key={zona.value} value={zona.value}>
+                          {zona.label}
+                        </option>
+                      ))}
                     </select>
+                    <small>Zona horaria de referencia para los horarios del psicólogo</small>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={formularioConfiguracion.autoGenerar}
-                      onChange={(e) => setFormularioConfiguracion({
-                        ...formularioConfiguracion,
-                        autoGenerar: e.target.checked
-                      })}
-                    />
-                    Generar horarios automáticamente basado en plantillas semanales
-                  </label>
+                <div className="config-actions">
+                  <button type="submit" disabled={guardando} className="btn-save">
+                    {guardando ? '💾 Guardando...' : '💾 Guardar Configuración'}
+                  </button>
                 </div>
-
-                <button type="submit" className="btn-primary">
-                  💾 Guardar Configuración
-                </button>
               </form>
             </div>
           )}
 
-          {vistaActual === 'horarios' && (
-            <div className="seccion-horarios">
-              <div className="header-seccion">
-                <h3>Horarios de Trabajo Semanales</h3>
-                <div className="acciones-horarios">
-                  <button
-                    onClick={iniciarCreacionHorario}
-                    className="btn-secondary"
-                  >
-                    ➕ Nuevo Horario
+          {tabActiva === 'plantilla' && (
+            <div className="plantilla-content">
+              <div className="plantilla-header">
+                <div>
+                  <h3>📅 Plantilla Semanal</h3>
+                  <p>Define los horarios de trabajo para cada día de la semana</p>
+                </div>
+                <div className="plantilla-actions-header">
+                  <button onClick={generarPlantillaPorDefecto} className="btn-template" disabled={guardando}>
+                    ✨ Plantilla Sugerida
                   </button>
-                  <button
-                    onClick={generarHorariosPorDefecto}
-                    className="btn-outline"
-                  >
-                    🔄 Generar Por Defecto
+                  <button onClick={limpiarPlantilla} className="btn-clear" disabled={guardando}>
+                    🗑️ Limpiar Todo
+                  </button>
+                  <button onClick={guardarPlantillaSemanal} className="btn-save" disabled={guardando}>
+                    {guardando ? '💾 Guardando...' : '💾 Guardar Plantilla'}
                   </button>
                 </div>
               </div>
 
-              <div className="lista-horarios">
-                {horariosTrabajoSemanales.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No tienes horarios de trabajo configurados</p>
-                    <button onClick={generarHorariosPorDefecto} className="btn-primary">
-                      Generar Horarios Por Defecto
-                    </button>
-                  </div>
-                ) : (
-                  <div className="horarios-grid">
-                    {diasSemana.map(dia => {
-                      const horariosDia = horariosTrabajoSemanales.filter(h => h.dia_semana === dia.valor);
-                      return (
-                        <div key={dia.valor} className="dia-horarios">
-                          <h4>{dia.nombre}</h4>
-                          {horariosDia.length === 0 ? (
-                            <p className="sin-horarios">Sin horarios</p>
-                          ) : (
-                            horariosDia.map(horario => (
-                              <div key={horario.id} className="horario-item">
-                                <div className="horario-info">
-                                  <span className="horario-tiempo">
-                                    {horario.hora_inicio} - {horario.hora_fin}
-                                  </span>
-                                  <span className="horario-modalidades">
-                                    {horario.modalidades.map(m => m === 'online' ? '💻' : '🏢').join(' ')}
-                                  </span>
-                                  <span className={`horario-estado ${horario.activo ? 'activo' : 'inactivo'}`}>
-                                    {horario.activo ? 'Activo' : 'Inactivo'}
-                                  </span>
+              <div className="days-container">
+                {diasSemana.map(dia => {
+                  const horariosDelDia = plantillaSemanal.filter(h => h.diaSemana === dia.id);
+                  
+                  return (
+                    <div key={dia.id} className="day-card">
+                      <div className="day-header">
+                        <div className="day-info">
+                          <span className="day-emoji">{dia.emoji}</span>
+                          <span className="day-name">{dia.nombre}</span>
+                        </div>
+                        <div className="day-stats">
+                          <span className="horarios-count">
+                            {horariosDelDia.length} horario{horariosDelDia.length !== 1 ? 's' : ''}
+                          </span>
+                          <button
+                            onClick={() => agregarHorarioDia(dia.id)}
+                            className="btn-add-horario"
+                            disabled={guardando}
+                          >
+                            ➕
+                          </button>
+                        </div>
+                      </div>
+
+                      {horariosDelDia.length === 0 ? (
+                        <div className="empty-day">
+                          <span className="empty-icon">📭</span>
+                          <p>Sin horarios configurados</p>
+                          <button
+                            onClick={() => agregarHorarioDia(dia.id)}
+                            className="btn-add-first"
+                            disabled={guardando}
+                          >
+                            ➕ Agregar primer horario
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="horarios-list">
+                          {horariosDelDia.map((horario, index) => {
+                            const realIndex = plantillaSemanal.findIndex(h => h === horario);
+                            return (
+                              <div key={realIndex} className="horario-item">
+                                <div className="horario-times">
+                                  <div className="time-field">
+                                    <label>Inicio</label>
+                                    <input
+                                      type="time"
+                                      value={horario.horaInicio}
+                                      onChange={(e) => actualizarHorarioDia(realIndex, 'horaInicio', e.target.value)}
+                                      disabled={guardando}
+                                    />
+                                  </div>
+                                  <div className="time-separator">→</div>
+                                  <div className="time-field">
+                                    <label>Fin</label>
+                                    <input
+                                      type="time"
+                                      value={horario.horaFin}
+                                      onChange={(e) => actualizarHorarioDia(realIndex, 'horaFin', e.target.value)}
+                                      disabled={guardando}
+                                    />
+                                  </div>
                                 </div>
-                                <div className="horario-acciones">
+
+                                <div className="horario-modalidades">
+                                  <label>Modalidades</label>
+                                  <div className="modalidades-checkboxes-horarios">
+                                    <label className="checkbox-label-horarios">
+                                      <input
+                                        type="checkbox"
+                                        checked={horario.modalidades.includes('online')}
+                                        onChange={(e) => {
+                                          const modalidades = e.target.checked
+                                            ? [...horario.modalidades.filter(m => m !== 'online'), 'online']
+                                            : horario.modalidades.filter(m => m !== 'online');
+                                          actualizarHorarioDia(realIndex, 'modalidades', modalidades);
+                                        }}
+                                        disabled={guardando}
+                                      />
+                                      <span>💻 Online</span>
+                                    </label>
+                                    <label className="checkbox-label-horarios">
+                                      <input
+                                        type="checkbox"
+                                        checked={horario.modalidades.includes('presencial')}
+                                        onChange={(e) => {
+                                          const modalidades = e.target.checked
+                                            ? [...horario.modalidades.filter(m => m !== 'presencial'), 'presencial']
+                                            : horario.modalidades.filter(m => m !== 'presencial');
+                                          actualizarHorarioDia(realIndex, 'modalidades', modalidades);
+                                        }}
+                                        disabled={guardando}
+                                      />
+                                      <span>🏢 Presencial</span>
+                                    </label>
+                                  </div>
+                                </div>
+
+                                <div className="horario-actions">
+                                  <label className="switch-label">
+                                    <input
+                                      type="checkbox"
+                                      checked={horario.activo}
+                                      onChange={(e) => actualizarHorarioDia(realIndex, 'activo', e.target.checked)}
+                                      disabled={guardando}
+                                    />
+                                    <span className="switch-slider"></span>
+                                    <span className="switch-text">
+                                      {horario.activo ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                  </label>
+                                  
                                   <button
-                                    onClick={() => iniciarEdicionHorario(horario)}
-                                    className="btn-edit-small"
-                                  >
-                                    ✏️
-                                  </button>
-                                  <button
-                                    onClick={() => eliminarHorarioTrabajo(horario.id!, dia.nombre)}
-                                    className="btn-delete-small"
+                                    onClick={() => eliminarHorarioDia(realIndex)}
+                                    className="btn-delete-horario"
+                                    disabled={guardando}
                                   >
                                     🗑️
                                   </button>
                                 </div>
                               </div>
-                            ))
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {mostrarFormularioHorario && (
-                <div className="formulario-overlay">
-                  <div className="formulario-horario">
-                    <h4>{horarioEditando ? 'Editar' : 'Nuevo'} Horario de Trabajo</h4>
-                    <form onSubmit={guardarHorarioTrabajo}>
-                      <div className="form-group">
-                        <label>Día de la semana:</label>
-                        <select
-                          value={formularioHorario.diaSemana}
-                          onChange={(e) => setFormularioHorario({
-                            ...formularioHorario,
-                            diaSemana: parseInt(e.target.value)
+                            );
                           })}
-                        >
-                          {diasSemana.map(dia => (
-                            <option key={dia.valor} value={dia.valor}>{dia.nombre}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>Hora inicio:</label>
-                          <input
-                            type="time"
-                            value={formularioHorario.horaInicio}
-                            onChange={(e) => setFormularioHorario({
-                              ...formularioHorario,
-                              horaInicio: e.target.value
-                            })}
-                            required
-                          />
                         </div>
-                        <div className="form-group">
-                          <label>Hora fin:</label>
-                          <input
-                            type="time"
-                            value={formularioHorario.horaFin}
-                            onChange={(e) => setFormularioHorario({
-                              ...formularioHorario,
-                              horaFin: e.target.value
-                            })}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Modalidades disponibles:</label>
-                        <div className="modalidades-checkbox">
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={formularioHorario.modalidades.includes('online')}
-                              onChange={(e) => {
-                                const modalidades = e.target.checked
-                                  ? [...formularioHorario.modalidades, 'online']
-                                  : formularioHorario.modalidades.filter(m => m !== 'online');
-                                setFormularioHorario({...formularioHorario, modalidades});
-                              }}
-                            />
-                            💻 Online
-                          </label>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={formularioHorario.modalidades.includes('presencial')}
-                              onChange={(e) => {
-                                const modalidades = e.target.checked
-                                  ? [...formularioHorario.modalidades, 'presencial']
-                                  : formularioHorario.modalidades.filter(m => m !== 'presencial');
-                                setFormularioHorario({...formularioHorario, modalidades});
-                              }}
-                            />
-                            🏢 Presencial
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={formularioHorario.activo}
-                            onChange={(e) => setFormularioHorario({
-                              ...formularioHorario,
-                              activo: e.target.checked
-                            })}
-                          />
-                          Horario activo
-                        </label>
-                      </div>
-
-                      <div className="form-actions">
-                        <button type="submit" className="btn-primary">
-                          {horarioEditando ? 'Actualizar' : 'Crear'} Horario
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setMostrarFormularioHorario(false)}
-                          className="btn-secondary"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {vistaActual === 'excepciones' && (
-            <div className="seccion-excepciones">
-              <div className="header-seccion">
-                <h3>Excepciones de Horarios</h3>
-                <button
-                  onClick={() => setMostrarFormularioExcepcion(!mostrarFormularioExcepcion)}
-                  className="btn-secondary"
-                >
-                  {mostrarFormularioExcepcion ? '❌ Cancelar' : '➕ Nueva Excepción'}
-                </button>
-              </div>
-
-              {mostrarFormularioExcepcion && (
-                <div className="formulario-excepcion">
-                  <h4>Nueva Excepción</h4>
-                  <form onSubmit={guardarExcepcion}>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Fecha:</label>
-                        <input
-                          type="date"
-                          value={formularioExcepcion.fecha}
-                          onChange={(e) => setFormularioExcepcion({
-                            ...formularioExcepcion,
-                            fecha: e.target.value
-                          })}
-                          min={new Date().toISOString().split('T')[0]}
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>Tipo:</label>
-                        <select
-                          value={formularioExcepcion.tipo}
-                          onChange={(e) => setFormularioExcepcion({
-                            ...formularioExcepcion,
-                            tipo: e.target.value as 'bloqueado' | 'horario_especial'
-                          })}
-                        >
-                          <option value="bloqueado">🚫 Día bloqueado</option>
-                          <option value="horario_especial">🕒 Horario especial</option>
-                        </select>
-                      </div>
+                      )}
                     </div>
-
-                    {formularioExcepcion.tipo === 'horario_especial' && (
-                      <>
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label>Hora inicio:</label>
-                            <input
-                              type="time"
-                              value={formularioExcepcion.horaInicio}
-                              onChange={(e) => setFormularioExcepcion({
-                                ...formularioExcepcion,
-                                horaInicio: e.target.value
-                              })}
-                              required
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>Hora fin:</label>
-                            <input
-                              type="time"
-                              value={formularioExcepcion.horaFin}
-                              onChange={(e) => setFormularioExcepcion({
-                                ...formularioExcepcion,
-                                horaFin: e.target.value
-                              })}
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div className="form-group">
-                          <label>Modalidades disponibles:</label>
-                          <div className="modalidades-checkbox">
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={formularioExcepcion.modalidades.includes('online')}
-                                onChange={(e) => {
-                                  const modalidades = e.target.checked
-                                    ? [...formularioExcepcion.modalidades, 'online']
-                                    : formularioExcepcion.modalidades.filter(m => m !== 'online');
-                                  setFormularioExcepcion({...formularioExcepcion, modalidades});
-                                }}
-                              />
-                              💻 Online
-                            </label>
-                            <label>
-                              <input
-                                type="checkbox"
-                                checked={formularioExcepcion.modalidades.includes('presencial')}
-                                onChange={(e) => {
-                                  const modalidades = e.target.checked
-                                    ? [...formularioExcepcion.modalidades, 'presencial']
-                                    : formularioExcepcion.modalidades.filter(m => m !== 'presencial');
-                                  setFormularioExcepcion({...formularioExcepcion, modalidades});
-                                }}
-                              />
-                              🏢 Presencial
-                            </label>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    <div className="form-group">
-                      <label>Motivo (opcional):</label>
-                      <input
-                        type="text"
-                        value={formularioExcepcion.motivo}
-                        onChange={(e) => setFormularioExcepcion({
-                          ...formularioExcepcion,
-                          motivo: e.target.value
-                        })}
-                        placeholder="Ej: Vacaciones, conferencia, etc."
-                      />
-                    </div>
-
-                    <button type="submit" className="btn-primary">
-                      Crear Excepción
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              <div className="lista-excepciones">
-                {excepciones.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No tienes excepciones configuradas</p>
-                  </div>
-                ) : (
-                  excepciones.map(excepcion => (
-                    <div key={excepcion.id} className="excepcion-item">
-                      <div className="excepcion-info">
-                        <span className="excepcion-fecha">
-                          {new Date(excepcion.fecha).toLocaleDateString('es-ES', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </span>
-                        <span className={`excepcion-tipo ${excepcion.tipo}`}>
-                          {excepcion.tipo === 'bloqueado' ? '🚫 Bloqueado' : '🕒 Horario especial'}
-                        </span>
-                        {excepcion.tipo === 'horario_especial' && (
-                          <span className="excepcion-horario">
-                            {excepcion.hora_inicio} - {excepcion.hora_fin}
-                          </span>
-                        )}
-                        {excepcion.motivo && (
-                          <span className="excepcion-motivo">{excepcion.motivo}</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => eliminarExcepcion(excepcion.id!, excepcion.fecha)}
-                        className="btn-delete-small"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             </div>
           )}
+        </div>
+
+        {/* Footer del modal */}
+        <div className="modal-footer-horarios">
+          <button onClick={onCerrar} className="btn-close" disabled={guardando}>
+            Cerrar
+          </button>
         </div>
       </div>
     </div>

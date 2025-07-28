@@ -49,10 +49,27 @@ export const convertirHorario = (hora: string, timezoneOrigen: string, timezoneD
 };
 
 export const obtenerSemanaActual = (): { inicio: Date; fin: Date } => {
-  // Usar la primera fecha con disponibilidad (18 de julio 2025) como referencia
-  const fechaReferencia = new Date('2025-07-18');
+  const hoy = new Date();
+  const fechaInicioDisponibilidad = new Date('2025-06-01');
+  const fechaFinDisponibilidad = new Date('2026-06-01');
+  
+  // Determinar qué fecha usar como referencia
+  let fechaReferencia: Date;
+  
+  if (hoy < fechaInicioDisponibilidad) {
+    // Si estamos antes del rango, usar la fecha de inicio
+    fechaReferencia = new Date(fechaInicioDisponibilidad);
+  } else if (hoy > fechaFinDisponibilidad) {
+    // Si estamos después del rango, usar la fecha de inicio
+    fechaReferencia = new Date(fechaInicioDisponibilidad);
+  } else {
+    // Si estamos dentro del rango, usar la fecha actual
+    fechaReferencia = new Date(hoy);
+  }
+  
+  // Calcular el lunes de la semana de la fecha de referencia
   const diaActual = fechaReferencia.getDay();
-  const diferencia = diaActual === 0 ? -6 : 1 - diaActual;
+  const diferencia = diaActual === 0 ? -6 : 1 - diaActual; // 0=Domingo, 1=Lunes, etc.
   
   const lunes = new Date(fechaReferencia);
   lunes.setDate(fechaReferencia.getDate() + diferencia);

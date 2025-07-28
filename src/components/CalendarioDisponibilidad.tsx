@@ -61,7 +61,8 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
     }
     
     return {
-      semana: semanaActual,
+      inicio: semanaActual.inicio,
+      fin: semanaActual.fin,
       dias
     };
   }, [semanaActual, disponibilidadReal, timezoneUsuario]);
