@@ -72,14 +72,12 @@ const MainApp: React.FC = () => {
   const irABusqueda = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Navegando a búsqueda');
     setVistaActual('busqueda');
   };
 
   const irASesiones = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Navegando a sesiones');
     setVistaActual('sesiones');
   };
 
