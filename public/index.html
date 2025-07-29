@@ -29,14 +29,15 @@
     <noscript>Necesitas habilitar JavaScript para ejecutar esta aplicación de bienestar mental.</noscript>
     <div id="root"></div>
     
+    
         <!-- Div para precargar imágenes -->
         <div id="imagePreloader" style="display: none;"></div>
 
         <div class="iframe-container" style="display: none;">
         <iframe 
             class="gents-iframe-box"
-            id="918de5fa-bc24-4788-b856-58d86c05fadc"
-            title="Gents Builder - 918de5fa-bc2"
+            id="582c534b-df89-4774-abb4-9c2cef36b347"
+            title="Gents Builder - 582c534b-df8"
             allow="microphone; camera; geolocation"
             allowFullScreen
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"
@@ -217,7 +218,7 @@
 
         async function fetchWidgetIcons(agentId) {
             try {
-                const response = await fetch(`https://www.gents.cloud/api/widget/widget-icons/${agentId}/`);
+                const response = await fetch(`http://www.gentsdev.com/api/widget/widget-icons/${agentId}/`);
                 if (!response.ok) throw new Error('Failed to fetch widget icons');
                 const result = await response.json();
                 
@@ -301,7 +302,7 @@
         }
 
         async function initializeWidget() {
-            const agentId = '918de5fa-bc24-4788-b856-58d86c05fadc';
+            const agentId = '582c534b-df89-4774-abb4-9c2cef36b347';
             const elements = {
                 container: document.querySelector('.iframe-container'),
                 iframe: document.querySelector('.gents-iframe-box'),
@@ -368,7 +369,7 @@
                 iframe.style.maxWidth = '320px';
             }
             
-            iframe.src = `https://www.gents.cloud/api/widget/${agentId}/`;
+            iframe.src = `http://www.gentsdev.com/api/widget/${agentId}/`;
 
             const floatingButton = document.querySelector('.floating-button');
             const mobileStartText = document.querySelector('.mobile-start-text');
@@ -433,5 +434,6 @@
         });
         </script>
   
+ 
   </body>
 </html> 
