@@ -144,7 +144,7 @@ function crearTablas() {
         CREATE TABLE IF NOT EXISTS configuracion_horarios (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           psicologoId TEXT UNIQUE NOT NULL,
-          duracion_sesion INTEGER DEFAULT 60, -- minutos
+          duracion_sesion INTEGER DEFAULT 45, -- minutos
           tiempo_buffer INTEGER DEFAULT 15, -- minutos entre sesiones
           dias_anticipacion INTEGER DEFAULT 30, -- días máximos para agendar
           zona_horaria TEXT DEFAULT 'America/Mexico_City',

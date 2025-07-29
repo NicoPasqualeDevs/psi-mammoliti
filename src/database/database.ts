@@ -45,7 +45,7 @@ interface DBSesion {
   pacienteEmail: string;
   pacienteTelefono: string;
   especialidad: string;
-  estado: 'confirmada' | 'pendiente' | 'cancelada';
+  estado: 'confirmada' | 'cancelada' | 'completada';
   created_at?: Date;
 }
 

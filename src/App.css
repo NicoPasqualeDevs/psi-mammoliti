@@ -217,6 +217,48 @@ body {
   pointer-events: auto !important;
 }
 
+/* Estilos para iconos y badges de navegación */
+.navegacion button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.nav-icon {
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.nav-text {
+  font-weight: 600;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
 .app-main {
   max-width: 1400px;
   margin: 0 auto;
@@ -1278,11 +1320,7 @@ body {
   border-color: var(--secundario-amarillo);
 }
 
-.estado-pendiente {
-  background: linear-gradient(135deg, var(--secundario-naranja), var(--secundario-salmón));
-  color: var(--neutral-white);
-  border-color: var(--secundario-naranja);
-}
+
 
 .estado-cancelada {
   background: linear-gradient(135deg, #ff6b6b, #ff8e8e);

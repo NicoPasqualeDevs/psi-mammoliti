@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Psicologo, Sesion, Modalidad } from '../types';
+import { Psicologo, Modalidad } from '../types';
 import { CalendarioDisponibilidad } from './CalendarioDisponibilidad';
 import { useHorariosReales, useAgendarCita } from '../hooks/useHorariosReales';
+import { validarAnticipacionArgentina } from '../utils/timezone';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ModalAgendamientoProps {
@@ -32,7 +33,6 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
   const [vistaCalendario, setVistaCalendario] = useState(true);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>('');
   const [horaSeleccionada, setHoraSeleccionada] = useState<string>('');
-  const [horaLocal, setHoraLocal] = useState<string>('');
   const [modalidadesDisponibles, setModalidadesDisponibles] = useState<string[]>([]);
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState<Modalidad | ''>('');
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState<string>('');
@@ -89,7 +89,6 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
       // Reset values when no preselected time
       setFechaSeleccionada('');
       setHoraSeleccionada('');
-      setHoraLocal('');
       setModalidadesDisponibles([]);
       setModalidadSeleccionada('');
       setEspecialidadSeleccionada('');
@@ -99,10 +98,9 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
 
   if (!psicologo) return null;
 
-  const handleSeleccionarHorario = (fecha: string, hora: string, horaLocalCalculada: string, modalidades: string[]) => {
+  const handleSeleccionarHorario = (fecha: string, hora: string, modalidades: string[]) => {
     setFechaSeleccionada(fecha);
     setHoraSeleccionada(hora);
-    setHoraLocal(horaLocalCalculada);
     setModalidadesDisponibles(modalidades);
     
     // Auto-seleccionar modalidad si solo hay una disponible
@@ -129,9 +127,15 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
       return;
     }
 
+    // Validar que haya al menos 6 horas de anticipación (en hora de Argentina)
+    if (!validarAnticipacionArgentina(fechaSeleccionada, horaSeleccionada)) {
+      alert('La fecha y hora seleccionadas deben tener al menos 6 horas de anticipación desde ahora.');
+      return;
+    }
+
     try {
-      // Usar duración de la configuración o 60 minutos por defecto
-      const duracionMinutos = configuracion?.duracionSesion || 60;
+      // Usar duración de la configuración o 45 minutos por defecto
+      const duracionMinutos = configuracion?.duracionSesion || 45;
 
       // Agendar la cita usando el sistema real
       const resultado = await agendarCita({
@@ -150,12 +154,9 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
       alert(`¡Cita agendada exitosamente! 
       
 Detalles:
-• Fecha: ${new Date(fechaSeleccionada).toLocaleDateString('es-ES', { 
-  weekday: 'long', 
-  year: 'numeric', 
-  month: 'long', 
-  day: 'numeric' 
-})}
+• Fecha: ${fechaSeleccionada.split('-').reverse().join('/')} (${new Date(fechaSeleccionada + 'T12:00:00').toLocaleDateString('es-ES', { 
+  weekday: 'long'
+})})
 • Hora: ${horaSeleccionada} (${duracionMinutos} minutos)
 • Modalidad: ${getModalidadTexto(modalidadSeleccionada)}
 • Psicólogo: ${psicologo.nombre} ${psicologo.apellido}
@@ -216,14 +217,11 @@ ID de la sesión: ${resultado.sesionId}`);
               <div className="sesion-seleccionada">
                 <h4>Horario Seleccionado:</h4>
                 <div className="horario-detalles">
-                  <p><strong>Fecha:</strong> {new Date(fechaSeleccionada).toLocaleDateString('es-ES', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                  <p><strong>Fecha:</strong> {fechaSeleccionada.split('-').reverse().join('/')} - {new Date(fechaSeleccionada + 'T12:00:00').toLocaleDateString('es-ES', {
+                    weekday: 'long'
                   })}</p>
-                  <p><strong>Hora:</strong> {horaSeleccionada} {horaLocal && `(${horaLocal} tu hora)`}</p>
-                  <p><strong>Duración:</strong> {configuracion?.duracionSesion || 60} minutos</p>
+                  <p><strong>Hora:</strong> {horaSeleccionada}</p>
+                  <p><strong>Duración:</strong> {configuracion?.duracionSesion || 45} minutos</p>
                   <p><strong>Modalidades disponibles:</strong> {modalidadesDisponibles.map(m => getModalidadEmoji(m) + ' ' + getModalidadTexto(m)).join(', ')}</p>
                 </div>
               </div>
@@ -312,7 +310,7 @@ ID de la sesión: ${resultado.sesionId}`);
               <div className="resumen-detalles">
                 <p><strong>Psicólogo:</strong> {psicologo.nombre} {psicologo.apellido}</p>
                 <p><strong>Precio:</strong> ${psicologo.precio} por sesión</p>
-                {fechaSeleccionada && <p><strong>Fecha:</strong> {new Date(fechaSeleccionada).toLocaleDateString('es-ES')}</p>}
+                {fechaSeleccionada && <p><strong>Fecha:</strong> {fechaSeleccionada.split('-').reverse().join('/')}</p>}
                 {horaSeleccionada && <p><strong>Hora:</strong> {horaSeleccionada}</p>}
                 {modalidadSeleccionada && <p><strong>Modalidad:</strong> {getModalidadTexto(modalidadSeleccionada)}</p>}
                 {especialidadSeleccionada && <p><strong>Especialidad:</strong> {especialidadSeleccionada}</p>}

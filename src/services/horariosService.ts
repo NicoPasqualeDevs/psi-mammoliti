@@ -39,18 +39,20 @@ export class HorariosService {
         horariosDelDia = [];
       } else if (excepcionDia?.tipo === 'horario_especial') {
         // Día con horario especial
-        horariosDelDia = this.generarHorariosDia(
-          fechaStr,
-          [{
-            diaSemana,
-            horaInicio: excepcionDia.horaInicio!,
-            horaFin: excepcionDia.horaFin!,
-            modalidades: excepcionDia.modalidades!,
-            intervaloMinutos: configuracion.duracionSesion + configuracion.tiempoBuffer
-          }],
-          citasAgendadas,
-          configuracion
-        );
+        if (excepcionDia.horaInicio && excepcionDia.horaFin && excepcionDia.modalidades) {
+          horariosDelDia = this.generarHorariosDia(
+            fechaStr,
+            [{
+              diaSemana,
+              horaInicio: excepcionDia.horaInicio,
+              horaFin: excepcionDia.horaFin,
+              modalidades: excepcionDia.modalidades,
+              intervaloMinutos: configuracion.duracionSesion + configuracion.tiempoBuffer
+            }],
+            citasAgendadas,
+            configuracion
+          );
+        }
       } else {
         // Día normal según plantilla semanal
         const plantillasDelDia = horariosTrabajoSemanales
@@ -196,10 +198,10 @@ export class HorariosService {
   static crearConfiguracionPorDefecto(psicologoId: string): ConfiguracionHorarios {
     return {
       psicologoId,
-      duracionSesion: 60,
+      duracionSesion: 45,
       tiempoBuffer: 15,
       diasAnticipacion: 30,
-      zonaHoraria: 'America/Mexico_City',
+      zonaHoraria: 'America/Argentina/Buenos_Aires',
       autoGenerar: true
     };
   }

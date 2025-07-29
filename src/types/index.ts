@@ -37,7 +37,7 @@ export interface Sesion {
     telefono: string;
   };
   especialidad: string;
-  estado: 'confirmada' | 'pendiente' | 'cancelada';
+  estado: 'confirmada' | 'cancelada' | 'completada';
 }
 
 export interface FiltrosBusqueda {
@@ -102,7 +102,7 @@ export interface Cita {
   horaInicio: string;
   horaFin: string;
   modalidad: Modalidad;
-  estado: 'confirmada' | 'pendiente' | 'cancelada';
+  estado: 'confirmada' | 'cancelada' | 'completada';
   sesionId?: string;
   createdAt?: Date;
 }
@@ -139,4 +139,34 @@ export interface PlantillaHorario {
 export interface DisponibilidadRespuesta {
   fecha: string;
   horarios: HorarioGenerado[];
+}
+
+// Tipos adicionales para componentes específicos
+export interface SesionConPsicologo extends Sesion {
+  psicologo?: Psicologo;
+}
+
+export interface SesionConPsicologoRequerido extends Sesion {
+  psicologo: Psicologo;
+}
+
+export interface CalendarioDiaData {
+  fecha: Date;
+  fechaStr: string;
+  horarios: CalendarioHorario[];
+}
+
+export interface CalendarioSemanaData {
+  inicio: Date;
+  fin: Date;
+  dias: CalendarioDiaData[];
+}
+
+export interface SesionAgrupada {
+  paciente: {
+    nombre: string;
+    email: string;
+    telefono: string;
+  };
+  sesiones: Sesion[];
 } 

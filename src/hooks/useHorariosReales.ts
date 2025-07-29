@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HorarioDisponible, ConfiguracionHorarios } from '../types';
+import { getApiBaseUrl } from '../utils/apiConfig';
+import { obtenerAhoraArgentina, obtenerFechaArgentina, validarAnticipacionArgentina } from '../utils/timezone';
 
 interface UseHorariosRealesProps {
   psicologoId: string;
@@ -31,21 +33,15 @@ export function useHorariosReales({
     setError(null);
 
     try {
-      // Obtener rango de fechas (próximas 4 semanas desde hoy)
-      const hoy = new Date();
-      const fechaInicio = hoy.toISOString().split('T')[0];
+      // Obtener rango de fechas (próximas 4 semanas desde hoy) usando hora de Argentina
+      const hoyArgentina = obtenerAhoraArgentina();
+      const fechaInicio = obtenerFechaArgentina(hoyArgentina);
       
-      const fechaLimite = new Date(hoy);
-      fechaLimite.setDate(fechaLimite.getDate() + 28); // 4 semanas
-      const fechaFin = fechaLimite.toISOString().split('T')[0];
+      const fechaLimite = new Date(hoyArgentina);
+      fechaLimite.setDate(fechaLimite.getDate() + 28); // 4 semanas desde hoy
+      const fechaFin = obtenerFechaArgentina(fechaLimite);
 
-      // Configuración dinámica de URL base
-      const getApiBaseUrl = () => {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          return 'http://localhost:3001/api';
-        }
-        return '/api';
-      };
+
       
       // Cargar disponibilidad directamente desde el backend simplificado
       const disponibilidadResponse = await fetch(
@@ -127,6 +123,11 @@ export function useAgendarCita() {
     setError(null);
 
     try {
+      // Validar que haya al menos 6 horas de anticipación (en hora de Argentina)
+      if (!validarAnticipacionArgentina(datos.fecha, datos.hora)) {
+        throw new Error('La fecha y hora seleccionadas deben tener al menos 6 horas de anticipación desde ahora.');
+      }
+
       // Calcular hora de fin basada en duración
       const [horas, minutos] = datos.hora.split(':').map(Number);
       const inicioMinutos = horas * 60 + minutos;
@@ -136,13 +137,7 @@ export function useAgendarCita() {
       const horaFinMinutos = finMinutos % 60;
       const horaFin = `${horaFinHoras.toString().padStart(2, '0')}:${horaFinMinutos.toString().padStart(2, '0')}`;
 
-      // Configuración dinámica de URL base para agendamiento
-      const getApiBaseUrl = () => {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          return 'http://localhost:3001/api';
-        }
-        return '/api';
-      };
+
       
       // Crear sesión
       const sesionResponse = await fetch(`${getApiBaseUrl()}/sesiones`, {

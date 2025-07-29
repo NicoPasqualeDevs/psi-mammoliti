@@ -29,7 +29,7 @@ function generarFechas() {
 }
 
 // Función para generar horarios para un día
-function generarHorariosDia(fecha, horaInicio, horaFin, modalidades, intervaloMinutos = 60, bufferMinutos = 15) {
+function generarHorariosDia(fecha, horaInicio, horaFin, modalidades, intervaloMinutos = 45, bufferMinutos = 15) {
   const horarios = [];
   const [horaIni, minIni] = horaInicio.split(':').map(Number);
   const [horaFinHora, minFin] = horaFin.split(':').map(Number);

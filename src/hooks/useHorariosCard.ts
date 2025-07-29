@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { HorarioDisponible } from '../types';
+import { getApiBaseUrl } from '../utils/apiConfig';
+import { obtenerAhoraArgentina, obtenerFechaArgentina, validarAnticipacionArgentina } from '../utils/timezone';
 
 interface UseHorariosCardProps {
   psicologoId: string;
@@ -12,13 +14,6 @@ interface UseHorariosCardReturn {
   error: string | null;
 }
 
-const getApiBaseUrl = () => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3001/api';
-  }
-  return '/api';
-};
-
 export function useHorariosCard({ 
   psicologoId, 
   habilitado = true 
@@ -26,6 +21,15 @@ export function useHorariosCard({
   const [proximaDisponibilidad, setProximaDisponibilidad] = useState<HorarioDisponible | null>(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const filtrarHorariosPorAnticipacion = useCallback((disponibilidad: HorarioDisponible[]): HorarioDisponible[] => {
+    return disponibilidad.map(dia => ({
+      ...dia,
+      horarios: dia.horarios.filter(horario => {
+        return validarAnticipacionArgentina(dia.fecha, horario.hora);
+      })
+    })).filter(dia => dia.horarios.length > 0); // Solo días con horarios disponibles
+  }, []);
 
   useEffect(() => {
     if (!habilitado || !psicologoId) {
@@ -35,16 +39,19 @@ export function useHorariosCard({
     }
 
     const cargarHorarios = async () => {
+      if (!habilitado) return;
+      
       setCargando(true);
       setError(null);
-
+      
       try {
-        const fechaInicio = new Date();
-        const fechaFin = new Date();
-        fechaFin.setDate(fechaInicio.getDate() + 7); // Próxima semana
-
-        const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
-        const fechaFinStr = fechaFin.toISOString().split('T')[0];
+        // Obtener fechas de la próxima semana usando hora de Argentina
+        const hoyArgentina = obtenerAhoraArgentina();
+        const fechaInicioStr = obtenerFechaArgentina(hoyArgentina);
+        
+        const fechaLimite = new Date(hoyArgentina);
+        fechaLimite.setDate(fechaLimite.getDate() + 7); // Una semana desde hoy
+        const fechaFinStr = obtenerFechaArgentina(fechaLimite);
 
         const response = await fetch(
           `${getApiBaseUrl()}/psicologos/${psicologoId}/disponibilidad?fecha_inicio=${fechaInicioStr}&fecha_fin=${fechaFinStr}`
@@ -56,8 +63,11 @@ export function useHorariosCard({
 
         const disponibilidad: HorarioDisponible[] = await response.json();
         
+        // Filtrar horarios que no cumplan con las 6 horas mínimas de anticipación
+        const disponibilidadFiltrada = filtrarHorariosPorAnticipacion(disponibilidad);
+        
         // Encontrar la primera fecha con horarios disponibles
-        const primeraFechaConHorarios = disponibilidad.find(dia => dia.horarios.length > 0);
+        const primeraFechaConHorarios = disponibilidadFiltrada.find(dia => dia.horarios.length > 0);
         
         setProximaDisponibilidad(primeraFechaConHorarios || null);
 
@@ -70,8 +80,43 @@ export function useHorariosCard({
       }
     };
 
+    // Cargar horarios inmediatamente
     cargarHorarios();
-  }, [psicologoId, habilitado]);
+  }, [psicologoId, habilitado, filtrarHorariosPorAnticipacion]);
+
+  // Efecto separado para actualizar horarios cada 5 minutos
+  useEffect(() => {
+    if (!proximaDisponibilidad) return;
+
+    const intervalo = setInterval(() => {
+      const disponibilidadActualizada = filtrarHorariosPorAnticipacion([proximaDisponibilidad]);
+      if (disponibilidadActualizada.length === 0) {
+        setProximaDisponibilidad(null);
+      } else {
+        setProximaDisponibilidad(disponibilidadActualizada[0]);
+      }
+    }, 5 * 60 * 1000); // 5 minutos
+
+    return () => clearInterval(intervalo);
+  }, [proximaDisponibilidad, filtrarHorariosPorAnticipacion]);
+
+  // Actualizar horarios automáticamente cada minuto para eliminar los que ya no son válidos
+  useEffect(() => {
+    if (!proximaDisponibilidad) return;
+    
+    const interval = setInterval(() => {
+      const horariosFiltrados = filtrarHorariosPorAnticipacion([proximaDisponibilidad]);
+      if (horariosFiltrados.length === 0) {
+        // Si ya no hay horarios válidos, actualizar a null
+        setProximaDisponibilidad(null);
+      } else if (horariosFiltrados[0].horarios.length !== proximaDisponibilidad.horarios.length) {
+        // Si cambió el número de horarios válidos, actualizar
+        setProximaDisponibilidad(horariosFiltrados[0]);
+      }
+    }, 60000); // Cada minuto
+    
+    return () => clearInterval(interval);
+  }, [proximaDisponibilidad, filtrarHorariosPorAnticipacion]);
 
   return {
     proximaDisponibilidad,

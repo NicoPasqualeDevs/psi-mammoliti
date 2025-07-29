@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Psicologo } from '../types';
-import { detectarTimezone, convertirHorario } from '../utils/timezone';
+import { Psicologo, HorarioDisponible, HorarioModalidad } from '../types';
+import { validarAnticipacionArgentina } from '../utils/timezone';
+import { CalendarioDisponibilidad } from './CalendarioDisponibilidad';
 import { useHorariosCard } from '../hooks/useHorariosCard';
 
 interface PsicologoCardProps {
@@ -34,8 +35,6 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
   const [expandido, setExpandido] = useState(false);
   const [visible, setVisible] = useState(false);
   const [horariosEstables, setHorariosEstables] = useState<any>(null);
-  const timezoneUsuario = detectarTimezone();
-  const timezonePsicologo = 'America/Mexico_City';
 
   // Cargar horarios disponibles
   const { proximaDisponibilidad: horarioReal, cargando: cargandoHorarios } = useHorariosCard({
@@ -43,11 +42,31 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
     habilitado: psicologo.tieneHorariosConfigurados || false
   });
 
-  // Determinar qué horarios mostrar
+  // Función para filtrar horarios que cumplan con anticipación mínima
+  const filtrarHorariosPorAnticipacion = (horarioDisponible: HorarioDisponible): HorarioDisponible | null => {
+    const horariosFiltrados = horarioDisponible.horarios.filter((horario: HorarioModalidad) => {
+      return validarAnticipacionArgentina(horarioDisponible.fecha, horario.hora);
+    });
+
+    if (horariosFiltrados.length === 0) {
+      return null;
+    }
+
+    return {
+      ...horarioDisponible,
+      horarios: horariosFiltrados
+    };
+  };
+
+  // Determinar qué horarios mostrar con filtro de anticipación aplicado
   const tieneHorarios = psicologo.tieneHorariosConfigurados || false;
-  const proximaDisponibilidad = tieneHorarios && horarioReal 
-    ? horarioReal 
-    : psicologo.disponibilidad[0];
+  let proximaDisponibilidad: HorarioDisponible | null = null;
+  
+  if (tieneHorarios && horarioReal) {
+    // Si hay horarios reales, aplicar también el filtro de anticipación
+    proximaDisponibilidad = filtrarHorariosPorAnticipacion(horarioReal);
+  }
+  // ELIMINO: No usar psicologo.disponibilidad como fallback para evitar datos estáticos obsoletos
 
   // Manejar animación de entrada
   useEffect(() => {
@@ -62,10 +81,9 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
   useEffect(() => {
     if (proximaDisponibilidad && !cargandoHorarios) {
       setHorariosEstables(proximaDisponibilidad);
-    } else if (!tieneHorarios && psicologo.disponibilidad[0]) {
-      setHorariosEstables(psicologo.disponibilidad[0]);
     }
-  }, [proximaDisponibilidad, cargandoHorarios, tieneHorarios, psicologo.disponibilidad]);
+    // ELIMINO: No usar psicologo.disponibilidad como fallback
+  }, [proximaDisponibilidad, cargandoHorarios, tieneHorarios]);
 
   const handleClickHorario = (fecha: string, hora: string, modalidades: string[]) => {
     onSeleccionarHorario(psicologo, fecha, hora, modalidades);
@@ -142,7 +160,7 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
           {horariosMostrar && (
             <div className="proxima-cita">
               <p className="fecha-proxima">
-                <strong>Próxima fecha:</strong> {new Date(horariosMostrar.fecha).toLocaleDateString('es-ES', {
+                <strong>Próxima fecha:</strong> {new Date(horariosMostrar.fecha + 'T12:00:00').toLocaleDateString('es-AR', {
                   weekday: 'short',
                   day: 'numeric',
                   month: 'short'
@@ -151,8 +169,7 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
               <div className="horarios-preview">
                 <small className="horarios-hint">👆 Haz click en un horario para agendar directamente:</small>
                 <div className="horarios-container">
-                  {horariosMostrar.horarios?.slice(0, 3).map((horarioData: any, index: number) => {
-                    const horaLocal = convertirHorario(horarioData.hora, timezonePsicologo, timezoneUsuario);
+                  {horariosMostrar.horarios?.slice(0, 3).map((horarioData: HorarioModalidad, index: number) => {
                     const modalidadesTexto = horarioData.modalidades.map(getModalidadEmoji).join('');
                     return (
                       <button
@@ -161,7 +178,7 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
                         onClick={() => handleClickHorario(horariosMostrar.fecha, horarioData.hora, horarioData.modalidades)}
                         title={`Hacer click para agendar directamente en ${horarioData.hora}`}
                       >
-                        {modalidadesTexto} {horarioData.hora} ({horaLocal})
+                        {modalidadesTexto} {horarioData.hora}
                       </button>
                     );
                   })}
@@ -187,7 +204,7 @@ export const PsicologoCard: React.FC<PsicologoCardProps> = ({
         </div>
         
         <div className="timezone-nota">
-          <small>Horarios mostrados en tu zona: {timezoneUsuario.split('/').pop()}</small>
+          <small>Horarios en Buenos Aires, Argentina</small>
         </div>
       </div>
       

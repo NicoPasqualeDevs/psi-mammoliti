@@ -133,7 +133,7 @@ db.serialize(() => {
       hora_fin TEXT NOT NULL,
       modalidad TEXT NOT NULL,
       sesionId TEXT,
-      estado TEXT DEFAULT 'pendiente',
+      estado TEXT DEFAULT 'confirmada',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (psicologoId) REFERENCES psicologos(id)
     )
@@ -529,6 +529,14 @@ app.get('/api/sesiones/usuario/:email', (req, res) => {
 // Crear nueva sesión
 app.post('/api/sesiones', (req, res) => {
   const sesion = req.body;
+  
+  // Validar que haya al menos 6 horas de anticipación (en hora de Argentina)
+  if (!validarAnticipacionArgentina(sesion.fecha, sesion.hora)) {
+    return res.status(400).json({ 
+      error: 'La fecha y hora seleccionadas deben tener al menos 6 horas de anticipación desde ahora.' 
+    });
+  }
+  
   const id = `sesion_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   const query = `
@@ -554,6 +562,109 @@ app.post('/api/sesiones', (req, res) => {
     }
     
     res.status(201).json({ id, message: 'Sesión creada exitosamente' });
+  });
+});
+
+// Obtener sesión específica por ID
+app.get('/api/sesiones/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const query = `
+    SELECT s.*, p.nombre as psicologoNombre, p.apellido as psicologoApellido 
+    FROM sesiones s
+    LEFT JOIN psicologos p ON s.psicologoId = p.id
+    WHERE s.id = ?
+  `;
+  
+  db.get(query, [id], (err, sesion) => {
+    if (err) {
+      console.error('Error obteniendo sesión:', err);
+      return res.status(500).json({ error: 'Error al obtener sesión' });
+    }
+    
+    if (!sesion) {
+      return res.status(404).json({ error: 'Sesión no encontrada' });
+    }
+    
+    // Formatear respuesta
+    const sesionFormateada = {
+      id: sesion.id,
+      psicologoId: sesion.psicologoId,
+      fecha: sesion.fecha,
+      hora: sesion.hora,
+      modalidad: sesion.modalidad,
+      paciente: {
+        nombre: sesion.pacienteNombre,
+        email: sesion.pacienteEmail,
+        telefono: sesion.pacienteTelefono
+      },
+      especialidad: sesion.especialidad,
+      estado: sesion.estado
+    };
+    
+    res.json(sesionFormateada);
+  });
+});
+
+// Actualizar sesión existente
+app.put('/api/sesiones/:id', (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  
+  // Construir la consulta dinámicamente basada en los campos a actualizar
+  const allowedFields = ['fecha', 'hora', 'modalidad', 'estado', 'especialidad'];
+  const fieldsToUpdate = Object.keys(updates).filter(field => allowedFields.includes(field));
+  
+  if (fieldsToUpdate.length === 0) {
+    return res.status(400).json({ error: 'No hay campos válidos para actualizar' });
+  }
+  
+  const setClause = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
+  const values = fieldsToUpdate.map(field => updates[field]);
+  values.push(id); // Para el WHERE clause
+  
+  const query = `UPDATE sesiones SET ${setClause} WHERE id = ?`;
+  
+  db.run(query, values, function(err) {
+    if (err) {
+      console.error('Error actualizando sesión:', err);
+      return res.status(500).json({ error: 'Error al actualizar sesión' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Sesión no encontrada' });
+    }
+    
+    res.json({ message: 'Sesión actualizada exitosamente', changes: this.changes });
+  });
+});
+
+// Actualizar citas por sesión ID
+app.put('/api/citas/sesion/:sessionId', (req, res) => {
+  const { sessionId } = req.params;
+  const updates = req.body;
+  
+  // Construir la consulta dinámicamente
+  const allowedFields = ['estado', 'fecha', 'hora_inicio', 'hora_fin'];
+  const fieldsToUpdate = Object.keys(updates).filter(field => allowedFields.includes(field));
+  
+  if (fieldsToUpdate.length === 0) {
+    return res.status(400).json({ error: 'No hay campos válidos para actualizar' });
+  }
+  
+  const setClause = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
+  const values = fieldsToUpdate.map(field => updates[field]);
+  values.push(sessionId);
+  
+  const query = `UPDATE citas SET ${setClause} WHERE sesionId = ?`;
+  
+  db.run(query, values, function(err) {
+    if (err) {
+      console.error('Error actualizando citas:', err);
+      return res.status(500).json({ error: 'Error al actualizar citas' });
+    }
+    
+    res.json({ message: 'Citas actualizadas exitosamente', changes: this.changes });
   });
 });
 
@@ -857,10 +968,10 @@ app.get('/api/psicologos/:id/configuracion-horarios', (req, res) => {
       // Crear configuración por defecto
       const configPorDefecto = {
         psicologoId: id,
-        duracion_sesion: 60,
+        duracion_sesion: 45,
         tiempo_buffer: 15,
         dias_anticipacion: 30,
-        zona_horaria: 'America/Mexico_City',
+        zona_horaria: 'America/Argentina/Buenos_Aires',
         auto_generar: 1
       };
       
@@ -1101,9 +1212,9 @@ app.get('/api/psicologos/:id/disponibilidad', (req, res) => {
     
     // Usar configuración por defecto si no existe
     const config = configuracion || {
-      duracion_sesion: 60,
+      duracion_sesion: 45,
       tiempo_buffer: 15,
-      zona_horaria: 'America/Mexico_City'
+      zona_horaria: 'America/Argentina/Buenos_Aires'
     };
     
     // Obtener plantilla semanal activa
@@ -1184,6 +1295,10 @@ function generarDisponibilidadDesdePlantilla(fechaInicio, fechaFin, plantillaSem
             )
           );
         })
+        .filter(intervalo => {
+          // Filtrar horarios que no cumplan las 6 horas mínimas de anticipación (en hora de Argentina)
+          return validarAnticipacionArgentina(fechaStr, intervalo.hora_inicio);
+        })
         .map(intervalo => ({
           hora: intervalo.hora_inicio,
           modalidades: modalidades
@@ -1250,6 +1365,14 @@ function hayConflictoHorario(inicio1, fin1, inicio2, fin2) {
 // Crear cita (al agendar sesión)
 app.post('/api/citas', (req, res) => {
   const { psicologoId, fecha, hora_inicio, hora_fin, modalidad, sesionId } = req.body;
+  
+  // Validar que haya al menos 6 horas de anticipación (en hora de Argentina)
+  if (!validarAnticipacionArgentina(fecha, hora_inicio)) {
+    return res.status(400).json({ 
+      error: 'La fecha y hora seleccionadas deben tener al menos 6 horas de anticipación desde ahora.' 
+    });
+  }
+  
   const citaId = `cita_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   const query = `
@@ -1269,6 +1392,240 @@ app.post('/api/citas', (req, res) => {
     });
   });
 });
+
+// === BUSCAR PSICÓLOGOS DISPONIBLES EN FECHA Y HORA ESPECÍFICA ===
+
+// Obtener psicólogos disponibles en una fecha y hora específica
+app.get('/api/disponibilidad/buscar', (req, res) => {
+  const { fecha, hora, modalidad } = req.query;
+  
+  if (!fecha || !hora) {
+    return res.status(400).json({ error: 'Se requieren fecha y hora' });
+  }
+
+  // Validar formato de fecha (YYYY-MM-DD)
+  const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!fechaRegex.test(fecha)) {
+    return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD' });
+  }
+
+  // Validar formato de hora (HH:MM)
+  const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  if (!horaRegex.test(hora)) {
+    return res.status(400).json({ error: 'Formato de hora inválido. Use HH:MM' });
+  }
+
+  // Validar que haya al menos 6 horas de anticipación (en hora de Argentina)
+  if (!validarAnticipacionArgentina(fecha, hora)) {
+    return res.status(400).json({ 
+      error: 'La fecha y hora seleccionadas deben tener al menos 6 horas de anticipación desde ahora.' 
+    });
+  }
+
+  // Obtener todos los psicólogos activos
+  const psicologosQuery = `
+    SELECT 
+      p.*,
+      GROUP_CONCAT(pe.especialidad) as especialidades
+    FROM psicologos p
+    LEFT JOIN psicologo_especialidades pe ON p.id = pe.psicologoId
+    GROUP BY p.id
+    ORDER BY p.rating DESC
+  `;
+  
+  db.all(psicologosQuery, [], (err, psicologos) => {
+    if (err) {
+      console.error('Error obteniendo psicólogos:', err);
+      return res.status(500).json({ error: 'Error interno del servidor' });
+    }
+
+    if (!psicologos || psicologos.length === 0) {
+      return res.json([]);
+    }
+
+    // Procesar cada psicólogo para verificar disponibilidad
+    const promesasDisponibilidad = psicologos.map(psicologo => {
+      return new Promise((resolve) => {
+        verificarDisponibilidadPsicologo(psicologo.id, fecha, hora, modalidad, (disponible, configuracion) => {
+          if (disponible) {
+            resolve({
+              id: psicologo.id,
+              nombre: psicologo.nombre,
+              apellido: psicologo.apellido,
+              experiencia: psicologo.experiencia,
+              precio: psicologo.precio,
+              imagen: psicologo.imagen,
+              descripcion: psicologo.descripcion,
+              rating: psicologo.rating,
+              especialidades: psicologo.especialidades ? psicologo.especialidades.split(',') : [],
+              modalidades: JSON.parse(psicologo.modalidades || '[]'),
+              disponibilidadEncontrada: {
+                fecha: fecha,
+                hora: hora,
+                modalidad: modalidad,
+                duracionSesion: configuracion.duracion_sesion,
+                tiempoBuffer: configuracion.tiempo_buffer
+              }
+            });
+          } else {
+            resolve(null);
+          }
+        });
+      });
+    });
+
+    Promise.all(promesasDisponibilidad).then(resultados => {
+      // Filtrar psicólogos disponibles (eliminar nulls)
+      const psicologosDisponibles = resultados.filter(resultado => resultado !== null);
+      
+      res.json({
+        fecha: fecha,
+        hora: hora,
+        modalidadSolicitada: modalidad,
+        cantidadDisponibles: psicologosDisponibles.length,
+        psicologosDisponibles: psicologosDisponibles
+      });
+    });
+  });
+});
+
+// Función auxiliar para verificar disponibilidad de un psicólogo específico
+function verificarDisponibilidadPsicologo(psicologoId, fecha, hora, modalidadSolicitada, callback) {
+  // 1. Obtener configuración del psicólogo
+  const configQuery = 'SELECT * FROM configuracion_horarios WHERE psicologoId = ?';
+  
+  db.get(configQuery, [psicologoId], (err, configuracion) => {
+    if (err) {
+      console.error('Error obteniendo configuración:', err);
+      return callback(false, null);
+    }
+    
+    // Usar configuración por defecto si no existe
+    const config = configuracion || {
+      duracion_sesion: 45,
+      tiempo_buffer: 15,
+      zona_horaria: 'America/Argentina/Buenos_Aires'
+    };
+
+    // 2. Verificar si tiene plantilla de trabajo para este día
+    const fechaObj = new Date(fecha);
+    const diaSemana = fechaObj.getDay(); // 0=Domingo, 1=Lunes, etc.
+    
+    const plantillaQuery = 'SELECT * FROM horarios_trabajo WHERE psicologoId = ? AND dia_semana = ? AND activo = 1';
+    
+    db.get(plantillaQuery, [psicologoId, diaSemana], (err, plantilla) => {
+      if (err || !plantilla) {
+        return callback(false, config);
+      }
+
+      // 3. Verificar si la hora solicitada está dentro del horario de trabajo
+      const modalidadesPermitidas = JSON.parse(plantilla.modalidades);
+      
+      // Verificar modalidad si se especifica
+      if (modalidadSolicitada && !modalidadesPermitidas.includes(modalidadSolicitada)) {
+        return callback(false, config);
+      }
+
+      // Verificar si la hora está en el rango de trabajo
+      if (!estaHoraEnRango(hora, plantilla.hora_inicio, plantilla.hora_fin, config.duracion_sesion)) {
+        return callback(false, config);
+      }
+
+      // 4. Verificar que no haya conflictos con citas existentes
+      const horaFin = calcularHoraFin(hora, config.duracion_sesion);
+      const citasQuery = 'SELECT * FROM citas WHERE psicologoId = ? AND fecha = ? AND estado = "confirmada"';
+      
+      db.all(citasQuery, [psicologoId, fecha], (err, citas) => {
+        if (err) {
+          console.error('Error obteniendo citas:', err);
+          return callback(false, config);
+        }
+
+        // Verificar conflictos de horario
+        const hayConflicto = citas.some(cita => 
+          hayConflictoHorario(hora, horaFin, cita.hora_inicio, cita.hora_fin)
+        );
+
+        if (hayConflicto) {
+          return callback(false, config);
+        }
+
+        // 5. Verificar excepciones de horario
+        const excepcionesQuery = 'SELECT * FROM horarios_excepciones WHERE psicologoId = ? AND fecha = ?';
+        
+        db.get(excepcionesQuery, [psicologoId, fecha], (err, excepcion) => {
+          if (err) {
+            console.error('Error obteniendo excepciones:', err);
+            return callback(false, config);
+          }
+
+          if (excepcion) {
+            if (excepcion.tipo === 'bloqueado') {
+              return callback(false, config);
+            }
+            
+            if (excepcion.tipo === 'horario_especial') {
+              // Verificar disponibilidad en horario especial
+              const modalidadesEspeciales = excepcion.modalidades ? JSON.parse(excepcion.modalidades) : modalidadesPermitidas;
+              
+              if (modalidadSolicitada && !modalidadesEspeciales.includes(modalidadSolicitada)) {
+                return callback(false, config);
+              }
+              
+              if (!estaHoraEnRango(hora, excepcion.hora_inicio, excepcion.hora_fin, config.duracion_sesion)) {
+                return callback(false, config);
+              }
+            }
+          }
+
+          // Si pasó todas las validaciones, está disponible
+          callback(true, config);
+        });
+      });
+    });
+  });
+}
+
+// Función auxiliar para verificar si una hora está en un rango válido
+function estaHoraEnRango(horaSolicitada, horaInicio, horaFin, duracionSesion) {
+  const [hSol, mSol] = horaSolicitada.split(':').map(Number);
+  const [hIni, mIni] = horaInicio.split(':').map(Number);
+  const [hFin, mFin] = horaFin.split(':').map(Number);
+  
+  const minutosSolicitados = hSol * 60 + mSol;
+  const minutosInicio = hIni * 60 + mIni;
+  const minutosFin = hFin * 60 + mFin;
+  const minutosFinSesion = minutosSolicitados + duracionSesion;
+  
+  return minutosSolicitados >= minutosInicio && minutosFinSesion <= minutosFin;
+}
+
+// Función auxiliar para calcular hora de fin basada en duración
+function calcularHoraFin(horaInicio, duracionMinutos) {
+  const [horas, minutos] = horaInicio.split(':').map(Number);
+  const inicioMinutos = horas * 60 + minutos;
+  const finMinutos = inicioMinutos + duracionMinutos;
+  
+  const horaFinHoras = Math.floor(finMinutos / 60);
+  const horaFinMinutos = finMinutos % 60;
+  
+  return `${horaFinHoras.toString().padStart(2, '0')}:${horaFinMinutos.toString().padStart(2, '0')}`;
+}
+
+// Función para validar horarios con 6 horas de anticipación en Argentina
+function validarAnticipacionArgentina(fechaStr, horaStr) {
+  // Crear la fecha/hora solicitada en Argentina (asumiendo que viene en formato Argentina)
+  const fechaHoraSolicitada = new Date(`${fechaStr}T${horaStr}:00-03:00`);
+  
+  // Obtener la hora actual en Argentina
+  const ahora = new Date();
+  const ahoraArgentina = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
+  
+  // Calcular 6 horas después de ahora
+  const minimaFechaHora = new Date(ahoraArgentina.getTime() + 6 * 60 * 60 * 1000);
+  
+  return fechaHoraSolicitada >= minimaFechaHora;
+}
 
 // Servir archivos estáticos en producción
 if (process.env.NODE_ENV === 'production') {

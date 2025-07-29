@@ -33,6 +33,17 @@ export DOMAIN_NAME="tu-dominio.com"
 sudo ./deploy/deploy.sh
 ```
 
+### Opción 3: Con SSL Habilitado
+
+```bash
+# Para habilitar SSL automáticamente
+export DOMAIN_NAME="global-deer.com"
+export SETUP_SSL="true"
+sudo ./deploy/deploy.sh
+```
+
+**Nota**: El script detectará automáticamente si existen certificados SSL específicos para `global-deer.com` en el directorio `deploy/` y los usará en lugar de generar nuevos con Certbot.
+
 ## 🔧 Lo que hace el script
 
 1. **Actualiza el sistema** Debian
@@ -52,7 +63,11 @@ sudo ./deploy/deploy.sh
 5. **Configura servicios**:
    - PM2 para gestión de procesos
    - Autostart en reinicio del sistema
-   - Firewall básico (puertos 22 y 80)
+   - Firewall básico (puertos 22, 80 y 443 si SSL está habilitado)
+6. **Configura SSL** (si está habilitado):
+   - Detecta certificados existentes para global-deer.com
+   - Configura nginx con HTTPS y redirección automática
+   - Implementa configuración SSL moderna y segura
 
 ## 📁 Estructura después del despliegue
 
@@ -118,7 +133,20 @@ pm2 restart psi-mammoliti      # Reiniciar aplicación
 
 3. **Verificar que el proxy funciona**:
    ```bash
+   # Para HTTP
    curl -I http://tu-dominio.com
+   
+   # Para HTTPS (si SSL está configurado)
+   curl -I https://global-deer.com
+   ```
+
+4. **Verificar certificados SSL** (si está configurado):
+   ```bash
+   # Verificar estado del certificado
+   openssl s_client -connect global-deer.com:443 -servername global-deer.com
+   
+   # Ver detalles del certificado
+   openssl x509 -in /etc/nginx/ssl/global-deer.com.crt -text -noout
    ```
 
 ## 📊 Logs y monitoreo
@@ -224,9 +252,73 @@ El script configura:
 - Monitorear logs
 - Configurar SSL/TLS (Certbot)
 
+## 🔐 Configuración SSL Específica para global-deer.com
+
+### Certificados existentes
+
+El proyecto incluye certificados SSL específicos para el dominio `global-deer.com`:
+
+- `deploy/e27b3c236ad504e7.crt` - Certificado principal
+- `deploy/e27b3c236ad504e7.pem` - Clave privada  
+- `deploy/gd_bundle-g2.crt` - Certificados intermedios
+
+### Despliegue con SSL
+
+Para habilitar SSL automáticamente:
+
+```bash
+export DOMAIN_NAME="global-deer.com"
+export SETUP_SSL="true"
+sudo ./deploy/deploy.sh
+```
+
+### Configuración manual de SSL
+
+Si necesitas configurar SSL manualmente después del despliegue:
+
+```bash
+# Ejecutar script específico para certificados existentes
+sudo ./deploy/setup-ssl-existing.sh
+```
+
+### Estructura de archivos SSL después del despliegue
+
+```
+/etc/nginx/ssl/
+├── global-deer.com.crt           # Certificado principal
+├── global-deer.com.key           # Clave privada
+├── global-deer.com-bundle.crt    # Bundle de certificados intermedios
+└── global-deer.com-fullchain.crt # Certificado completo (cert + bundle)
+```
+
+### Verificar configuración SSL
+
+```bash
+# Test de conectividad SSL
+curl -I https://global-deer.com
+
+# Verificar configuración nginx
+nginx -t
+
+# Ver información del certificado
+openssl x509 -in /etc/nginx/ssl/global-deer.com.crt -text -noout | grep -E "(Subject:|Issuer:|Not Before:|Not After:)"
+
+# Test de SSL completo
+openssl s_client -connect global-deer.com:443 -servername global-deer.com
+```
+
+### Renovación de certificados
+
+Para renovar los certificados SSL:
+
+1. Obtén los nuevos archivos del proveedor
+2. Reemplaza los archivos en `deploy/`
+3. Ejecuta: `sudo ./deploy/setup-ssl-existing.sh`
+
 ## 📞 Soporte
 
 Si encuentras problemas:
 1. Revisa los logs mencionados arriba
 2. Verifica que todos los servicios estén corriendo
-3. Comprueba la configuración de red/firewall 
+3. Comprueba la configuración de red/firewall
+4. Para problemas SSL, verifica que los certificados sean válidos y estén en el formato correcto 

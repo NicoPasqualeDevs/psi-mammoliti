@@ -55,7 +55,7 @@ function obtenerPlantillasHorarios() {
 }
 
 // Función para generar intervalos de horarios desde plantillas
-function generarIntervalosDesdeBloque(horaInicio, horaFin, duracionMinutos = 60, bufferMinutos = 15) {
+function generarIntervalosDesdeBloque(horaInicio, horaFin, duracionMinutos = 45, bufferMinutos = 15) {
   const intervalos = [];
   
   const [horaIni, minIni] = horaInicio.split(':').map(Number);
@@ -84,7 +84,7 @@ async function generarSesionesPrueba() {
   const fechas = generarFechasSemanaProxima();
   const modalidades = ['online', 'presencial'];
   const especialidades = ['Ansiedad', 'Depresión', 'Terapia de Pareja', 'Estrés', 'Autoestima', 'Terapia Cognitivo-Conductual'];
-  const estados = ['confirmada', 'pendiente'];
+  const estados = ['confirmada'];
   
   const pacientes = [
     {

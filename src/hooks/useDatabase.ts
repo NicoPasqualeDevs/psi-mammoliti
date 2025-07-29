@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Psicologo, Sesion, Modalidad } from '../types';
 import { apiService } from '../services/apiService';
-
-// Función para obtener la URL base de la API
-const getApiBaseUrl = () => {
-  // En desarrollo, el backend corre en puerto 3001
-  return 'http://localhost:3001/api';
-};
+import { getApiBaseUrl } from '../utils/apiConfig';
 
 interface DatabaseState {
   psicologos: Psicologo[];
@@ -97,7 +92,7 @@ export function useDatabase() {
   // Cargar datos al montar el componente
   useEffect(() => {
     cargarDatos();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Función para insertar nuevo psicólogo
   const insertarPsicologo = async (psicologo: Psicologo): Promise<boolean> => {

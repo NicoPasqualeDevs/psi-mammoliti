@@ -1,0 +1,235 @@
+.buscador-psicologos-disponibles {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.buscador-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.buscador-header h2 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.buscador-form {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #2c3e50;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-buscar,
+.btn-limpiar,
+.btn-agendar {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-buscar {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-buscar:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.btn-buscar:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.btn-limpiar {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-limpiar:hover {
+  background-color: #7f8c8d;
+}
+
+.btn-agendar {
+  background-color: #27ae60;
+  color: white;
+}
+
+.btn-agendar:hover {
+  background-color: #229954;
+}
+
+.error-message {
+  background-color: #e74c3c;
+  color: white;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.resultados-header {
+  margin-bottom: 20px;
+}
+
+.resultados-header h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.busqueda-info {
+  background-color: #ecf0f1;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.cantidad-disponibles {
+  font-size: 18px;
+  color: #27ae60;
+  margin-top: 10px;
+}
+
+.psicologo-card-disponible {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+}
+
+.psicologo-info {
+  display: flex;
+  gap: 15px;
+}
+
+.psicologo-imagen {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.psicologo-detalles h4 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+}
+
+.experiencia,
+.precio {
+  margin: 5px 0;
+  color: #555;
+}
+
+.rating {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.especialidades,
+.modalidades {
+  margin: 10px 0;
+}
+
+.especialidades-lista,
+.modalidades-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.especialidad-tag,
+.modalidad-tag {
+  background-color: #3498db;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 12px;
+}
+
+.modalidad-tag {
+  background-color: #9b59b6;
+}
+
+.disponibilidad-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.disponibilidad-detalles {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.disponibilidad-detalles h5 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+}
+
+.disponibilidad-detalles p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.sin-resultados {
+  text-align: center;
+  background-color: #f39c12;
+  color: white;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .psicologo-card-disponible {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

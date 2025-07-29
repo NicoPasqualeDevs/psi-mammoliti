@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Psicologo, Modalidad } from '../types';
+import { getApiBaseUrl } from '../utils/apiConfig';
 
 interface PlantillaSemanal {
   id?: number;
@@ -28,6 +29,7 @@ interface HorarioTrabajoBackend {
 interface GestionHorariosProps {
   psicologo: Psicologo;
   onCerrar: () => void;
+  onGuardadoExitoso?: () => void;
 }
 
 const diasSemana = [
@@ -48,18 +50,10 @@ const zonasHorarias = [
   { value: 'America/Argentina/Buenos_Aires', label: 'Buenos Aires (GMT-3)' }
 ];
 
-// Configuración dinámica de URL base
-const getApiBaseUrl = () => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3001/api';
-  }
-  return '/api';
-};
-
-export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onCerrar }) => {
+export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onCerrar, onGuardadoExitoso }) => {
   const [plantillaSemanal, setPlantillaSemanal] = useState<PlantillaSemanal[]>([]);
   const [configuracion, setConfiguracion] = useState<ConfiguracionHorarios>({
-    duracionSesion: 60,
+    duracionSesion: 45,
     tiempoBuffer: 15,
     zonaHoraria: 'America/Mexico_City'
   });
@@ -72,14 +66,14 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
 
   useEffect(() => {
     cargarDatos();
-  }, [psicologo.id]);
+  }, [psicologo.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Validar horarios cuando cambie la plantilla
   useEffect(() => {
     if (plantillaSemanal.length > 0) {
       validarTodosLosHorarios();
     }
-  }, [plantillaSemanal]);
+  }, [plantillaSemanal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cargarDatos = async () => {
     try {
@@ -255,7 +249,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     }, 0);
   };
 
-  const actualizarHorarioDia = (index: number, campo: keyof PlantillaSemanal, valor: any) => {
+  const actualizarHorarioDia = (index: number, campo: keyof PlantillaSemanal, valor: string | number | boolean | Modalidad[] | string[]) => {
     const nuevaPlantilla = [...plantillaSemanal];
     nuevaPlantilla[index] = { ...nuevaPlantilla[index], [campo]: valor };
     setPlantillaSemanal(nuevaPlantilla);
@@ -351,6 +345,8 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
 
       mostrarMensaje('✅ Plantilla semanal guardada exitosamente');
       await cargarDatos();
+      onGuardadoExitoso?.(); // Llamar al prop onGuardadoExitoso
+      onCerrar(); // Cerrar el modal
     } catch (error) {
       console.error('Error:', error);
       mostrarMensaje('❌ Error al guardar plantilla semanal', 'error');
@@ -609,7 +605,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                         </div>
                       ) : (
                         <div className="horarios-list">
-                          {horariosDelDia.map((horario, index) => {
+                          {horariosDelDia.map((horario, _index) => {
                             const realIndex = plantillaSemanal.findIndex(h => h === horario);
                             return (
                               <div key={realIndex} className="horario-item">

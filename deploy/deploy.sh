@@ -309,8 +309,32 @@ case "$1" in
         echo "Probando APIs..."
         echo "Backend directo (puerto 3001):"
         curl -s -f http://localhost:3001/api/psicologos > /dev/null && echo "✅ OK" || echo "❌ FALLO"
-        echo "A través de nginx:"
+        echo "A través de nginx (HTTP):"
         curl -s -f http://localhost/api/psicologos > /dev/null && echo "✅ OK" || echo "❌ FALLO"
+        
+        # Test HTTPS si está configurado
+        if [ -f "/etc/nginx/ssl/global-deer.com.crt" ]; then
+            echo "A través de nginx (HTTPS):"
+            curl -s -f https://global-deer.com/api/psicologos > /dev/null && echo "✅ OK" || echo "❌ FALLO"
+        fi
+        ;;
+    verify-ssl)
+        echo "Verificando configuración SSL..."
+        if [ -f "$APP_DIR/deploy/verify-ssl.sh" ]; then
+            chmod +x "$APP_DIR/deploy/verify-ssl.sh"
+            "$APP_DIR/deploy/verify-ssl.sh"
+        else
+            echo "Script de verificación SSL no encontrado"
+        fi
+        ;;
+    setup-ssl)
+        echo "Configurando SSL..."
+        if [ -f "$APP_DIR/deploy/setup-ssl-existing.sh" ]; then
+            chmod +x "$APP_DIR/deploy/setup-ssl-existing.sh"
+            "$APP_DIR/deploy/setup-ssl-existing.sh"
+        else
+            echo "Script de configuración SSL no encontrado"
+        fi
         ;;
     update)
         echo "Actualizando $APP_NAME..."
@@ -323,17 +347,19 @@ case "$1" in
         pm2 restart "$APP_NAME-frontend" "$APP_NAME-backend"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart|status|logs|diagnose|test-api|update}"
+        echo "Uso: $0 {start|stop|restart|status|logs|diagnose|test-api|verify-ssl|setup-ssl|update}"
         echo ""
         echo "Comandos disponibles:"
-        echo "  start     - Iniciar aplicación"
-        echo "  stop      - Detener aplicación"
-        echo "  restart   - Reiniciar aplicación"
-        echo "  status    - Ver estado de servicios"
-        echo "  logs      - Ver logs (logs backend|frontend para específicos)"
-        echo "  diagnose  - Ejecutar diagnóstico completo"
-        echo "  test-api  - Probar APIs"
-        echo "  update    - Actualizar aplicación"
+        echo "  start      - Iniciar aplicación"
+        echo "  stop       - Detener aplicación"
+        echo "  restart    - Reiniciar aplicación"
+        echo "  status     - Ver estado de servicios"
+        echo "  logs       - Ver logs (logs backend|frontend para específicos)"
+        echo "  diagnose   - Ejecutar diagnóstico completo"
+        echo "  test-api   - Probar APIs (HTTP y HTTPS si está configurado)"
+        echo "  verify-ssl - Verificar configuración SSL"
+        echo "  setup-ssl  - Configurar certificados SSL existentes"
+        echo "  update     - Actualizar aplicación"
         exit 1
         ;;
 esac
@@ -343,12 +369,23 @@ chmod +x "/usr/local/bin/$APP_NAME-manage"
 
 # Configurar SSL si está habilitado
 if [ "$SETUP_SSL" = "true" ]; then
-    log "Configurando SSL con Certbot..."
-    if [ -f "$(pwd)/deploy/setup-ssl.sh" ]; then
-        chmod +x "$(pwd)/deploy/setup-ssl.sh"
-        "$(pwd)/deploy/setup-ssl.sh"
+    # Verificar si existen certificados específicos para global-deer.com
+    if [ -f "$(pwd)/deploy/e27b3c236ad504e7.crt" ] && [ -f "$(pwd)/deploy/e27b3c236ad504e7.pem" ]; then
+        log "Configurando SSL con certificados existentes para global-deer.com..."
+        if [ -f "$(pwd)/deploy/setup-ssl-existing.sh" ]; then
+            chmod +x "$(pwd)/deploy/setup-ssl-existing.sh"
+            "$(pwd)/deploy/setup-ssl-existing.sh"
+        else
+            error "Script de configuración SSL para certificados existentes no encontrado"
+        fi
     else
-        warning "Script de configuración SSL no encontrado"
+        log "Configurando SSL con Certbot..."
+        if [ -f "$(pwd)/deploy/setup-ssl.sh" ]; then
+            chmod +x "$(pwd)/deploy/setup-ssl.sh"
+            "$(pwd)/deploy/setup-ssl.sh"
+        else
+            warning "Script de configuración SSL no encontrado"
+        fi
     fi
 fi
 
@@ -375,6 +412,8 @@ echo -e "   $APP_NAME-manage status      # Ver estado de servicios"
 echo -e "   $APP_NAME-manage logs        # Ver logs (logs backend|frontend)"
 echo -e "   $APP_NAME-manage diagnose    # Diagnóstico completo"
 echo -e "   $APP_NAME-manage test-api    # Probar APIs"
+echo -e "   $APP_NAME-manage verify-ssl  # Verificar configuración SSL"
+echo -e "   $APP_NAME-manage setup-ssl   # Configurar certificados SSL"
 echo -e "   $APP_NAME-manage update      # Actualizar aplicación"
 echo ""
 echo -e "   systemctl status nginx     # Estado de nginx"

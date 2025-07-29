@@ -1,99 +1,107 @@
+import { toZonedTime, format } from 'date-fns-tz';
+import { parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+const ARGENTINA_TIMEZONE = 'America/Argentina/Buenos_Aires';
+
 export const detectarTimezone = (): string => {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return ARGENTINA_TIMEZONE;
 };
 
 export const obtenerOffsetTimezone = (timezone: string): number => {
-  const fecha = new Date();
-  const utc = fecha.getTime() + (fecha.getTimezoneOffset() * 60000);
-  const fechaTimezone = new Date(utc + (getTimezoneOffset(timezone) * 3600000));
-  return fechaTimezone.getTimezoneOffset() / -60;
+  const date = new Date();
+  const zonedDate = toZonedTime(date, timezone);
+  const offset = (zonedDate.getTime() - date.getTime()) / (1000 * 60 * 60);
+  return offset;
 };
 
-const getTimezoneOffset = (timezone: string): number => {
-  const offsets: { [key: string]: number } = {
-    'America/New_York': -5,
-    'America/Chicago': -6,
-    'America/Denver': -7,
-    'America/Los_Angeles': -8,
-    'America/Mexico_City': -6,
-    'America/Argentina/Buenos_Aires': -3,
-    'America/Sao_Paulo': -3,
-    'Europe/London': 0,
-    'Europe/Paris': 1,
-    'Europe/Madrid': 1,
-    'Asia/Tokyo': 9,
-    'Asia/Shanghai': 8,
-    'Australia/Sydney': 10,
+// Obtener la fecha/hora actual en Argentina
+export const obtenerAhoraArgentina = (): Date => {
+  return toZonedTime(new Date(), ARGENTINA_TIMEZONE);
+};
+
+// Convertir una fecha local a la zona horaria de Argentina
+export const convertirAArgentina = (fecha: Date): Date => {
+  return toZonedTime(fecha, ARGENTINA_TIMEZONE);
+};
+
+// Generar string de fecha en formato YYYY-MM-DD para Argentina
+export const obtenerFechaArgentina = (fecha?: Date): string => {
+  const fechaArgentina = fecha ? convertirAArgentina(fecha) : obtenerAhoraArgentina();
+  return format(fechaArgentina, 'yyyy-MM-dd', { timeZone: ARGENTINA_TIMEZONE });
+};
+
+// Obtener la semana actual basada en hora de Argentina
+export const obtenerSemanaActual = (): { inicio: Date; fin: Date } => {
+  const hoyArgentina = obtenerAhoraArgentina();
+  
+  // Obtener el lunes de esta semana (inicio de semana)
+  const diaSemana = hoyArgentina.getDay(); // 0 = domingo, 1 = lunes, etc.
+  const diasParaLunes = diaSemana === 0 ? -6 : 1 - diaSemana; // Si es domingo, retroceder 6 días
+  
+  const inicioSemana = new Date(hoyArgentina);
+  inicioSemana.setDate(hoyArgentina.getDate() + diasParaLunes);
+  inicioSemana.setHours(0, 0, 0, 0);
+  
+  // El domingo de esta semana (fin de semana)
+  const finSemana = new Date(inicioSemana);
+  finSemana.setDate(inicioSemana.getDate() + 6);
+  finSemana.setHours(23, 59, 59, 999);
+  
+  return {
+    inicio: inicioSemana,
+    fin: finSemana
   };
-  
-  return offsets[timezone] || 0;
 };
 
-export const convertirHorario = (hora: string, timezoneOrigen: string, timezoneDestino: string): string => {
-  const [horas, minutos] = hora.split(':').map(Number);
+// Verificar si una fecha/hora es al menos 6 horas en el futuro (tiempo Argentina)
+export const validarAnticipacionArgentina = (fechaStr: string, horaStr: string): boolean => {
+  const fechaHora = parseISO(`${fechaStr}T${horaStr}`);
+  const fechaHoraArgentina = convertirAArgentina(fechaHora);
+  const ahoraArgentina = obtenerAhoraArgentina();
+  const minimaFechaHora = new Date(ahoraArgentina.getTime() + 6 * 60 * 60 * 1000); // 6 horas después
   
+  return fechaHoraArgentina >= minimaFechaHora;
+};
+
+// Verificar si una fecha es hoy en Argentina
+export const esHoyArgentina = (fecha: Date): boolean => {
+  const hoyArgentina = obtenerAhoraArgentina();
+  return fecha.getFullYear() === hoyArgentina.getFullYear() &&
+         fecha.getMonth() === hoyArgentina.getMonth() &&
+         fecha.getDate() === hoyArgentina.getDate();
+};
+
+// Verificar si una fecha es pasada en Argentina
+export const esPasadoArgentina = (fecha: Date): boolean => {
+  const hoyArgentina = obtenerAhoraArgentina();
+  const fechaCopia = new Date(fecha);
+  fechaCopia.setHours(23, 59, 59, 999); // Final del día
+  
+  const hoyInicio = new Date(hoyArgentina);
+  hoyInicio.setHours(0, 0, 0, 0); // Inicio del día
+  
+  return fechaCopia < hoyInicio;
+};
+
+export const convertirHorario = (hora: string): string => {
+  // Para simplificar, todas las horas se muestran en hora de Buenos Aires
+  const [horas, minutos] = hora.split(':').map(Number);
   const fecha = new Date();
   fecha.setHours(horas, minutos, 0, 0);
   
-  const offsetOrigen = getTimezoneOffset(timezoneOrigen);
-  const offsetDestino = getTimezoneOffset(timezoneDestino);
-  const diferencia = offsetDestino - offsetOrigen;
-  
-  fecha.setHours(fecha.getHours() + diferencia);
-  
-  return fecha.toLocaleTimeString('es-ES', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
-};
-
-export const obtenerSemanaActual = (): { inicio: Date; fin: Date } => {
-  const hoy = new Date();
-  const fechaInicioDisponibilidad = new Date('2025-06-01');
-  const fechaFinDisponibilidad = new Date('2026-06-01');
-  
-  // Determinar qué fecha usar como referencia
-  let fechaReferencia: Date;
-  
-  if (hoy < fechaInicioDisponibilidad) {
-    // Si estamos antes del rango, usar la fecha de inicio
-    fechaReferencia = new Date(fechaInicioDisponibilidad);
-  } else if (hoy > fechaFinDisponibilidad) {
-    // Si estamos después del rango, usar la fecha de inicio
-    fechaReferencia = new Date(fechaInicioDisponibilidad);
-  } else {
-    // Si estamos dentro del rango, usar la fecha actual
-    fechaReferencia = new Date(hoy);
-  }
-  
-  // Calcular el lunes de la semana de la fecha de referencia
-  const diaActual = fechaReferencia.getDay();
-  const diferencia = diaActual === 0 ? -6 : 1 - diaActual; // 0=Domingo, 1=Lunes, etc.
-  
-  const lunes = new Date(fechaReferencia);
-  lunes.setDate(fechaReferencia.getDate() + diferencia);
-  lunes.setHours(0, 0, 0, 0);
-  
-  const domingo = new Date(lunes);
-  domingo.setDate(lunes.getDate() + 6);
-  domingo.setHours(23, 59, 59, 999);
-  
-  return { inicio: lunes, fin: domingo };
+  return format(convertirAArgentina(fecha), 'HH:mm', { timeZone: ARGENTINA_TIMEZONE });
 };
 
 export const formatearFecha = (fecha: Date): string => {
-  return fecha.toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
+  return format(convertirAArgentina(fecha), 'EEEE, d \'de\' MMMM', { 
+    timeZone: ARGENTINA_TIMEZONE,
+    locale: es
   });
 };
 
 export const formatearFechaCorta = (fecha: Date): string => {
-  return fecha.toLocaleDateString('es-ES', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short'
+  return format(convertirAArgentina(fecha), 'dd/MM/yyyy', { 
+    timeZone: ARGENTINA_TIMEZONE 
   });
 }; 

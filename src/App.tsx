@@ -164,7 +164,8 @@ const MainApp: React.FC = () => {
               userSelect: 'none'
             }}
           >
-            Buscar Psicólogos
+            <span className="nav-icon">🔍</span>
+            <span className="nav-text">Buscar Psicólogos</span>
           </button>
           <button 
             className={vistaActual === 'sesiones' ? 'activo' : ''}
@@ -178,7 +179,11 @@ const MainApp: React.FC = () => {
               userSelect: 'none'
             }}
           >
-            Mis Sesiones ({sesionesUsuario.length})
+            <span className="nav-icon">📅</span>
+            <span className="nav-text">Mis Sesiones</span>
+            {sesionesUsuario.length > 0 && (
+              <span className="nav-badge">{sesionesUsuario.length}</span>
+            )}
           </button>
         </nav>
       </header>

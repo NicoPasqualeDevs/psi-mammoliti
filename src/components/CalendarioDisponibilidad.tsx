@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Psicologo, CalendarioSemana, CalendarioDia, CalendarioHorario } from '../types';
-import { detectarTimezone, convertirHorario, obtenerSemanaActual } from '../utils/timezone';
+import { Psicologo, CalendarioDiaData, CalendarioSemanaData, CalendarioHorario } from '../types';
 import { useHorariosReales } from '../hooks/useHorariosReales';
+import { obtenerSemanaActual, esHoyArgentina, esPasadoArgentina, validarAnticipacionArgentina, obtenerFechaArgentina } from '../utils/timezone';
 
 interface CalendarioDisponibilidadProps {
   psicologo: Psicologo;
-  onSeleccionarHorario: (fecha: string, hora: string, horaLocal: string, modalidades: string[]) => void;
+  onSeleccionarHorario: (fecha: string, hora: string, modalidades: string[]) => void;
   fechaSeleccionada?: string;
   horaSeleccionada?: string;
 }
@@ -22,8 +22,6 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
 }) => {
   const [semanaActual, setSemanaActual] = useState(() => obtenerSemanaActual());
   const [diasExpandidos, setDiasExpandidos] = useState<Set<string>>(new Set());
-  const timezoneUsuario = detectarTimezone();
-  const timezonePsicologo = 'America/Mexico_City';
 
   // Usar horarios reales del backend
   const { 
@@ -35,14 +33,15 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
     psicologoId: psicologo.id 
   });
 
-  const calendarioSemana: CalendarioSemana = useMemo(() => {
-    const dias: CalendarioDia[] = [];
+  const calendarioSemana = useMemo(() => {
+    const dias: CalendarioDiaData[] = []; 
     
     for (let i = 0; i < 7; i++) {
       const fecha = new Date(semanaActual.inicio);
       fecha.setDate(semanaActual.inicio.getDate() + i);
       
-      const fechaStr = fecha.toISOString().split('T')[0];
+      // Usar consistentemente la función de Argentina para todas las fechas
+      const fechaStr = obtenerFechaArgentina(fecha);
       
       // Buscar disponibilidad en los horarios reales
       const disponibilidadDia = disponibilidadReal.find(d => d.fecha === fechaStr);
@@ -50,12 +49,13 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
       const horarios: CalendarioHorario[] = disponibilidadDia?.horarios.map(horarioData => ({
         hora: horarioData.hora,
         disponible: true,
-        horaLocal: convertirHorario(horarioData.hora, timezonePsicologo, timezoneUsuario),
+        horaLocal: horarioData.hora,
         modalidades: horarioData.modalidades
       })) || [];
       
       dias.push({
         fecha,
+        fechaStr, // Guardar la fecha string consistente
         horarios
       });
     }
@@ -65,7 +65,7 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
       fin: semanaActual.fin,
       dias
     };
-  }, [semanaActual, disponibilidadReal, timezoneUsuario]);
+  }, [semanaActual, disponibilidadReal]);
 
   const cambiarSemana = (direccion: 'anterior' | 'siguiente') => {
     const nuevaFecha = new Date(semanaActual.inicio);
@@ -82,14 +82,16 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
   };
 
   const esHoy = (fecha: Date): boolean => {
-    const hoy = new Date();
-    return fecha.toDateString() === hoy.toDateString();
+    return esHoyArgentina(fecha);
   };
 
   const esPasado = (fecha: Date): boolean => {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    return fecha < hoy;
+    return esPasadoArgentina(fecha);
+  };
+
+  const esHorarioPasado = (fecha: Date, hora: string): boolean => {
+    const fechaStr = obtenerFechaArgentina(fecha);
+    return !validarAnticipacionArgentina(fechaStr, hora);
   };
 
   const toggleDiaExpandido = (fechaStr: string, tieneHorarios: boolean) => {
@@ -104,11 +106,8 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
     setDiasExpandidos(nuevosExpandidos);
   };
 
-  const formatearHorario = (hora: string, horaLocal: string): string => {
-    if (timezoneUsuario === timezonePsicologo) {
-      return hora;
-    }
-    return `${hora} (${horaLocal} tu hora)`;
+  const formatearHorario = (hora: string): string => {
+    return hora;
   };
 
   // Mostrar estado de carga
@@ -158,16 +157,14 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
         </button>
       </div>
 
-      {/* Mostrar información de zona horaria si es diferente */}
-      {timezoneUsuario !== timezonePsicologo && (
-        <div className="info-timezone">
-          ℹ️ Los horarios se muestran en hora del psicólogo y tu hora local
-        </div>
-      )}
+      <div className="info-timezone">
+        ℹ️ Todos los horarios están en hora de Buenos Aires, Argentina
+      </div>
 
       <div className="calendario-grid">
         {calendarioSemana.dias.map((dia) => {
-          const fechaStr = dia.fecha.toISOString().split('T')[0];
+          // Usar la fecha string consistente que ya calculamos
+          const fechaStr = dia.fechaStr;
           const tieneHorarios = dia.horarios.length > 0;
           const esExpandido = diasExpandidos.has(fechaStr);
           const esDiaActual = esHoy(dia.fecha);
@@ -206,27 +203,28 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
 
               {tieneHorarios && esExpandido && (
                 <div className="horarios-lista">
-                  {dia.horarios.map((horario) => {
+                  {dia.horarios.map((horario: CalendarioHorario) => {
                     const esSeleccionado = fechaSeleccionada === fechaStr && horaSeleccionada === horario.hora;
+                    const horarioPasado = esHorarioPasado(dia.fecha, horario.hora);
                     
                     return (
                       <button
                         key={horario.hora}
-                        className={`horario-slot ${esSeleccionado ? 'seleccionado' : ''}`}
+                        className={`horario-slot ${esSeleccionado ? 'seleccionado' : ''} ${horarioPasado ? 'pasado' : ''}`}
                         onClick={() => onSeleccionarHorario(
                           fechaStr, 
                           horario.hora, 
-                          horario.horaLocal,
                           horario.modalidades
                         )}
-                        disabled={!horario.disponible}
+                        disabled={!horario.disponible || horarioPasado}
+                        title={horarioPasado ? 'Este horario requiere al menos 6 horas de anticipación' : ''}
                       >
                         <div className="horario-info">
                           <span className="horario-tiempo">
-                            {formatearHorario(horario.hora, horario.horaLocal)}
+                            {formatearHorario(horario.hora)}
                           </span>
                           <div className="modalidades">
-                            {horario.modalidades.map(modalidad => (
+                            {horario.modalidades.map((modalidad: string) => (
                               <span key={modalidad} className="modalidad-badge">
                                 {getModalidadEmoji(modalidad)}
                               </span>

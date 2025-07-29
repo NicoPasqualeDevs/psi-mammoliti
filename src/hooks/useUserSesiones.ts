@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Sesion } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { getApiBaseUrl } from '../utils/apiConfig';
 
 interface UseUserSesionesReturn {
   sesiones: Sesion[];
@@ -9,14 +10,6 @@ interface UseUserSesionesReturn {
   error: string | null;
   refrescar: () => Promise<void>;
 }
-
-// Configuración dinámica de URL base
-const getApiBaseUrl = () => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3001/api';
-  }
-  return '/api';
-};
 
 export function useUserSesiones(): UseUserSesionesReturn {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);

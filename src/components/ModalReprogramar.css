@@ -1,0 +1,457 @@
+/* === MODAL REPROGRAMAR === */
+
+.modal-reprogramar {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-reprogramar .modal-body {
+  padding: 2rem;
+}
+
+/* === INFORMACIÓN SESIÓN ACTUAL === */
+.sesion-actual-info {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+}
+
+.sesion-actual-info h3 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sesion-actual-info h3::before {
+  content: '📅';
+  font-size: 1.2rem;
+}
+
+.info-actual {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+.psicologo-actual {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar-pequeno {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.psicologo-actual h4 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+}
+
+.especialidad-actual {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.fecha-hora-original {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.fecha-original {
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.hora-original {
+  color: #667eea;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.modalidad-original {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* === SELECCIÓN NUEVA FECHA === */
+.seleccion-nueva-fecha h3 {
+  color: #1e293b;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.seleccion-nueva-fecha h3::before {
+  content: '🔄';
+  font-size: 1.3rem;
+}
+
+.loading-horarios {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 2rem;
+  gap: 1rem;
+}
+
+.sin-horarios-disponibles {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+}
+
+.sin-horarios-disponibles .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.sin-horarios-disponibles h4 {
+  color: #475569;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.sin-horarios-disponibles p {
+  color: #64748b;
+  margin: 0;
+}
+
+.calendario-reprogramar {
+  display: grid;
+  gap: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.dia-disponible {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.dia-disponible:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.fecha-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fecha-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.total-horarios {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.horarios-grid {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.btn-horario-disponible {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 70px;
+  justify-content: center;
+}
+
+.btn-horario-disponible:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-horario-disponible .hora {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.btn-horario-disponible .modalidad {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.btn-horario-disponible:hover .modalidad {
+  opacity: 1;
+}
+
+/* === CONFIRMACIÓN === */
+.confirmacion-reprogramacion {
+  text-align: center;
+}
+
+.confirmacion-reprogramacion h3 {
+  color: #1e293b;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.confirmacion-reprogramacion h3::before {
+  content: '✅';
+  font-size: 1.3rem;
+}
+
+.cambio-resumen {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+}
+
+.cambio-de,
+.cambio-a {
+  text-align: center;
+}
+
+.cambio-de h4,
+.cambio-a h4 {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fecha-hora-info {
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fecha-hora-info.original {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+.fecha-hora-info.nueva {
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+}
+
+.fecha-hora-info .fecha {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.fecha-hora-info .hora {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.cambio-arrow {
+  font-size: 2rem;
+  color: #667eea;
+  font-weight: 700;
+}
+
+.error-reprogramar {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border: 1px solid #fecaca;
+}
+
+.error-reprogramar p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.acciones-confirmacion {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.acciones-confirmacion .btn-secondary,
+.acciones-confirmacion .btn-primary {
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  min-width: 160px;
+}
+
+.acciones-confirmacion .btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.acciones-confirmacion .btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.acciones-confirmacion .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.acciones-confirmacion .btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.acciones-confirmacion .btn-primary:disabled,
+.acciones-confirmacion .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .modal-reprogramar {
+    max-width: 95vw;
+    margin: 1rem;
+  }
+
+  .modal-reprogramar .modal-body {
+    padding: 1rem;
+  }
+
+  .info-actual {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    text-align: left;
+  }
+
+  .fecha-hora-original {
+    align-items: flex-start;
+  }
+
+  .cambio-resumen {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .cambio-arrow {
+    transform: rotate(90deg);
+    font-size: 1.5rem;
+  }
+
+  .horarios-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .acciones-confirmacion {
+    flex-direction: column;
+  }
+
+  .acciones-confirmacion .btn-secondary,
+  .acciones-confirmacion .btn-primary {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .fecha-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .fecha-header h4 {
+    font-size: 0.9rem;
+  }
+
+  .total-horarios {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .horarios-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+
+  .btn-horario-disponible {
+    padding: 0.75rem;
+    min-height: 60px;
+  }
+
+  .btn-horario-disponible .hora {
+    font-size: 0.9rem;
+  }
+}

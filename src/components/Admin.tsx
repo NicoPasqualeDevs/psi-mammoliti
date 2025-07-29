@@ -1,29 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useDatabase } from '../hooks/useDatabase';
-import { Psicologo, Modalidad } from '../types';
+import { Psicologo, Modalidad, Sesion, SesionAgrupada } from '../types';
 import { generarHorariosAleatorios } from '../utils/horarioGenerator';
 import { GestionHorarios } from './GestionHorarios';
 import { generarPsicologoAleatorio, validarPsicologoAleatorio } from '../utils/generadorPsicologoAleatorio';
 import { obtenerImagenPorGenero } from '../constants/psicologosRandom';
+import { getApiBaseUrl } from '../utils/apiConfig';
+import './AdminSesiones.css';
 
-type TabType = 'dashboard' | 'psicologos' | 'formulario' | 'configuracion';
-
-// Función para obtener la URL base de la API
-const getApiBaseUrl = () => {
-  // En desarrollo, el backend corre en puerto 3001
-  return 'http://localhost:3001/api';
-};
+type TabType = 'dashboard' | 'psicologos' | 'formulario' | 'sesiones' | 'configuracion';
 
 export const Admin: React.FC = () => {
   const { 
     psicologos, 
+    sesiones,
     loading, 
     error, 
     stats,
     insertarPsicologo,
     actualizarPsicologo,
-    eliminarPsicologo
+    eliminarPsicologo,
+    cargarDatos
   } = useDatabase();
   
   // Estados principales
@@ -367,6 +365,16 @@ export const Admin: React.FC = () => {
     setPsicologoParaHorarios(null);
   };
 
+  const manejarGuardadoHorariosExitoso = async () => {
+    try {
+      await cargarDatos(); // Recargar el listado de psicólogos
+      mostrarMensaje('✅ Horarios actualizados y listado recargado');
+    } catch (error) {
+      console.error('Error al recargar datos:', error);
+      mostrarMensaje('⚠️ Horarios guardados pero error al recargar listado', 'error');
+    }
+  };
+
   const generarPsicologoAleatorioHandler = async () => {
     setProcesando(true);
     
@@ -475,6 +483,12 @@ export const Admin: React.FC = () => {
           }}
         >
           ✏️ {psicologoEditando ? 'Editar' : 'Nuevo'}
+        </button>
+        <button 
+          className={`tab-button ${tabActiva === 'sesiones' ? 'active' : ''}`}
+          onClick={() => setTabActiva('sesiones')}
+        >
+          📅 Sesiones ({stats.totalSesiones})
         </button>
         <button 
           className={`tab-button ${tabActiva === 'configuracion' ? 'active' : ''}`}
@@ -1005,6 +1019,122 @@ export const Admin: React.FC = () => {
           </div>
         )}
 
+        {tabActiva === 'sesiones' && (
+          <div className="sesiones-content">
+            <div className="sesiones-header">
+              <h3>📅 Gestión de Sesiones</h3>
+              <div className="sesiones-stats">
+                <span className="stat-item">
+                  <strong>Total:</strong> {stats.totalSesiones} sesiones
+                </span>
+                <span className="stat-item">
+                  <strong>Confirmadas:</strong> {sesiones.filter((s: Sesion) => s.estado === 'confirmada').length}
+                </span>
+                <span className="stat-item">
+                  <strong>Canceladas:</strong> {sesiones.filter((s: Sesion) => s.estado === 'cancelada').length}
+                </span>
+              </div>
+            </div>
+
+            {sesiones.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📅</div>
+                <h3>No hay sesiones registradas</h3>
+                <p>Cuando los usuarios agenden sesiones, aparecerán aquí</p>
+              </div>
+            ) : (
+              <div className="sesiones-por-usuario">
+                {Object.entries(
+                  sesiones.reduce((acc: Record<string, SesionAgrupada>, sesion: Sesion) => {
+                    const email = sesion.paciente.email;
+                    if (!acc[email]) {
+                      acc[email] = {
+                        paciente: sesion.paciente,
+                        sesiones: []
+                      };
+                    }
+                    acc[email].sesiones.push(sesion);
+                    return acc;
+                  }, {} as Record<string, SesionAgrupada>)
+                ).map(([email, data]: [string, SesionAgrupada]) => (
+                  <div key={email} className="usuario-sesiones-card">
+                    <div className="usuario-header">
+                      <div className="usuario-info">
+                        <div className="usuario-avatar">
+                          {data.paciente.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="usuario-details">
+                          <h4>{data.paciente.nombre}</h4>
+                          <p className="usuario-email">{data.paciente.email}</p>
+                          <p className="usuario-telefono">📞 {data.paciente.telefono}</p>
+                        </div>
+                      </div>
+                      <div className="usuario-stats">
+                        <span className="sesiones-count">
+                          {data.sesiones.length} sesión{data.sesiones.length !== 1 ? 'es' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="sesiones-lista">
+                      {data.sesiones
+                        .sort((a: Sesion, b: Sesion) => new Date(b.fecha + ' ' + b.hora).getTime() - new Date(a.fecha + ' ' + a.hora).getTime())
+                        .map((sesion: Sesion) => {
+                          const psicologo = psicologos.find(p => p.id === sesion.psicologoId);
+                          return (
+                            <div key={sesion.id} className="sesion-item">
+                              <div className="sesion-fecha">
+                                <div className="fecha-principal">
+                                  {new Date(sesion.fecha + 'T12:00:00').toLocaleDateString('es-ES', {
+                                    weekday: 'short',
+                                    day: 'numeric',
+                                    month: 'short'
+                                  })}
+                                </div>
+                                <div className="hora">{sesion.hora}</div>
+                              </div>
+                              
+                              <div className="sesion-detalles">
+                                <div className="psicologo-info">
+                                  {psicologo ? (
+                                    <>
+                                      <img 
+                                        src={psicologo.imagen} 
+                                        alt={psicologo.nombre}
+                                        className="psicologo-mini-avatar"
+                                      />
+                                      <span className="psicologo-nombre">
+                                        {psicologo.nombre} {psicologo.apellido}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <span className="psicologo-no-encontrado">Psicólogo no encontrado</span>
+                                  )}
+                                </div>
+                                <div className="sesion-meta">
+                                  <span className="especialidad">{sesion.especialidad}</span>
+                                  <span className="modalidad">
+                                    {sesion.modalidad === 'online' ? '💻' : '🏢'} {sesion.modalidad}
+                                  </span>
+                                                    <span className={`estado estado-${sesion.estado}`}>
+                    {sesion.estado === 'confirmada' && '✅'}
+                    {sesion.estado === 'cancelada' && '❌'}
+                    {sesion.estado === 'completada' && '✨'}
+                    {sesion.estado}
+                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {tabActiva === 'configuracion' && (
           <div className="configuracion-content">
             <h3>Configuración del Sistema</h3>
@@ -1050,6 +1180,7 @@ export const Admin: React.FC = () => {
         <GestionHorarios
           psicologo={psicologoParaHorarios}
           onCerrar={cerrarGestionHorarios}
+          onGuardadoExitoso={manejarGuardadoHorariosExitoso}
         />
       )}
 
