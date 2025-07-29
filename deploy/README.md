@@ -252,34 +252,46 @@ El script configura:
 - Monitorear logs
 - Configurar SSL/TLS (Certbot)
 
-## 🔐 Configuración SSL Específica para global-deer.com
+## 🔐 Configuración SSL Mejorada
 
-### Certificados existentes
+### Detección Automática de Certificados
 
-El proyecto incluye certificados SSL específicos para el dominio `global-deer.com`:
+El sistema ahora detecta automáticamente los certificados SSL en el directorio `deploy/`:
 
-- `deploy/e27b3c236ad504e7.crt` - Certificado principal
-- `deploy/e27b3c236ad504e7.pem` - Clave privada  
-- `deploy/gd_bundle-g2.crt` - Certificados intermedios
+**Tipos de archivos soportados:**
+- **Certificados**: `.crt`, `.cert`, `.pem` (que contengan `BEGIN CERTIFICATE`)
+- **Claves privadas**: `.key`, `.pem` (que contengan `BEGIN PRIVATE KEY` o `BEGIN RSA PRIVATE KEY`)
+- **Bundles/Cadenas**: archivos con múltiples certificados o que contengan `bundle`, `intermediate`, `chain`
 
-### Despliegue con SSL
-
-Para habilitar SSL automáticamente:
+### Despliegue con SSL Automático
 
 ```bash
+# Opción 1: SSL automático con detección de certificados
 export DOMAIN_NAME="global-deer.com"
 export SETUP_SSL="true"
 sudo ./deploy/deploy.sh
 ```
 
-### Configuración manual de SSL
+### Configuración Manual de SSL
 
-Si necesitas configurar SSL manualmente después del despliegue:
+Si ya ejecutaste el deploy sin SSL, puedes configurarlo manualmente:
 
 ```bash
-# Ejecutar script específico para certificados existentes
+# Para certificados existentes (detección automática)
 sudo ./deploy/setup-ssl-existing.sh
+
+# Para generar nuevos con Certbot
+sudo ./deploy/setup-ssl.sh
 ```
+
+### Validación de Certificados
+
+El sistema ahora incluye validación automática:
+
+- ✅ **Formato válido**: Verifica que sean certificados/claves PEM válidos
+- ✅ **Coincidencia**: Confirma que el certificado y clave privada coinciden
+- ✅ **Información**: Muestra detalles del certificado antes de instalar
+- ✅ **Confirmación**: Solicita confirmación antes de proceder
 
 ### Estructura de archivos SSL después del despliegue
 
@@ -287,38 +299,114 @@ sudo ./deploy/setup-ssl-existing.sh
 /etc/nginx/ssl/
 ├── global-deer.com.crt           # Certificado principal
 ├── global-deer.com.key           # Clave privada
-├── global-deer.com-bundle.crt    # Bundle de certificados intermedios
+├── global-deer.com-bundle.crt    # Bundle de certificados intermedios (si existe)
 └── global-deer.com-fullchain.crt # Certificado completo (cert + bundle)
 ```
 
 ### Verificar configuración SSL
 
 ```bash
-# Test de conectividad SSL
-curl -I https://global-deer.com
+# Verificación completa automatizada
+./deploy/verify-ssl.sh
 
-# Verificar configuración nginx
-nginx -t
+# Tests individuales
+nginx -t                           # Verificar configuración nginx
+curl -I https://global-deer.com   # Test de conectividad HTTPS
+openssl s_client -connect global-deer.com:443  # Test del certificado
 
 # Ver información del certificado
 openssl x509 -in /etc/nginx/ssl/global-deer.com.crt -text -noout | grep -E "(Subject:|Issuer:|Not Before:|Not After:)"
+```
 
-# Test de SSL completo
-openssl s_client -connect global-deer.com:443 -servername global-deer.com
+### Preparar Certificados SSL
+
+**Para usar certificados propios:**
+
+1. **Coloca los archivos en `deploy/`**:
+   ```bash
+   # Ejemplos de nombres válidos:
+   deploy/certificado.crt      # o .cert, .pem
+   deploy/clave-privada.key    # o .pem
+   deploy/bundle.crt           # opcional
+   ```
+
+2. **Verificar formato**:
+   ```bash
+   # El certificado debe comenzar con:
+   -----BEGIN CERTIFICATE-----
+   
+   # La clave privada debe comenzar con:
+   -----BEGIN PRIVATE KEY-----
+   # o
+   -----BEGIN RSA PRIVATE KEY-----
+   ```
+
+3. **Ejecutar deploy con SSL**:
+   ```bash
+   export DOMAIN_NAME="tu-dominio.com"
+   export SETUP_SSL="true"
+   sudo ./deploy/deploy.sh
+   ```
+
+### Solución de Problemas SSL
+
+**Error: "PEM_read_bio_PrivateKey() failed"**
+```bash
+# Verificar que la clave privada es válida
+openssl rsa -in deploy/tu-clave.key -check -noout
+
+# Si falla, el archivo puede estar corrupto o en formato incorrecto
+```
+
+**Error: "certificate verify failed"**
+```bash
+# Verificar que certificado y clave coinciden
+cert_hash=$(openssl x509 -noout -modulus -in deploy/cert.crt | openssl md5)
+key_hash=$(openssl rsa -noout -modulus -in deploy/key.key | openssl md5)
+echo "Cert: $cert_hash"
+echo "Key:  $key_hash"
+# Deben ser idénticos
+```
+
+**Dominio no accesible externamente**
+```bash
+# Para desarrollo local sin dominio real:
+export DOMAIN_NAME="localhost"
+export SETUP_SSL="false"  # Deshabilitar SSL
+sudo ./deploy/deploy.sh
+
+# Luego configurar SSL manualmente si obtienes certificados
 ```
 
 ### Renovación de certificados
 
-Para renovar los certificados SSL:
-
+**Para certificados existentes:**
 1. Obtén los nuevos archivos del proveedor
 2. Reemplaza los archivos en `deploy/`
 3. Ejecuta: `sudo ./deploy/setup-ssl-existing.sh`
 
-## 📞 Soporte
+**Para certificados de Let's Encrypt:**
+```bash
+# Renovación automática (ya configurada)
+certbot renew --dry-run   # Probar renovación
 
-Si encuentras problemas:
-1. Revisa los logs mencionados arriba
-2. Verifica que todos los servicios estén corriendo
-3. Comprueba la configuración de red/firewall
-4. Para problemas SSL, verifica que los certificados sean válidos y estén en el formato correcto 
+# Renovación manual
+certbot renew
+systemctl restart nginx
+```
+
+### Configuración SSL Avanzada
+
+**Personalizar configuración SSL en nginx:**
+
+1. Editar `/etc/nginx/sites-available/psi-mammoliti`
+2. Modificar parámetros SSL según necesidades
+3. Verificar: `nginx -t`
+4. Aplicar: `systemctl restart nginx`
+
+**Parámetros SSL configurados:**
+- Protocolos: TLSv1.2, TLSv1.3
+- Ciphers modernos y seguros
+- HSTS habilitado
+- OCSP Stapling activado
+- Headers de seguridad 

@@ -369,23 +369,104 @@ chmod +x "/usr/local/bin/$APP_NAME-manage"
 
 # Configurar SSL si está habilitado
 if [ "$SETUP_SSL" = "true" ]; then
-    # Verificar si existen certificados específicos para global-deer.com
-    if [ -f "$(pwd)/deploy/e27b3c236ad504e7.crt" ] && [ -f "$(pwd)/deploy/e27b3c236ad504e7.pem" ]; then
-        log "Configurando SSL con certificados existentes para global-deer.com..."
+    log "Verificando certificados SSL disponibles..."
+    
+    # Función para detectar certificados SSL en deploy/
+    ssl_cert_found=""
+    ssl_key_found=""
+    
+    # Buscar archivos de certificado
+    for ext in crt cert pem; do
+        for file in "$(pwd)/deploy"/*.$ext; do
+            if [ -f "$file" ] && grep -q "BEGIN CERTIFICATE" "$file" 2>/dev/null; then
+                ssl_cert_found="$file"
+                log "Certificado SSL encontrado: $(basename "$file")"
+                break 2
+            fi
+        done
+    done
+    
+    # Buscar archivos de clave privada
+    for ext in key pem; do
+        for file in "$(pwd)/deploy"/*.$ext; do
+            if [ -f "$file" ] && (grep -q "BEGIN PRIVATE KEY\|BEGIN RSA PRIVATE KEY" "$file" 2>/dev/null); then
+                ssl_key_found="$file"
+                log "Clave privada SSL encontrada: $(basename "$file")"
+                break 2
+            fi
+        done
+    done
+    
+    # Decidir método de configuración SSL
+    if [ -n "$ssl_cert_found" ] && [ -n "$ssl_key_found" ]; then
+        log "Configurando SSL con certificados existentes..."
+        
+        # Verificar que el script de configuración existe
         if [ -f "$(pwd)/deploy/setup-ssl-existing.sh" ]; then
             chmod +x "$(pwd)/deploy/setup-ssl-existing.sh"
-            "$(pwd)/deploy/setup-ssl-existing.sh"
+            
+            # Exportar variables para el script SSL
+            export DOMAIN_NAME="$DOMAIN_NAME"
+            
+            # Ejecutar configuración SSL
+            if "$(pwd)/deploy/setup-ssl-existing.sh"; then
+                log "✅ SSL configurado exitosamente con certificados existentes"
+            else
+                warning "⚠️  Hubo problemas configurando SSL, continuando sin SSL"
+                warning "    Puedes configurar SSL manualmente después con:"
+                warning "    sudo ./deploy/setup-ssl-existing.sh"
+            fi
         else
             error "Script de configuración SSL para certificados existentes no encontrado"
         fi
     else
-        log "Configurando SSL con Certbot..."
-        if [ -f "$(pwd)/deploy/setup-ssl.sh" ]; then
-            chmod +x "$(pwd)/deploy/setup-ssl.sh"
-            "$(pwd)/deploy/setup-ssl.sh"
+        # No hay certificados existentes, intentar con Certbot
+        log "No se encontraron certificados existentes, configurando SSL con Certbot..."
+        
+        if [ "$DOMAIN_NAME" = "localhost" ] || [ "$DOMAIN_NAME" = "127.0.0.1" ]; then
+            warning "⚠️  No se puede usar Certbot con localhost o IP local"
+            warning "    SSL no se configurará automáticamente"
+            warning "    Para usar SSL con dominio local:"
+            warning "    1. Configura un dominio real que apunte a este servidor"
+            warning "    2. Ejecuta: export DOMAIN_NAME='tu-dominio.com' && sudo ./deploy/setup-ssl.sh"
         else
-            warning "Script de configuración SSL no encontrado"
+            if [ -f "$(pwd)/deploy/setup-ssl.sh" ]; then
+                chmod +x "$(pwd)/deploy/setup-ssl.sh"
+                
+                # Exportar variables para Certbot
+                export DOMAIN_NAME="$DOMAIN_NAME"
+                
+                # Intentar configuración con Certbot
+                if "$(pwd)/deploy/setup-ssl.sh"; then
+                    log "✅ SSL configurado exitosamente con Certbot"
+                else
+                    warning "⚠️  Certbot falló, continuando sin SSL"
+                    warning "    Posibles causas:"
+                    warning "    - El dominio no apunta a este servidor"
+                    warning "    - Puertos 80/443 no están accesibles desde Internet"
+                    warning "    - Límites de rate limit de Let's Encrypt"
+                    warning "    "
+                    warning "    Puedes intentar configurar SSL manualmente después:"
+                    warning "    sudo ./deploy/setup-ssl.sh"
+                fi
+            else
+                warning "Script de configuración SSL con Certbot no encontrado"
+            fi
         fi
+    fi
+    
+    # Información adicional sobre SSL
+    if [ -f "/etc/nginx/ssl/${DOMAIN_NAME}.crt" ]; then
+        log "SSL está configurado y disponible"
+        info "Puedes verificar la configuración SSL con:"
+        info "  ./deploy/verify-ssl.sh"
+    else
+        warning "SSL no está configurado"
+        info "Para configurar SSL manualmente:"
+        if [ -n "$ssl_cert_found" ] && [ -n "$ssl_key_found" ]; then
+            info "  sudo ./deploy/setup-ssl-existing.sh  # Usar certificados existentes"
+        fi
+        info "  sudo ./deploy/setup-ssl.sh            # Generar con Certbot"
     fi
 fi
 
