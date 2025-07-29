@@ -4,6 +4,8 @@ import { useDatabase } from '../hooks/useDatabase';
 import { Psicologo, Modalidad } from '../types';
 import { generarHorariosAleatorios } from '../utils/horarioGenerator';
 import { GestionHorarios } from './GestionHorarios';
+import { generarPsicologoAleatorio, validarPsicologoAleatorio } from '../utils/generadorPsicologoAleatorio';
+import { obtenerImagenPorGenero } from '../constants/psicologosRandom';
 
 type TabType = 'dashboard' | 'psicologos' | 'formulario' | 'configuracion';
 
@@ -21,8 +23,7 @@ export const Admin: React.FC = () => {
     stats,
     insertarPsicologo,
     actualizarPsicologo,
-    eliminarPsicologo,
-    limpiarYRecargarDB
+    eliminarPsicologo
   } = useDatabase();
   
   // Estados principales
@@ -366,6 +367,59 @@ export const Admin: React.FC = () => {
     setPsicologoParaHorarios(null);
   };
 
+  const generarPsicologoAleatorioHandler = async () => {
+    setProcesando(true);
+    
+    try {
+      const psicologoAleatorio = generarPsicologoAleatorio();
+      
+      // Validar que los datos generados sean correctos
+      if (!validarPsicologoAleatorio(psicologoAleatorio)) {
+        mostrarMensaje('❌ Error al generar datos aleatorios válidos', 'error');
+        return;
+      }
+      
+      mostrarMensaje('🎲 Generando psicólogo aleatorio...');
+      
+      // Crear el psicólogo directamente
+      const especialidades = psicologoAleatorio.especialidades
+        .split(',')
+        .map(esp => esp.trim())
+        .filter(esp => esp.length > 0);
+
+      const nuevoPsicologo: Psicologo = {
+        id: `psi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        nombre: psicologoAleatorio.nombre.trim(),
+        apellido: psicologoAleatorio.apellido.trim(),
+        especialidades,
+        experiencia: psicologoAleatorio.experiencia,
+        precio: psicologoAleatorio.precio,
+        descripcion: psicologoAleatorio.descripcion.trim(),
+        rating: Math.round((Math.random() * 1.5 + 3.5) * 10) / 10,
+        modalidades: psicologoAleatorio.modalidades,
+        imagen: obtenerImagenPorGenero(psicologoAleatorio.nombre),
+        disponibilidad: psicologoAleatorio.generarHorarios ? generarHorariosAleatorios() : []
+      };
+
+      const exito = await insertarPsicologo(nuevoPsicologo);
+      
+      if (exito) {
+        mostrarMensaje(`✅ Psicólogo aleatorio ${nuevoPsicologo.nombre} ${nuevoPsicologo.apellido} creado exitosamente`);
+        // Cambiar al tab de psicólogos
+        setTabActiva('psicologos');
+        // Limpiar formulario por si acaso
+        limpiarFormulario();
+      } else {
+        mostrarMensaje('❌ Error al crear el psicólogo aleatorio', 'error');
+      }
+    } catch (error) {
+      console.error('Error generando psicólogo aleatorio:', error);
+      mostrarMensaje('❌ Error al generar psicólogo aleatorio', 'error');
+    } finally {
+      setProcesando(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-loading">
@@ -610,10 +664,17 @@ export const Admin: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <div className={vistaLista === 'cards' ? 'psicologos-grid' : 'psicologos-table'}>
+              <div className={vistaLista === 'cards' ? 'psicologos-grid fade-in-container' : 'psicologos-table'}>
                 {vistaLista === 'cards' ? (
-                  psicologosFiltrados.map(psicologo => (
-                    <div key={psicologo.id} className="psicologo-card-admin">
+                  psicologosFiltrados.map((psicologo, index) => (
+                    <div 
+                      key={psicologo.id} 
+                      className="psicologo-card-admin card-visible"
+                      style={{
+                        animationDelay: `${index * 0.05}s`,
+                        animationFillMode: 'both'
+                      }}
+                    >
                       <div className="card-header">
                         <img src={psicologo.imagen} alt={psicologo.nombre} className="psicologo-avatar" />
                         <div className="card-info">
@@ -758,7 +819,19 @@ export const Admin: React.FC = () => {
 
         {tabActiva === 'formulario' && (
           <div className="formulario-content">
-            <h3>{psicologoEditando ? 'Editar Psicólogo' : 'Agregar Nuevo Psicólogo'}</h3>
+            <div className="formulario-header">
+              <h3>{psicologoEditando ? 'Editar Psicólogo' : 'Agregar Nuevo Psicólogo'}</h3>
+              {!psicologoEditando && (
+                <button 
+                  type="button"
+                  onClick={generarPsicologoAleatorioHandler}
+                  className="btn-random"
+                  disabled={procesando}
+                >
+                  🎲 Generar Aleatorio
+                </button>
+              )}
+            </div>
             
             <form onSubmit={manejarFormulario} className="formulario-moderno">
               <div className="form-section">

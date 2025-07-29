@@ -15,7 +15,7 @@ const getModalidadTexto = (modalidad: string): string => {
 };
 
 export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ psicologos }) => {
-  const { sesiones, cargando, error, refrescar } = useUserSesiones();
+  const { sesiones, cargando, recargando, error, refrescar } = useUserSesiones();
 
   if (cargando) {
     return (
@@ -35,8 +35,8 @@ export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ psicologos
         <h3>Mis Sesiones Agendadas</h3>
         <div className="error-container">
           <p>❌ Error al cargar sesiones: {error}</p>
-          <button onClick={refrescar} className="btn-secondary">
-            🔄 Reintentar
+          <button onClick={refrescar} className="btn-secondary" disabled={recargando}>
+            {recargando ? '🔄 Actualizando...' : '🔄 Reintentar'}
           </button>
         </div>
       </div>
@@ -56,8 +56,13 @@ export const SesionesAgendadas: React.FC<SesionesAgendadasProps> = ({ psicologos
     <div className="sesiones-agendadas">
       <div className="sesiones-header">
         <h3>Mis Sesiones Agendadas ({sesiones.length})</h3>
-        <button onClick={refrescar} className="btn-refresh" title="Actualizar">
-          🔄
+        <button 
+          onClick={refrescar} 
+          className={`btn-refresh ${recargando ? 'loading' : ''}`} 
+          title="Actualizar"
+          disabled={recargando}
+        >
+          {recargando ? '⏳' : '🔄'}
         </button>
       </div>
       

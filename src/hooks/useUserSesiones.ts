@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 interface UseUserSesionesReturn {
   sesiones: Sesion[];
   cargando: boolean;
+  recargando: boolean;
   error: string | null;
   refrescar: () => Promise<void>;
 }
@@ -20,17 +21,26 @@ const getApiBaseUrl = () => {
 export function useUserSesiones(): UseUserSesionesReturn {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [recargando, setRecargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cargaInicial, setCargaInicial] = useState(true);
   const { usuario, estaAutenticado } = useAuth();
 
-  const cargarSesiones = useCallback(async () => {
+  const cargarSesiones = useCallback(async (esRecarga = false) => {
     if (!estaAutenticado || !usuario?.email) {
       setSesiones([]);
       setCargando(false);
+      setCargaInicial(false);
       return;
     }
 
-    setCargando(true);
+    // Solo mostrar loading completo en carga inicial
+    if (cargaInicial) {
+      setCargando(true);
+    } else if (esRecarga) {
+      setRecargando(true);
+    }
+    
     setError(null);
 
     try {
@@ -48,11 +58,13 @@ export function useUserSesiones(): UseUserSesionesReturn {
       setSesiones([]);
     } finally {
       setCargando(false);
+      setRecargando(false);
+      setCargaInicial(false);
     }
-  }, [usuario?.email, estaAutenticado]);
+  }, [usuario?.email, estaAutenticado, cargaInicial]);
 
   const refrescar = useCallback(async () => {
-    await cargarSesiones();
+    await cargarSesiones(true);
   }, [cargarSesiones]);
 
   useEffect(() => {
@@ -62,6 +74,7 @@ export function useUserSesiones(): UseUserSesionesReturn {
   return {
     sesiones,
     cargando,
+    recargando,
     error,
     refrescar
   };

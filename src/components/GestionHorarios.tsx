@@ -296,6 +296,19 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
   };
 
   const guardarPlantillaSemanal = async () => {
+    // Validar que la plantilla no esté vacía
+    if (plantillaSemanal.length === 0) {
+      mostrarMensaje('❌ No se puede guardar una plantilla vacía. Agrega al menos un horario de trabajo.', 'error');
+      return;
+    }
+
+    // Validar que haya al menos un horario activo
+    const horariosActivos = plantillaSemanal.filter(h => h.activo);
+    if (horariosActivos.length === 0) {
+      mostrarMensaje('❌ No se puede guardar: debe haber al menos un horario activo.', 'error');
+      return;
+    }
+
     // Validar antes de guardar
     if (!validarTodosLosHorarios()) {
       mostrarMensaje('❌ No se puede guardar: hay errores en los horarios. Revisa las superposiciones.', 'error');
@@ -304,15 +317,20 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
     
     setGuardando(true);
     try {
-      // Eliminar horarios existentes
-      const horariosExistentes = plantillaSemanal.filter(h => h.id);
-      for (const horario of horariosExistentes) {
-        await fetch(`${getApiBaseUrl()}/horarios-trabajo/${horario.id}`, {
-          method: 'DELETE'
-        });
+      // Primero, obtener TODOS los horarios existentes del psicólogo desde el backend
+      const horariosExistentesResponse = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}/horarios-trabajo`);
+      if (horariosExistentesResponse.ok) {
+        const horariosExistentesBackend: HorarioTrabajoBackend[] = await horariosExistentesResponse.json();
+        
+        // Eliminar todos los horarios existentes del backend
+        for (const horario of horariosExistentesBackend) {
+          await fetch(`${getApiBaseUrl()}/horarios-trabajo/${horario.id}`, {
+            method: 'DELETE'
+          });
+        }
       }
 
-      // Crear nuevos horarios
+      // Ahora crear todos los nuevos horarios
       for (const horario of plantillaSemanal) {
         const response = await fetch(`${getApiBaseUrl()}/psicologos/${psicologo.id}/horarios-trabajo`, {
           method: 'POST',
@@ -362,7 +380,7 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
   const limpiarPlantilla = () => {
     setPlantillaSemanal([]);
     setErroresHorarios({});
-    mostrarMensaje('✅ Plantilla limpiada');
+    mostrarMensaje('✅ Plantilla limpiada. Agrega horarios de trabajo para poder guardar.');
   };
 
   if (cargando) {
@@ -506,6 +524,18 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
                 <div>
                   <h3>📅 Plantilla Semanal</h3>
                   <p>Define los horarios de trabajo para cada día de la semana</p>
+                  {plantillaSemanal.length === 0 && (
+                    <div className="plantilla-empty-warning">
+                      <span className="warning-icon">⚠️</span>
+                      <span>La plantilla está vacía. Agrega al menos un horario de trabajo para poder guardar.</span>
+                    </div>
+                  )}
+                  {plantillaSemanal.length > 0 && plantillaSemanal.filter(h => h.activo).length === 0 && (
+                    <div className="plantilla-empty-warning">
+                      <span className="warning-icon">⚠️</span>
+                      <span>No hay horarios activos. Activa al menos un horario para poder guardar.</span>
+                    </div>
+                  )}
                   {Object.keys(erroresHorarios).length > 0 && (
                     <div className="plantilla-errors-summary">
                       <span className="error-icon">⚠️</span>
@@ -683,7 +713,12 @@ export const GestionHorarios: React.FC<GestionHorariosProps> = ({ psicologo, onC
             <button 
               onClick={guardarPlantillaSemanal} 
               className="btn-save" 
-              disabled={guardando || Object.keys(erroresHorarios).length > 0}
+              disabled={
+                guardando || 
+                Object.keys(erroresHorarios).length > 0 || 
+                plantillaSemanal.length === 0 || 
+                plantillaSemanal.filter(h => h.activo).length === 0
+              }
             >
               {guardando ? '💾 Guardando...' : '💾 Guardar Plantilla'}
             </button>

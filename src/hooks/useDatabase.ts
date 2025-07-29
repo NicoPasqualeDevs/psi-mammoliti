@@ -13,6 +13,7 @@ interface DatabaseState {
   sesiones: Sesion[];
   especialidades: string[];
   loading: boolean;
+  recargando: boolean;
   error: string | null;
   initialized: boolean;
 }
@@ -29,6 +30,7 @@ export function useDatabase() {
     sesiones: [],
     especialidades: [],
     loading: true,
+    recargando: false,
     error: null,
     initialized: false
   });
@@ -40,8 +42,13 @@ export function useDatabase() {
   });
 
   // Función para cargar todos los datos
-  const cargarDatos = async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+  const cargarDatos = async (esRecarga = false) => {
+    // Solo mostrar loading completo en carga inicial
+    if (!state.initialized) {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+    } else if (esRecarga) {
+      setState(prev => ({ ...prev, recargando: true, error: null }));
+    }
 
     try {
       // Cargar datos en paralelo desde el backend real
@@ -63,6 +70,7 @@ export function useDatabase() {
         sesiones: sesionesData,
         especialidades,
         loading: false,
+        recargando: false,
         error: null,
         initialized: true
       });
@@ -79,6 +87,7 @@ export function useDatabase() {
       setState(prev => ({
         ...prev,
         loading: false,
+        recargando: false,
         error: error instanceof Error ? error.message : 'Error desconocido al cargar datos',
         initialized: false
       }));
@@ -107,7 +116,7 @@ export function useDatabase() {
       }
 
       // Recargar datos para mostrar el nuevo psicólogo
-      await cargarDatos();
+      await cargarDatos(true);
       
       return true;
     } catch (error) {
@@ -136,7 +145,7 @@ export function useDatabase() {
       }
 
       // Recargar datos para mostrar los cambios
-      await cargarDatos();
+      await cargarDatos(true);
       
       return true;
     } catch (error) {
@@ -161,7 +170,7 @@ export function useDatabase() {
       }
 
       // Recargar datos para mostrar los cambios
-      await cargarDatos();
+      await cargarDatos(true);
       
       return true;
     } catch (error) {
@@ -214,7 +223,7 @@ export function useDatabase() {
       }
 
       // Recargar todos los datos
-      await cargarDatos();
+      await cargarDatos(true);
       
       return true;
     } catch (error) {
@@ -234,6 +243,11 @@ export function useDatabase() {
     modalidad: Modalidad | ''
   ) => {
     return state.psicologos.filter(psicologo => {
+      // Filtro por horarios disponibles - Solo mostrar psicólogos con horarios configurados
+      if (!psicologo.tieneHorariosConfigurados) {
+        return false;
+      }
+      
       // Filtro por especialidad
       if (especialidad && !psicologo.especialidades.includes(especialidad)) {
         return false;
@@ -267,6 +281,7 @@ export function useDatabase() {
     sesiones: state.sesiones,
     especialidades: state.especialidades,
     loading: state.loading,
+    recargando: state.recargando,
     error: state.error,
     initialized: state.initialized,
     stats,

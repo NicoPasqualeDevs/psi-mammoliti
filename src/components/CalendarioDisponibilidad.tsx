@@ -176,7 +176,7 @@ export const CalendarioDisponibilidad: React.FC<CalendarioDisponibilidadProps> =
           return (
             <div 
               key={fechaStr} 
-              className={`calendario-dia ${esDiaActual ? 'hoy' : ''} ${esDiaPasado ? 'pasado' : ''} ${!tieneHorarios ? 'sin-horarios' : ''}`}
+              className={`calendario-dia ${esDiaActual ? 'hoy' : ''} ${esDiaPasado ? 'pasado' : ''} ${!tieneHorarios ? 'sin-horarios' : ''} ${esExpandido ? 'expandido' : 'colapsado'}`}
             >
               <div 
                 className="dia-header"

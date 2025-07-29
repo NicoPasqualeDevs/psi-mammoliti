@@ -11,7 +11,7 @@ import { Admin } from './components/Admin';
 import { Login } from './components/Login';
 import { UserBar } from './components/UserBar';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Psicologo, FiltrosBusqueda, Sesion } from './types';
+import { FiltrosBusqueda, Psicologo } from './types';
 
 // Componente principal de la aplicación pública
 const MainApp: React.FC = () => {
@@ -19,9 +19,9 @@ const MainApp: React.FC = () => {
   const {
     psicologos,
     loading,
+    recargando,
     error,
     initialized,
-    insertarSesion,
     filtrarPsicologos,
     limpiarError
   } = useDatabase();
@@ -44,36 +44,27 @@ const MainApp: React.FC = () => {
   });
 
   const psicologosFiltrados = useMemo(() => {
-    if (!initialized || loading) return [];
+    // Solo ocultar durante carga inicial, no durante recargas
+    if (!initialized) return [];
     
     return filtrarPsicologos(
       filtros.especialidad,
       filtros.precioMax,
       filtros.modalidad
     );
-  }, [filtros, filtrarPsicologos, initialized, loading]);
+  }, [filtros, filtrarPsicologos, initialized]);
 
   // Mostrar login si no está autenticado
   if (!estaAutenticado) {
     return <Login />;
   }
 
-  const handleAgendar = async (nuevaSesion: Omit<Sesion, 'id' | 'estado'>) => {
-    const sesion: Sesion = {
-      ...nuevaSesion,
-      id: Date.now().toString(),
-      estado: 'pendiente'
-    };
-
-    const exito = await insertarSesion(sesion);
-    
-    if (exito) {
-      // Refrescar las sesiones del usuario para actualizar el contador
-      await refrescarSesiones();
-      setPsicologoSeleccionado(null);
-      setHorarioPreseleccionado(null);
-      setVistaActual('sesiones');
-    }
+  const handleSesionCreada = async () => {
+    // Refrescar las sesiones del usuario para mostrar la nueva sesión
+    await refrescarSesiones();
+    setPsicologoSeleccionado(null);
+    setHorarioPreseleccionado(null);
+    setVistaActual('sesiones');
   };
 
   const handleSeleccionarPsicologo = (psicologo: Psicologo) => {
@@ -192,6 +183,13 @@ const MainApp: React.FC = () => {
         </nav>
       </header>
 
+      {/* Indicador sutil de recarga */}
+      {recargando && (
+        <div className="recarga-indicator">
+          <span>🔄 Actualizando datos...</span>
+        </div>
+      )}
+
       <main className="app-main">
         {vistaActual === 'busqueda' ? (
           <div className="busqueda-container">
@@ -217,13 +215,14 @@ const MainApp: React.FC = () => {
                   <p>Intenta ajustar los filtros de búsqueda</p>
                 </div>
               ) : (
-                <div className="psicologos-grid">
-                  {psicologosFiltrados.map((psicologo) => (
+                <div className="psicologos-grid fade-in-container">
+                  {psicologosFiltrados.map((psicologo, index) => (
                     <PsicologoCard
                       key={psicologo.id}
                       psicologo={psicologo}
                       onSeleccionar={handleSeleccionarPsicologo}
                       onSeleccionarHorario={handleSeleccionarHorario}
+                      index={index}
                     />
                   ))}
                 </div>
@@ -241,7 +240,7 @@ const MainApp: React.FC = () => {
         <ModalAgendamiento
           psicologo={psicologoSeleccionado}
           onCerrar={handleCerrarModal}
-          onAgendar={handleAgendar}
+          onSesionCreada={handleSesionCreada}
           horarioPreseleccionado={horarioPreseleccionado}
         />
       )}

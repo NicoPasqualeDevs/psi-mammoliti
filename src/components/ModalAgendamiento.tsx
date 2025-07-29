@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 interface ModalAgendamientoProps {
   psicologo: Psicologo | null;
   onCerrar: () => void;
-  onAgendar: (sesion: Omit<Sesion, 'id' | 'estado'>) => void;
+  onSesionCreada: () => void;
   horarioPreseleccionado?: {
     fecha: string;
     hora: string;
@@ -26,7 +26,7 @@ const getModalidadTexto = (modalidad: string): string => {
 export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
   psicologo,
   onCerrar,
-  onAgendar,
+  onSesionCreada,
   horarioPreseleccionado = null
 }) => {
   const [vistaCalendario, setVistaCalendario] = useState(true);
@@ -146,19 +146,6 @@ export const ModalAgendamiento: React.FC<ModalAgendamientoProps> = ({
         especialidad: especialidadSeleccionada
       });
 
-      // Crear objeto de sesión para compatibilidad con el componente padre
-      const sesion: Omit<Sesion, 'id' | 'estado'> = {
-        psicologoId: psicologo.id,
-        fecha: fechaSeleccionada,
-        hora: horaSeleccionada,
-        modalidad: modalidadSeleccionada,
-        paciente: datosPersonales,
-        especialidad: especialidadSeleccionada
-      };
-
-      // Llamar al callback del padre
-      onAgendar(sesion);
-
       // Mostrar mensaje de éxito
       alert(`¡Cita agendada exitosamente! 
       
@@ -177,6 +164,9 @@ Detalles:
 ID de la cita: ${resultado.citaId}
 ID de la sesión: ${resultado.sesionId}`);
 
+      // Notificar al padre que se creó la sesión exitosamente
+      onSesionCreada();
+      
       onCerrar();
 
     } catch (error) {

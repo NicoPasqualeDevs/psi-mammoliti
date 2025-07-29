@@ -787,13 +787,12 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(45, 32, 73, 0.8);
-  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 2rem;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.15s ease;
 }
 
 @keyframes fadeIn {
@@ -811,11 +810,11 @@ body {
   overflow-x: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--lila-lighter);
-  animation: slideIn 0.3s ease;
+  animation: slideIn 0.15s ease;
 }
 
 @keyframes slideIn {
-  from { transform: translateY(50px); opacity: 0; }
+  from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
@@ -823,7 +822,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 2rem 2rem 2rem;
+  padding: 1.5rem 2rem 1rem 2rem;
   background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
   border-radius: 24px 24px 0 0;
   min-height: 80px;
@@ -842,21 +841,26 @@ body {
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--textos-gris);
-  padding: 0.5rem;
+  padding: 0;
   width: 45px;
   height: 45px;
+  min-width: 45px;
+  min-height: 45px;
+  max-width: 45px;
+  max-height: 45px;
   border-radius: 50%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  flex-shrink: 0;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-cerrar:hover {
   background: var(--lila-lighter);
   border-color: var(--lila);
   color: var(--lila-darkest);
-  transform: rotate(90deg);
 }
 
 .formulario-agendamiento {
@@ -866,8 +870,8 @@ body {
 .navegacion-modal {
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding: 1rem 1.5rem;
   border-bottom: 2px solid var(--lila-lighter);
 }
 
@@ -897,7 +901,7 @@ body {
 }
 
 .seccion-calendario {
-  padding: 2rem;
+  padding: 0.5rem 2rem;
   overflow-x: hidden;
 }
 
@@ -1120,10 +1124,7 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Mejoras adicionales para animaciones */
-.psicologo-card {
-  animation: slideInUp 0.6s ease-out;
-}
+/* Animaciones de cards optimizadas */
 
 .psicologo-card:nth-child(1) { animation-delay: 0.1s; }
 .psicologo-card:nth-child(2) { animation-delay: 0.2s; }
@@ -1134,7 +1135,7 @@ body {
 @keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -1391,7 +1392,7 @@ body {
 
 /* Estilos para el Calendario de Disponibilidad */
 .calendario-disponibilidad {
-  margin: 2rem 0;
+  margin: 0.5rem 0;
   overflow: hidden;
 }
 
@@ -1399,8 +1400,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
   background: linear-gradient(135deg, var(--lila-lighter), var(--secundario-celeste));
   border-radius: 12px;
   border: 1px solid var(--lila-light);
@@ -1412,6 +1413,16 @@ body {
   font-weight: 700;
   font-size: 1.2rem;
   text-transform: capitalize;
+}
+
+.info-timezone {
+  background: var(--lila-lighter);
+  color: var(--textos-azul);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+  text-align: center;
 }
 
 .btn-navegacion {
@@ -1455,7 +1466,7 @@ body {
 
 .calendario-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(200px, 1fr));
+  grid-template-columns: repeat(7, minmax(180px, 180px));
   gap: 1rem;
   margin-bottom: 2rem;
   overflow-x: auto;
@@ -1489,19 +1500,55 @@ body {
   border: 2px solid var(--lila-lighter);
   border-radius: 12px;
   padding: 1rem;
-  min-height: 200px;
+  min-height: 280px;
+  margin-top: 12px;
   transition: all 0.3s ease;
   position: relative;
 }
 
 .calendario-dia.colapsado {
-  min-height: 100px;
-  max-height: 100px;
+  min-height: 140px;
+  max-height: 140px;
   overflow: hidden;
 }
 
+.calendario-dia.colapsado .dia-header {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.calendario-dia.sin-horarios {
+  margin-bottom: 0;
+}
+
+.calendario-dia .horarios-disponibles {
+  background: var(--lila);
+  color: var(--neutral-white);
+  padding: 0.2rem 0.6rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.6rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+.calendario-dia .horarios-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.calendario-dia .modalidades {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
 .calendario-dia.expandido {
-  min-height: 200px;
+  min-height: 280px;
   max-height: none;
 }
 
@@ -1615,7 +1662,7 @@ body {
 .horarios-dia {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.8rem;
   transition: all 0.3s ease;
 }
 
@@ -1664,7 +1711,7 @@ body {
 .horario-info {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.5rem;
   align-items: center;
 }
 
@@ -2245,7 +2292,7 @@ body {
   border-radius: 8px;
   margin: 15px 0;
   font-weight: 500;
-  animation: slideInDown 0.3s ease;
+  animation: slideInDown 0.15s ease;
 }
 
 .admin-message.success {
@@ -2411,10 +2458,11 @@ body {
   font-size: 12px;
   color: white;
   background: rgba(52, 152, 219, 0.4);
-  padding: 6px 10px;
+  padding: 3px 8px;
   border-radius: 12px;
   border: 1px solid rgba(52, 152, 219, 0.6);
   font-weight: 500;
+  margin-top: 8px;
 }
 
 /* Responsive para admin panel */
@@ -2964,7 +3012,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  animation: slideInDown 0.3s ease;
+  animation: slideInDown 0.15s ease;
 }
 
 .admin-message-modern.success {
@@ -3263,11 +3311,18 @@ body {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.psicologo-card-admin.card-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .psicologo-card-admin:hover {
-  transform: translateY(-5px);
+  transform: translateY(-5px) scale(1.02);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
@@ -3518,11 +3573,58 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.formulario-content h3 {
-  margin: 0 0 2rem 0;
+.formulario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.formulario-header h3 {
+  margin: 0;
   color: var(--textos-azul);
   font-size: 1.5rem;
   font-weight: 600;
+  flex: 1;
+}
+
+.btn-random {
+  background: var(--neutral-white);
+  color: var(--textos-gris);
+  border: 1px solid var(--lila-light);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-random:hover {
+  background: var(--lila-lighter);
+  border-color: var(--lila);
+  color: var(--textos-azul);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-random:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-random:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--neutral-white);
+  border-color: var(--componentes-accesible);
+  color: var(--componentes-accesible);
+  transform: none;
 }
 
 .formulario-moderno {
@@ -3887,7 +3989,6 @@ body {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3905,7 +4006,7 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn 0.15s ease-out;
 }
 
 .modal-content-horarios.loading {
@@ -3919,11 +4020,11 @@ body {
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-50px) scale(0.95);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -3991,7 +4092,8 @@ body {
   border-radius: 50%;
   cursor: pointer;
   font-size: 1.2rem;
-  transition: all 0.3s ease;
+  padding: 0;
+  transition: background 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3999,7 +4101,6 @@ body {
 
 .btn-close-modal:hover {
   background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
 }
 
 /* Navegación por pestañas */
@@ -4043,7 +4144,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  animation: slideInDown 0.3s ease;
+  animation: slideInDown 0.15s ease;
 }
 
 .message-horarios.success {
@@ -4338,10 +4439,11 @@ body {
 .horarios-count, .horarios-disponibles {
   background: var(--lila);
   color: var(--neutral-white);
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
+  margin-top: 0.5rem;
 }
 
 .btn-add-horario {
@@ -4787,6 +4889,12 @@ body {
   font-size: 1rem;
   transition: all 0.3s ease;
   background: rgba(255, 255, 255, 0.8);
+  color: var(--lila-darkest);
+}
+
+.login-form input::placeholder {
+  color: var(--textos-gris);
+  opacity: 0.7;
 }
 
 .login-form input:focus {
@@ -5057,6 +5165,23 @@ body {
   transform: rotate(180deg);
 }
 
+.btn-refresh.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.btn-refresh.loading:hover {
+  transform: none;
+  background: rgba(132, 117, 179, 0.05);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
 .loading-container, .error-container {
   display: flex;
   flex-direction: column;
@@ -5151,60 +5276,42 @@ body {
   font-size: 1.1rem;
 }
 
-/* Botón deshabilitado por errores */
-.btn-save:disabled {
-  background: #6c757d !important;
-  border-color: #6c757d !important;
-  cursor: not-allowed !important;  
-  opacity: 0.65 !important;        
-}
-
-.btn-save:disabled:hover {
-  background: #6c757d !important;  
-  border-color: #6c757d !important;
-  transform: none !important;
-}
-
-/* Modal de confirmación para limpiar BD */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+/* Advertencia de plantilla vacía */
+.plantilla-empty-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #856404;
+  font-weight: 500;
 }
 
-.modal-content {
-  background: var(--neutral-white);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: scaleIn 0.3s ease;
+.plantilla-empty-warning .warning-icon {
+  font-size: 1.1rem;
+  color: #ffc107;
 }
 
-.modal-header {
-  padding: 2rem 2rem 1rem 2rem;
-  border-bottom: 1px solid var(--lila-lighter);
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: var(--textos-azul);
-  font-size: 1.5rem;
-  font-weight: 700;
+.btn-cerrar:hover {
+  background: var(--lila-lighter);
+  border-color: var(--lila);
+  color: var(--lila-darkest);
 }
 
 .modal-body {
   padding: 2rem;
+}
+
+.modal-actions {
+  padding: 1rem 2rem 2rem 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  border-top: 1px solid var(--lila-lighter);
 }
 
 .warning-text {
@@ -5260,14 +5367,6 @@ body {
   line-height: 1.5;
 }
 
-.modal-actions {
-  padding: 1rem 2rem 2rem 2rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  border-top: 1px solid var(--lila-lighter);
-}
-
 .btn-danger {
   background: linear-gradient(135deg, var(--secundario-salmón), #d73527);
   color: var(--neutral-white);
@@ -5318,22 +5417,119 @@ body {
   transform: none;
 }
 
-@keyframes fadeIn {
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* Indicador de recarga sutil */
+.recarga-indicator {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: rgba(132, 117, 179, 0.95);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: slideInRight 0.3s ease-out, pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes slideInRight {
   from {
+    transform: translateX(100%);
     opacity: 0;
   }
   to {
+    transform: translateX(0);
     opacity: 1;
   }
 }
 
-@keyframes scaleIn {
+/* Mejoras adicionales para animaciones */
+.psicologo-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Nuevas animaciones de fade-in para evitar parpadeo */
+.fade-in-container {
+  position: relative;
+}
+
+.card-hidden {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: none;
+}
+
+.card-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Animaciones suaves para el contenido interno de las cards */
+.horarios-content {
+  transition: all 0.3s ease-in-out;
+  min-height: 120px;
+}
+
+.horarios-content.cargando {
+  opacity: 0.7;
+}
+
+.horarios-content.cargado {
+  opacity: 1;
+}
+
+.cargando-horarios {
+  padding: 1rem 0;
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.proxima-cita {
+  animation: fadeInContent 0.4s ease-out;
+}
+
+@keyframes fadeInContent {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Remover delays estáticos antiguos - ahora usamos JavaScript para timing */
+.psicologo-card:nth-child(1) { animation-delay: unset; }
+.psicologo-card:nth-child(2) { animation-delay: unset; }
+.psicologo-card:nth-child(3) { animation-delay: unset; }
+.psicologo-card:nth-child(4) { animation-delay: unset; }
+.psicologo-card:nth-child(5) { animation-delay: unset; }
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

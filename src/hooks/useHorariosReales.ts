@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HorarioDisponible, ConfiguracionHorarios } from '../types';
-import { apiService } from '../services/apiService';
 
 interface UseHorariosRealesProps {
   psicologoId: string;
