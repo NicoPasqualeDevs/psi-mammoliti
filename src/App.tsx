@@ -29,6 +29,11 @@ const MainApp: React.FC = () => {
   // Hook para obtener solo las sesiones del usuario actual
   const { sesiones: sesionesUsuario, refrescar: refrescarSesiones } = useUserSesiones();
 
+  // Filtrar sesiones para el contador - solo sesiones confirmadas (no canceladas)
+  const sesionesActivasUsuario = useMemo(() => {
+    return sesionesUsuario.filter(sesion => sesion.estado !== 'cancelada');
+  }, [sesionesUsuario]);
+
   const [vistaActual, setVistaActual] = useState<'busqueda' | 'sesiones'>('busqueda');
   const [psicologoSeleccionado, setPsicologoSeleccionado] = useState<Psicologo | null>(null);
   const [horarioPreseleccionado, setHorarioPreseleccionado] = useState<{
@@ -181,8 +186,8 @@ const MainApp: React.FC = () => {
           >
             <span className="nav-icon">📅</span>
             <span className="nav-text">Mis Sesiones</span>
-            {sesionesUsuario.length > 0 && (
-              <span className="nav-badge">{sesionesUsuario.length}</span>
+            {sesionesActivasUsuario.length > 0 && (
+              <span className="nav-badge">{sesionesActivasUsuario.length}</span>
             )}
           </button>
         </nav>

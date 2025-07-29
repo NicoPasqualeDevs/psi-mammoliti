@@ -34,9 +34,8 @@
 
 .sesiones-icon {
   font-size: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  /* Removido el gradiente violeta que hacía invisible el emoji */
+  filter: none;
 }
 
 .sesiones-controls {
