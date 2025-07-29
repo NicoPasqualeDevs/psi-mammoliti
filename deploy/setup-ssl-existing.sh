@@ -355,15 +355,15 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     
-    # CSP (Content Security Policy) actualizado para HTTPS y widget de gentsdev.com
+    # CSP (Content Security Policy) actualizado para HTTPS y widget de gents.cloud
     add_header Content-Security-Policy "
         default-src 'self';
         script-src 'self' 'unsafe-eval' 'unsafe-inline';
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com data:;
-        img-src 'self' data: https: blob: http://www.gentsdev.com https://www.gentsdev.com;
-        connect-src 'self' wss: https: http://www.gentsdev.com https://www.gentsdev.com;
-        frame-src http://www.gentsdev.com https://www.gentsdev.com;
+        img-src 'self' data: https: blob: http://www.gents.cloud https://www.gents.cloud;
+        connect-src 'self' wss: https: http://www.gents.cloud https://www.gents.cloud;
+        frame-src http://www.gents.cloud https://www.gents.cloud;
         frame-ancestors 'none';
         base-uri 'self';
         form-action 'self';

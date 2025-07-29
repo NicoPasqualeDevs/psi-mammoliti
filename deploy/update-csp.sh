@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script para actualizar Content Security Policy
-# Permite el widget de gentsdev.com en la aplicación
+# Permite el widget de gents.cloud en la aplicación
 
 set -e
 
@@ -34,7 +34,7 @@ info() {
     echo -e "${BLUE}[INFO] $1${NC}"
 }
 
-echo -e "${BLUE}🔧 Actualizando Content Security Policy para permitir widget de gentsdev.com${NC}"
+echo -e "${BLUE}🔧 Actualizando Content Security Policy para permitir widget de gents.cloud${NC}"
 echo "======================================================================="
 
 # Verificar que se ejecuta como root
@@ -63,9 +63,9 @@ NEW_CSP="add_header Content-Security-Policy \"
         script-src 'self' 'unsafe-eval' 'unsafe-inline';
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com data:;
-        img-src 'self' data: https: blob: http://www.gentsdev.com https://www.gentsdev.com;
-        connect-src 'self' wss: https: http://www.gentsdev.com https://www.gentsdev.com;
-        frame-src http://www.gentsdev.com https://www.gentsdev.com;
+        img-src 'self' data: https: blob: http://www.gents.cloud https://www.gents.cloud;
+        connect-src 'self' wss: https: http://www.gents.cloud https://www.gents.cloud;
+        frame-src http://www.gents.cloud https://www.gents.cloud;
         frame-ancestors 'none';
         base-uri 'self';
         form-action 'self';
@@ -74,15 +74,15 @@ NEW_CSP="add_header Content-Security-Policy \"
 
 # Usar sed para reemplazar la sección CSP completa
 sed -i '/add_header Content-Security-Policy/,/\" always;/c\
-    # CSP actualizado para widget de gentsdev.com\
+    # CSP actualizado para widget de gents.cloud\
     add_header Content-Security-Policy "\
         default-src '\''self'\'';\
         script-src '\''self'\'' '\''unsafe-eval'\'' '\''unsafe-inline'\'';\
         style-src '\''self'\'' '\''unsafe-inline'\'' https://fonts.googleapis.com;\
         font-src '\''self'\'' https://fonts.gstatic.com data:;\
-        img-src '\''self'\'' data: https: blob: http://www.gentsdev.com https://www.gentsdev.com;\
-        connect-src '\''self'\'' wss: https: http://www.gentsdev.com https://www.gentsdev.com;\
-        frame-src http://www.gentsdev.com https://www.gentsdev.com;\
+        img-src '\''self'\'' data: https: blob: http://www.gents.cloud https://www.gents.cloud;\
+        connect-src '\''self'\'' wss: https: http://www.gents.cloud https://www.gents.cloud;\
+        frame-src http://www.gents.cloud https://www.gents.cloud;\
         frame-ancestors '\''none'\'';\
         base-uri '\''self'\'';\
         form-action '\''self'\'';\
@@ -114,11 +114,11 @@ echo ""
 echo -e "${GREEN}🎉 ¡Content Security Policy actualizada exitosamente!${NC}"
 echo ""
 echo -e "${YELLOW}📋 Cambios realizados:${NC}"
-echo -e "  ✅ Permitir conexiones a gentsdev.com (connect-src)"
-echo -e "  ✅ Permitir iframes de gentsdev.com (frame-src)"
-echo -e "  ✅ Permitir imágenes de gentsdev.com (img-src)"
+echo -e "  ✅ Permitir conexiones a gents.cloud (connect-src)"
+echo -e "  ✅ Permitir iframes de gents.cloud (frame-src)"
+echo -e "  ✅ Permitir imágenes de gents.cloud (img-src)"
 echo ""
 echo -e "${BLUE}🔧 Archivo de configuración: $NGINX_CONFIG${NC}"
 echo -e "${BLUE}💾 Backup creado: ${NGINX_CONFIG}.backup.$(date +%Y%m%d_%H%M%S)${NC}"
 echo ""
-echo -e "${GREEN}El widget de gentsdev.com ahora debería funcionar correctamente.${NC}"
+echo -e "${GREEN}El widget de gents.cloud ahora debería funcionar correctamente.${NC}"
